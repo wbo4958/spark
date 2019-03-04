@@ -33,7 +33,7 @@ pipeline {
             steps {
 
                 updateGitlabCommitStatus(name: 'JenkinsTests', state: 'running')
-                sh 'build/mvn -Dtest=none -DwildcardSuites=org.apache.spark.util.VersionUtilsSuite test'
+                sh 'build/mvn -Dtest=none -Phadoop-2.7 -Pyarn -Phive -Phive-thriftserver -Pkubernetes test'
             }
             
             post {
