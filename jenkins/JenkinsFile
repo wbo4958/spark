@@ -16,8 +16,16 @@ pipeline {
 
                 updateGitlabCommitStatus(name: 'build', state: 'running')
                 sh 'build/mvn -DskipTests  -Phadoop-2.7 -Pyarn -Phive -Phive-thriftserver -Pkubernetes clean package'
-                updateGitlabCommitStatus(name: 'build', state: 'success')
-                
+
+            }
+
+            post {
+                success {
+                    updateGitlabCommitStatus(name: 'build', state: 'success')
+                }
+                failure {
+                    updateGitlabCommitStatus(name: 'build', state: 'failed')
+                }
             }
         }
 
