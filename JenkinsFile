@@ -1,11 +1,19 @@
 pipeline {
     agent {
-        docker {
+        dockerfile
+        {
             label 'docker'
-            image 'openkbs/jre-mvn-py3'
+            filename 'Dockerfile'
+            args '-v /etc/passwd:/etc/passwd:ro -v /var/run/docker.sock:/var/run/docker.sock:rw'
             args '-v /root/.m2:/root/.m2'
         }
+
     }
+    
+    // environment
+    //     {
+    //         SPARK_USER = "svngcc"
+    //     }
 
     stages {
 
@@ -15,7 +23,7 @@ pipeline {
                 updateGitlabCommitStatus(name: 'pipeline', state: 'running')
 
                 updateGitlabCommitStatus(name: 'build', state: 'running')
-                sh 'build/mvn -DskipTests  -Phadoop-2.7 -Pyarn -Phive -Phive-thriftserver -Pkubernetes clean package'
+                sh 'build/mvn -DskipTests -Phadoop-2.7 -Pyarn -Phive -Phive-thriftserver -Pkubernetes clean package'
 
             }
 
@@ -33,7 +41,7 @@ pipeline {
             steps {
 
                 updateGitlabCommitStatus(name: 'JenkinsTests', state: 'running')
-                sh 'build/mvn -Dtest=none -DSPARK_USER="tester" -Phadoop-2.7 -Pyarn -Phive -Phive-thriftserver -Pkubernetes test'
+                //sh 'build/mvn -Dtest=none -Phadoop-2.7 -Pyarn -Phive -Phive-thriftserver -Pkubernetes test'
             }
             
             post {
