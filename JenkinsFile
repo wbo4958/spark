@@ -9,7 +9,7 @@ pipeline {
         }
 
     }
-    
+
     // environment
     //     {
     //         SPARK_USER = "svngcc"
