@@ -1,19 +1,5 @@
 pipeline {
-    agent {
-        dockerfile
-        {
-            label 'docker'
-            filename 'Dockerfile'
-            args '-v /etc/passwd:/etc/passwd:ro -v /var/run/docker.sock:/var/run/docker.sock:rw'
-            args '-v /root/.m2:/root/.m2'
-        }
-
-    }
-
-    // environment
-    //     {
-    //         SPARK_USER = "svngcc"
-    //     }
+    agent {label 'nvspark'}
 
     stages {
 
@@ -41,7 +27,7 @@ pipeline {
             steps {
 
                 updateGitlabCommitStatus(name: 'JenkinsTests', state: 'running')
-                //sh 'build/mvn -Dtest=none -Phadoop-2.7 -Pyarn -Phive -Phive-thriftserver -Pkubernetes test'
+                sh 'build/mvn -Dtest=none -Phadoop-2.7 -Pyarn -Phive -Phive-thriftserver -Pkubernetes test'
             }
             
             post {
