@@ -27,7 +27,7 @@ pipeline {
             steps {
 
                 updateGitlabCommitStatus(name: 'JenkinsTests', state: 'running')
-                sh 'build/mvn -Dtest=none -Phadoop-2.7 -Pyarn -Phive -Phive-thriftserver -Pkubernetes test'
+                sh 'build/mvn -Dtest=none -Phadoop-2.7 -Pyarn -Phive -Phive-thriftserver -Pkubernetes test -T 4'
             }
             
             post {
