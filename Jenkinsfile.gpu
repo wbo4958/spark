@@ -1,0 +1,99 @@
+def artifactory_server = Artifactory.server "artifactory"
+def buildInfo = Artifactory.newBuildInfo()
+buildInfo.env.capture = true
+
+// MR title check
+if (! gitlabMergeRequestTitle.startsWith("[GPU]")) {
+    echo "MR title doesn't begin with [GPU]: ${gitlabMergeRequestTitle}"
+    currentBuild.result = 'ABORTED'
+    error("Aborting GPU tests")
+} else {
+    echo "MR title begins with [GPU]. Running GPU tests"
+}
+
+pipeline {
+    agent {
+        dockerfile {
+            label 'docker-gpu'
+            args '--runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all -v ${HOME}/.m2:${HOME}/.m2:rw -v ${HOME}/.zinc:${HOME}/.zinc:rw'
+        }
+    }
+    options {
+        ansiColor('xterm')
+        timestamps()
+        timeout(time: 6, unit: 'HOURS')
+        gitLabConnection('GitLab Master')
+    }
+
+    parameters {
+        string(name: 'REF',
+               defaultValue: '\${gitlabBranch}',
+               description: 'Commit to build')
+    }
+
+    stages {
+        stage('smi') {
+            steps {
+                sh 'nvidia-smi'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                updateGitlabCommitStatus(name: 'Pipeline', state: 'running')
+                updateGitlabCommitStatus(name: 'Build', state: 'running')
+                sh 'build/mvn -DskipTests -Phadoop-2.7 -Pyarn -Phive -Phive-thriftserver -Pkubernetes clean package'
+            }
+            post {
+                success {
+                    updateGitlabCommitStatus(name: 'Build', state: 'success')
+                }
+                failure {
+                    updateGitlabCommitStatus(name: 'Build', state: 'failed')
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                updateGitlabCommitStatus(name: 'Test', state: 'running')
+                sh 'build/mvn -Dtest=none test -fn'
+            }
+
+            post {
+                success {
+                    updateGitlabCommitStatus(name: 'Test', state: 'success')
+                }
+                failure {
+                    updateGitlabCommitStatus(name: 'Test', state: 'failed')
+                }
+                always {
+                    junit(testResults: '**/surefire-reports/*.xml', allowEmptyResults: 'true')
+                    addGitLabMRComment(comment: "${BUILD_URL}testReport/")
+                }
+            }
+        }
+
+    }
+
+    post {
+        success {
+            updateGitlabCommitStatus(name: 'Pipeline', state: 'success')
+            addGitLabMRComment(comment: "Pipeline is complete with no errors.")
+        }
+        // failure condition doesn't trigger on unstable status
+        unstable {
+            updateGitlabCommitStatus(name: 'Pipeline', state: 'failed')
+            addGitLabMRComment(comment: "Pipeline is complete with errors.")
+        }
+        failure {
+            updateGitlabCommitStatus(name: 'Pipeline', state: 'failed')
+            addGitLabMRComment(comment: "Pipeline is complete with errors.")
+        }
+        always {
+            script {
+                artifactory_server.publishBuildInfo buildInfo
+            }
+        }
+    }
+}
