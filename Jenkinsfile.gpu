@@ -48,6 +48,9 @@ pipeline {
                 success {
                     updateGitlabCommitStatus(name: 'Build', state: 'success')
                 }
+                unstable {
+                    updateGitlabCommitStatus(name: 'Build', state: 'failed')
+                }
                 failure {
                     updateGitlabCommitStatus(name: 'Build', state: 'failed')
                 }
@@ -63,6 +66,9 @@ pipeline {
             post {
                 success {
                     updateGitlabCommitStatus(name: 'Test', state: 'success')
+                }
+                unstable {
+                    updateGitlabCommitStatus(name: 'Test', state: 'failed')
                 }
                 failure {
                     updateGitlabCommitStatus(name: 'Test', state: 'failed')
