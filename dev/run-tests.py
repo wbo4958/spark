@@ -581,7 +581,7 @@ def main():
     test_modules = determine_modules_to_test(changed_modules)
 
     # license checks
-    run_apache_rat_checks()
+    # run_apache_rat_checks()
 
     # style checks
     if not changed_files or any(f.endswith(".scala")
@@ -631,11 +631,12 @@ def main():
 
     modules_with_python_tests = [m for m in test_modules if m.python_test_goals]
     if modules_with_python_tests:
-        # We only run PySpark tests with coverage report in one specific job with
-        # Spark master with SBT in Jenkins.
+        # Generation of coverage reports is not supported by nvspark. 
+        # "post_python_tests_results" doesn't include logic 
+        # for generating coverage reports for GitLab.
         is_sbt_master_job = "SPARK_MASTER_SBT_HADOOP_2_7" in os.environ
         run_python_tests(
-            modules_with_python_tests, opts.parallelism, with_coverage=is_sbt_master_job)
+            modules_with_python_tests, opts.parallelism, with_coverage=False)
         run_python_packaging_tests()
     if any(m.should_run_r_tests for m in test_modules):
         run_sparkr_tests()
