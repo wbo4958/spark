@@ -1,0 +1,46 @@
+def artifactory_server = Artifactory.server "artifactory"
+def buildInfo = Artifactory.newBuildInfo()
+buildInfo.env.capture = true
+
+pipeline {
+    agent any
+    options {
+        ansiColor('xterm')
+        timestamps()
+        timeout(time: 1.5, unit: 'HOURS')
+    }
+
+    parameters {
+        string(name: 'REF',
+               defaultValue: '\${gitlabBranch}',
+               description: 'Commit to build')
+    }
+
+    stages {
+        stage('Build & Test') {
+            parallel {
+                stage('CPU') {
+                    steps {
+                        build job: 'spark/cpu', parameters: [string(name: 'REF', value: REF)]
+                    }
+                }
+                stage('GPU') {
+                    when {
+                        expression { gitlabMergeRequestTitle =~ /[GPU]/ }
+                    }
+                    steps {
+                        build job: 'spark/gpu', parameters: [string(name: 'REF', value: REF)]
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                artifactory_server.publishBuildInfo buildInfo
+            }
+        }
+    }
+}

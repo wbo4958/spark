@@ -2,15 +2,6 @@ def artifactory_server = Artifactory.server "artifactory"
 def buildInfo = Artifactory.newBuildInfo()
 buildInfo.env.capture = true
 
-// MR title check
-if (! gitlabMergeRequestTitle.startsWith("[GPU]")) {
-    echo "MR title doesn't begin with [GPU]: ${gitlabMergeRequestTitle}"
-    currentBuild.result = 'ABORTED'
-    error("Aborting GPU tests")
-} else {
-    echo "MR title begins with [GPU]. Running GPU tests"
-}
-
 pipeline {
     agent {
         dockerfile {
