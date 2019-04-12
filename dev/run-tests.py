@@ -631,8 +631,8 @@ def main():
 
     modules_with_python_tests = [m for m in test_modules if m.python_test_goals]
     if modules_with_python_tests:
-        # Generation of coverage reports is not supported by nvspark. 
-        # "post_python_tests_results" doesn't include logic 
+        # Generation of coverage reports is not supported by nvspark.
+        # "post_python_tests_results" doesn't include logic
         # for generating coverage reports for GitLab.
         is_sbt_master_job = "SPARK_MASTER_SBT_HADOOP_2_7" in os.environ
         run_python_tests(

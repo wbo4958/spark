@@ -45,12 +45,6 @@ pipeline {
             choice(name: 'JENKINS_BUILD_TOOL',
                    choices:["maven","sbt"],
                    description: "Build tool used to run Spark Project.")
-
-            booleanParam(name: 'AMP_JENKINS_PRB', 
-                   defaultValue:  true, 
-                   description: """\
-                   (REQUIRED): To check for files changes with respect to target branch(ex. master) \
-                    and run only the test cases that correspond to the changed modules.""")
                    
         }
 
@@ -61,7 +55,6 @@ pipeline {
         PULL_REQUEST_ID="${params.GITLAB_MERGE_REQUEST_IID}"
         ghprbTargetBranch="${params.GITLAB_TARGET_BRANCH}"
         GITLAB_OAUTH_KEY = credentials('svcngcc_gitlab_str')
-        AMP_JENKINS_PRB="${params.AMP_JENKINS_PRB}"
         GITLAB_PROJECT_URL="${params.SPARK_PROJECT_URL}"
         GITLAB_API_ENDPOINT="https://gitlab-master.nvidia.com/api/v4/projects/${params.GITLAB_MERGE_REQUEST_TARGET_PROJECT_ID}"
         BUILD_URL="${BUILD_URL}" 

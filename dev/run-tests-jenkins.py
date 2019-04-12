@@ -161,6 +161,11 @@ def main():
     See ../jenkinsfile to see the list of environment variables to be set.
     """
 
+    if os.environ["PULL_REQUEST_ID"] == "null":
+        test_result_code, test_result_note = run_tests()
+        sys.exit(test_result_code)
+
+    os.environ["AMP_JENKINS_PRB"] = "True"
     if os.environ["GIT_VENDOR"] == "GitHub":
         git_pr_obj = GitPullRequestObj(os.environ["PULL_REQUEST_ID"],
                                        os.environ["GIT_VENDOR"],
