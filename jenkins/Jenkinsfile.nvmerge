@@ -21,6 +21,10 @@ pipeline {
 
     agent {label 'vanilla'}
 
+    triggers {
+        cron('H 3 * * *')
+    }
+
     parameters
     {
         string(name: 'SOURCE_BRANCH',
