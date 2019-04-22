@@ -32,6 +32,10 @@ pipeline {
 
         string(name: 'TARGET_BRANCH',
                 defaultValue: 'nvmaster')
+        
+        string(name: 'REF',
+                defaultValue: 'nvmaster')
+
     }
 
     
