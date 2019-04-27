@@ -21,7 +21,7 @@ pipeline {
     agent {
         dockerfile {
             label 'docker'
-            args '-v ${HOME}/.m2:${HOME}/.m2:rw -v ${HOME}/.zinc:${HOME}/.zinc:rw -v /etc/passwd:/etc/passwd:ro'
+            args '-v ${HOME}/.m2:${HOME}/.m2:rw -v ${HOME}/.ivy2:${HOME}/.ivy2:rw -v ${HOME}/.zinc:${HOME}/.zinc:rw -v /etc/passwd:/etc/passwd:ro'
         }
     }
 

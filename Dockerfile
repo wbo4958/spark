@@ -5,9 +5,11 @@ RUN apt-get update && \
     curl \
     flake8 \
     git-core \
+    maven \
     openjdk-8-jdk \
     python2.7 \
     python-pip \
+    scala \
     wget
 
 RUN DEBIAN_FRONTEND=noninteractive pip install \
