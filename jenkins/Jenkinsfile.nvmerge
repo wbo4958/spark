@@ -71,10 +71,6 @@ pipeline {
             echo 'cleaning up workspace'
             deleteDir() /* clean up our workspace */
         }
-        success {
-            //'#00FF00' is colorCode for Green.
-            notifier("master is successfully merged into nvmaster", '#00FF00')
-        }
         failure {
             //'#FF0000' is colorCode for Red
             notifier("master failed to merged into nvmaster", '#FF0000')
