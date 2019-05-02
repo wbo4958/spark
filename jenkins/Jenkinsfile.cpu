@@ -21,7 +21,7 @@ pipeline {
     agent {
         dockerfile {
             label 'docker'
-            args '-v ${HOME}/.m2:${HOME}/.m2:rw -v ${HOME}/.ivy2:${HOME}/.ivy2:rw -v ${HOME}/.zinc:${HOME}/.zinc:rw -v /etc/passwd:/etc/passwd:ro'
+            args '-v ${HOME}/.m2:${HOME}/.m2:rw -v ${HOME}/.sparkStaging:${HOME}/.sparkStaging:rw -v ${HOME}/.ivy2:${HOME}/.ivy2:rw -v ${HOME}/.zinc:${HOME}/.zinc:rw -v /etc/passwd:/etc/passwd:ro'
         }
     }
 
@@ -108,6 +108,8 @@ pipeline {
 
         }
         failure {
+            echo 'archiving log files'
+            archiveArtifacts artifacts: '**/*.log'
             updateGitlabCommitStatus(name: 'pipeline', state: 'failed')
             addGitLabMRComment(comment: "Pipeline is complete with errors.")
             //'#FF0000' is colorCode for Red
@@ -116,6 +118,8 @@ pipeline {
         }
         // failure condition doesn't trigger on unstable status
         unstable {
+            echo 'archiving log files'
+            archiveArtifacts artifacts: '**/*.log'
             updateGitlabCommitStatus(name: 'pipeline', state: 'failed')
             addGitLabMRComment(comment: "Pipeline is complete with errors.")
             //'#FFFF00' is colorCode for Yellow.

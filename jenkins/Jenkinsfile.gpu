@@ -6,7 +6,7 @@ pipeline {
     agent {
         dockerfile {
             label 'docker-gpu'
-            args '--runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all -v ${HOME}/.m2:${HOME}/.m2:rw -v ${HOME}/.ivy2:${HOME}/.ivy2:rw -v ${HOME}/.zinc:${HOME}/.zinc:rw'
+            args '--runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all -v ${HOME}/.m2:${HOME}/.m2:rw -v ${HOME}/.sparkStaging:${HOME}/.sparkStaging:rw -v ${HOME}/.ivy2:${HOME}/.ivy2:rw -v ${HOME}/.zinc:${HOME}/.zinc:rw'
         }
     }
     options {
