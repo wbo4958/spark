@@ -30,7 +30,7 @@ pipeline {
                 }
                 stage('GPU') {
                     steps {
-                        build job: 'spark/gpu', parameters: [string(name: 'REF', value: REF)]
+                        build(job: 'spark/gpu', parameters: [string(name: 'REF', value: REF), string(name: 'GITLAB_MERGE_REQUEST_IID', value: null),])
                     }
                 }
             }

@@ -1,7 +1,22 @@
-def artifactory_server = Artifactory.server "artifactory"
-def buildInfo = Artifactory.newBuildInfo()
-buildInfo.env.capture = true
-
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+ 
 pipeline {
     agent {
         dockerfile {
@@ -9,6 +24,7 @@ pipeline {
             args '--runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all -v ${HOME}/.m2:${HOME}/.m2:rw -v ${HOME}/.sparkStaging:${HOME}/.sparkStaging:rw -v ${HOME}/.ivy2:${HOME}/.ivy2:rw -v ${HOME}/.zinc:${HOME}/.zinc:rw -v /etc/passwd:/etc/passwd:ro'
         }
     }
+
     options {
         ansiColor('xterm')
         timestamps()
@@ -16,81 +32,107 @@ pipeline {
         gitLabConnection('GitLab Master')
     }
 
-    parameters {
-        string(name: 'REF',
-               defaultValue: '\${gitlabBranch}',
-               description: 'Commit to build')
+    parameters
+        {
+            string(name: 'SPARK_PROJECT_URL',
+                   defaultValue: 'https://gitlab-master.nvidia.com/nvspark/spark',
+                   description: '(REQUIRED): Specify the repository.')
+
+            booleanParam(name: 'AMPLAB_JENKINS',
+                   defaultValue: true,
+                   description: "(OPTIONAL) Run with same environment configration Berkeley CI")
+
+            choice(name: 'JENKINS_BUILD_TOOL',
+                   choices:["maven","sbt"],
+                   description: "Build tool used to run Spark Project.")
+                   
+        }
+
+
+    environment {
+        GIT_VENDOR="GitLab"
+        BUILD_DISPLAY_NAME="${BUILD_NUMBER}"
+        PULL_REQUEST_ID="${params.GITLAB_MERGE_REQUEST_IID}"
+        ghprbTargetBranch="${params.GITLAB_TARGET_BRANCH}"
+        GITLAB_OAUTH_KEY = credentials('svcngcc_gitlab_str')
+        GITLAB_PROJECT_URL="${params.SPARK_PROJECT_URL}"
+        GITLAB_API_ENDPOINT="https://gitlab-master.nvidia.com/api/v4/projects/${params.GITLAB_MERGE_REQUEST_TARGET_PROJECT_ID}"
+        BUILD_URL="${BUILD_URL}" 
+        AMPLAB_JENKINS_BUILD_TOOL="${params.JENKINS_BUILD_TOOL}"
+        AMPLAB_JENKINS="${params.AMPLAB_JENKINS}"
     }
 
     stages {
-        stage('smi') {
-            steps {
-                sh 'nvidia-smi'
-            }
-        }
 
         stage('Build') {
+            
             steps {
-                updateGitlabCommitStatus(name: 'Pipeline', state: 'running')
-                updateGitlabCommitStatus(name: 'Build', state: 'running')
-                sh 'build/mvn -DskipTests -Phadoop-2.7 -Pyarn -Phive -Phive-thriftserver -Pkubernetes clean package'
-            }
-            post {
-                success {
-                    updateGitlabCommitStatus(name: 'Build', state: 'success')
-                }
-                unstable {
-                    updateGitlabCommitStatus(name: 'Build', state: 'failed')
-                }
-                failure {
-                    updateGitlabCommitStatus(name: 'Build', state: 'failed')
-                }
-            }
-        }
 
-        stage('Test') {
-            steps {
-                updateGitlabCommitStatus(name: 'Test', state: 'running')
-                sh 'build/mvn -Dtest=none test -fn'
+                updateGitlabCommitStatus(name: 'pipeline', state: 'running')
+                updateGitlabCommitStatus(name: 'run-tests-jenkins', state: 'running')
+
+                withCredentials([sshUserPrivateKey(credentialsId: 'svcngcc_pubpriv',
+                              keyFileVariable: 'SSH_KEY_FILE_PATH')])
+                {
+                    withEnv(["GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -i ${env.SSH_KEY_FILE_PATH}"])
+                    {
+                        sh './dev/run-tests-jenkins'
+                    }                
+                }
+
             }
 
             post {
                 success {
-                    updateGitlabCommitStatus(name: 'Test', state: 'success')
-                }
-                unstable {
-                    updateGitlabCommitStatus(name: 'Test', state: 'failed')
+                    updateGitlabCommitStatus(name: 'run-tests-jenkins', state: 'success')
                 }
                 failure {
-                    updateGitlabCommitStatus(name: 'Test', state: 'failed')
-                }
-                always {
-                    junit(testResults: '**/surefire-reports/*.xml', allowEmptyResults: 'true')
-                    addGitLabMRComment(comment: "${BUILD_URL}testReport/")
+                    updateGitlabCommitStatus(name: 'run-tests-jenkins', state: 'failed')
                 }
             }
         }
-
     }
 
     post {
+        always {
+            echo 'cleaning up workspace'
+            junit(testResults: '**/surefire-reports/*.xml', allowEmptyResults: 'true')
+            addGitLabMRComment(comment: "${BUILD_URL}testReport/")
+            deleteDir() /* clean up our workspace */
+        }
         success {
-            updateGitlabCommitStatus(name: 'Pipeline', state: 'success')
+            updateGitlabCommitStatus(name: 'pipeline', state: 'success')
             addGitLabMRComment(comment: "Pipeline is complete with no errors.")
+            //'#00FF00' is colorCode for Green.
+            // notifier("Pipeline successed for MR: ${gitlabMergeRequestIid}", '#00FF00')
+
+        }
+        failure {
+            echo 'archiving log files'
+            archiveArtifacts artifacts: '**/*.log'
+            updateGitlabCommitStatus(name: 'pipeline', state: 'failed')
+            addGitLabMRComment(comment: "Pipeline is complete with errors.")
+            //'#FF0000' is colorCode for Red
+            // notifier("Pipeline failed for MR: ${gitlabMergeRequestIid}", '#FF0000')
+
         }
         // failure condition doesn't trigger on unstable status
         unstable {
-            updateGitlabCommitStatus(name: 'Pipeline', state: 'failed')
+            echo 'archiving log files'
+            archiveArtifacts artifacts: '**/*.log'
+            updateGitlabCommitStatus(name: 'pipeline', state: 'failed')
             addGitLabMRComment(comment: "Pipeline is complete with errors.")
+            //'#FFFF00' is colorCode for Yellow.
+            // notifier("Pipeline failed for MR: ${gitlabMergeRequestIid}", '#FFFF00')
         }
-        failure {
-            updateGitlabCommitStatus(name: 'Pipeline', state: 'failed')
-            addGitLabMRComment(comment: "Pipeline is complete with errors.")
-        }
-        always {
-            script {
-                artifactory_server.publishBuildInfo buildInfo
-            }
-        }
+
     }
+}
+
+def notifier(message, colorCode){
+        slackSend(baseUrl: 'https://nvidia.slack.com/services/hooks/jenkins-ci/',
+                                                channel: '#rapidsdev-spark',
+                                                message: message + "\n Job Details: ${BUILD_URL}",
+                                                tokenCredentialId: 'slack_token',
+                                                color: colorCode)
 }
