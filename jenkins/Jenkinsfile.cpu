@@ -40,7 +40,7 @@ pipeline {
 
             booleanParam(name: 'AMPLAB_JENKINS',
                    defaultValue: true,
-                   description: "(OPTIONAL) Run with same environment configration Berkeley CI")
+                   description: "(OPTIONAL) Run with same environment configuration as the Berkeley CI")
 
             choice(name: 'JENKINS_BUILD_TOOL',
                    choices:["maven","sbt"],
