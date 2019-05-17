@@ -55,8 +55,8 @@ WORKDIR /opt/spark/work-dir
 RUN chmod g+w /opt/spark/work-dir
 
 ENV TINI_VERSION v0.18.0
-ADD https://github.com/krallin/tini/releases/tag/${TINI_VERSION}/tini /sbin/tini
-RUN chmod 777 /sbin/tini
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /sbin/tini
+RUN chmod +rx /sbin/tini
 
 ENTRYPOINT [ "/opt/entrypoint.sh" ]
 
