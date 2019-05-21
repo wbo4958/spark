@@ -34,17 +34,17 @@ pipeline {
                         string(name: 'GITLAB_MERGE_REQUEST_TARGET_PROJECT_ID', value: gitlabMergeRequestTargetProjectId)])
                     }
                 }
-                stage('GPU') {
-                    when {
-                        expression { gitlabMergeRequestTitle ==~ ".*\\[GPU].*" }
-                    }
-                    steps {
-                        build job: 'spark/gpu', parameters: [string(name: 'REF', value: REF)]
-                        string(name: 'GITLAB_MERGE_REQUEST_IID', value: gitlabMergeRequestIid),
-                        string(name: 'GITLAB_TARGET_BRANCH', value: gitlabTargetBranch),
-                        string(name: 'GITLAB_MERGE_REQUEST_TARGET_PROJECT_ID', value: gitlabMergeRequestTargetProjectId)])
-                    }
-                }
+                // stage('GPU') {
+                //     when {
+                //         expression { gitlabMergeRequestTitle ==~ ".*\\[GPU].*" }
+                //     }
+                //     steps {
+                //         build job: 'spark/gpu', parameters: [string(name: 'REF', value: REF)],
+                //         string(name: 'GITLAB_MERGE_REQUEST_IID', value: gitlabMergeRequestIid),
+                //         string(name: 'GITLAB_TARGET_BRANCH', value: gitlabTargetBranch),
+                //         string(name: 'GITLAB_MERGE_REQUEST_TARGET_PROJECT_ID', value: gitlabMergeRequestTargetProjectId)])
+                //     }
+                // }
             }
         }
     }

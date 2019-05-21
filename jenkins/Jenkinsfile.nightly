@@ -28,11 +28,11 @@ pipeline {
                         build(job: 'spark/cpu', parameters: [string(name: 'REF', value: REF), string(name: 'GITLAB_MERGE_REQUEST_IID', value: null),])
                     }
                 }
-                stage('GPU') {
-                    steps {
-                        build(job: 'spark/gpu', parameters: [string(name: 'REF', value: REF), string(name: 'GITLAB_MERGE_REQUEST_IID', value: null),])
-                    }
-                }
+                // stage('GPU') {
+                //     steps {
+                //         build(job: 'spark/gpu', parameters: [string(name: 'REF', value: REF), string(name: 'GITLAB_MERGE_REQUEST_IID', value: null),])
+                //     }
+                // }
             }
         }
     }
