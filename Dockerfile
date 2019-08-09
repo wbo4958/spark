@@ -7,12 +7,17 @@ RUN apt-get update && \
     git-core \
     maven \
     openjdk-8-jdk \
-    python2.7 \
-    python-pip \
+    python3 \
+    python3-pip \
     scala \
     wget
 
-RUN DEBIAN_FRONTEND=noninteractive pip install \
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.5 1 && \
+  update-alternatives --install /usr/bin/python python /usr/bin/python2.7 2 && \
+  update-alternatives --set python /usr/bin/python3.5 && \
+  python -m pip install --upgrade pip
+
+RUN DEBIAN_FRONTEND=noninteractive pip3 install \
     requests \
     numpy
 
