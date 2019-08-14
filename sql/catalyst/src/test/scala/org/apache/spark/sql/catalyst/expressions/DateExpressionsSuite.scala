@@ -596,6 +596,9 @@ class DateExpressionsSuite extends SparkFunSuite with ExpressionEvalHelper {
     testTrunc(date, null, null)
     testTrunc(null, "MON", null)
     testTrunc(null, null, null)
+
+    testTrunc(Date.valueOf("2000-03-08"), "decade", Date.valueOf("2000-01-01"))
+    testTrunc(Date.valueOf("2000-03-08"), "century", Date.valueOf("1901-01-01"))
   }
 
   test("TruncTimestamp") {
@@ -664,6 +667,11 @@ class DateExpressionsSuite extends SparkFunSuite with ExpressionEvalHelper {
       testTrunc(inputDate, null, null)
       testTrunc(null, "MON", null)
       testTrunc(null, null, null)
+
+      testTrunc(Timestamp.valueOf("2000-03-08 11:12:13"), "decade",
+        Timestamp.valueOf("2000-01-01 00:00:00"))
+      testTrunc(Timestamp.valueOf("2000-03-08 11:12:13"), "century",
+        Timestamp.valueOf("1901-01-01 00:00:00"))
     }
   }
 
@@ -931,8 +939,8 @@ class DateExpressionsSuite extends SparkFunSuite with ExpressionEvalHelper {
 
   test("creating values of TimestampType via make_timestamp") {
     var makeTimestampExpr = MakeTimestamp(
-      Literal(2013), Literal(7), Literal(15), Literal(8), Literal(15), Literal(23.5),
-      Some(Literal(ZoneId.systemDefault().getId)))
+      Literal(2013), Literal(7), Literal(15), Literal(8), Literal(15),
+      Literal(Decimal(BigDecimal(23.5), 8, 6)), Some(Literal(ZoneId.systemDefault().getId)))
     val expected = Timestamp.valueOf("2013-7-15 8:15:23.5")
     checkEvaluation(makeTimestampExpr, expected)
     checkEvaluation(makeTimestampExpr.copy(timezone = None), expected)
@@ -952,12 +960,54 @@ class DateExpressionsSuite extends SparkFunSuite with ExpressionEvalHelper {
     checkEvaluation(makeTimestampExpr.copy(min = Literal.create(null, IntegerType)), null)
     checkEvaluation(makeTimestampExpr.copy(min = Literal(65)), null)
 
-    checkEvaluation(makeTimestampExpr.copy(sec = Literal.create(null, DoubleType)), null)
-    checkEvaluation(makeTimestampExpr.copy(sec = Literal(70.0)), null)
+    checkEvaluation(makeTimestampExpr.copy(sec = Literal.create(null, DecimalType(8, 6))), null)
+    checkEvaluation(makeTimestampExpr.copy(sec = Literal(Decimal(BigDecimal(70.0), 8, 6))), null)
 
     makeTimestampExpr = MakeTimestamp(Literal(2019), Literal(6), Literal(30),
-      Literal(23), Literal(59), Literal(60.0))
+      Literal(23), Literal(59), Literal(Decimal(BigDecimal(60.0), 8, 6)))
     checkEvaluation(makeTimestampExpr, Timestamp.valueOf("2019-07-01 00:00:00"))
-    checkEvaluation(makeTimestampExpr.copy(sec = Literal(60.5)), null)
+    checkEvaluation(makeTimestampExpr.copy(sec = Literal(Decimal(BigDecimal(60.5), 8, 6))), null)
+
+    makeTimestampExpr = MakeTimestamp(Literal(2019), Literal(8), Literal(12),
+      Literal(0), Literal(0), Literal(Decimal(BigDecimal(58.000001), 8, 6)))
+    checkEvaluation(makeTimestampExpr, Timestamp.valueOf("2019-08-12 00:00:58.000001"))
+  }
+
+  test("millennium") {
+    val date = MakeDate(Literal(2019), Literal(1), Literal(1))
+    checkEvaluation(Millennium(date), 3)
+    checkEvaluation(Millennium(date.copy(year = Literal(2001))), 3)
+    checkEvaluation(Millennium(date.copy(year = Literal(2000))), 2)
+    checkEvaluation(Millennium(date.copy(year = Literal(1001), day = Literal(28))), 2)
+    checkEvaluation(Millennium(date.copy(year = Literal(1))), 1)
+    checkEvaluation(Millennium(date.copy(year = Literal(-1))), -1)
+    checkEvaluation(Millennium(date.copy(year = Literal(-100), month = Literal(12))), -1)
+    checkEvaluation(Millennium(date.copy(year = Literal(-2019))), -3)
+  }
+
+  test("century") {
+    val date = MakeDate(Literal(2019), Literal(1), Literal(1))
+    checkEvaluation(Century(date), 21)
+    checkEvaluation(Century(date.copy(year = Literal(2001))), 21)
+    checkEvaluation(Century(date.copy(year = Literal(2000))), 20)
+    checkEvaluation(Century(date.copy(year = Literal(1001), day = Literal(28))), 11)
+    checkEvaluation(Century(date.copy(year = Literal(1))), 1)
+    checkEvaluation(Century(date.copy(year = Literal(-1))), -1)
+    checkEvaluation(Century(date.copy(year = Literal(-100), month = Literal(12))), -2)
+    checkEvaluation(Century(date.copy(year = Literal(-2019))), -21)
+  }
+
+  test("decade") {
+    val date = MakeDate(Literal(2019), Literal(8), Literal(8))
+    checkEvaluation(Decade(date), 201)
+    checkEvaluation(Decade(date.copy(year = Literal(2011))), 201)
+    checkEvaluation(Decade(date.copy(year = Literal(2010))), 201)
+    checkEvaluation(Decade(date.copy(year = Literal(2009))), 200)
+    checkEvaluation(Decade(date.copy(year = Literal(10))), 1)
+    checkEvaluation(Decade(date.copy(year = Literal(1))), 0)
+    checkEvaluation(Decade(date.copy(year = Literal(-1))), -1)
+    checkEvaluation(Decade(date.copy(year = Literal(-10))), -1)
+    checkEvaluation(Decade(date.copy(year = Literal(-11))), -2)
+    checkEvaluation(Decade(date.copy(year = Literal(-2019))), -202)
   }
 }

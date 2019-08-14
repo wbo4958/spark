@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
@@ -30,6 +30,15 @@ import json
 import requests
 import functools
 import subprocess
+if sys.version < '3':
+    from urllib2 import urlopen
+    from urllib2 import Request
+    from urllib2 import HTTPError, URLError
+else:
+    from urllib.request import urlopen
+    from urllib.request import Request
+    from urllib.error import HTTPError, URLError
+
 
 from sparktestsupport import SPARK_HOME, ERROR_CODES, TEST_TIMEOUT
 from sparktestsupport.shellutils import run_cmd
@@ -61,7 +70,6 @@ def make_rest_api_calls(request_type, url, headers, payload=None):
         raise ValueError("Invalid Request Type")
 
     response.raise_for_status()
-
 
 def post_pr_message(git_pr_obj):
     """
