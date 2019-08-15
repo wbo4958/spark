@@ -25,7 +25,7 @@ pipeline {
             parallel {
                 stage('CPU') {
                     steps {
-                        build(job: 'spark/cpu', parameters: [string(name: 'REF', value: REF), string(name: 'GITLAB_MERGE_REQUEST_IID', value: null),])
+                        build(job: 'spark/spark_cpu', parameters: [string(name: 'REF', value: REF), string(name: 'GITLAB_MERGE_REQUEST_IID', value: null),])
                     }
                 }
                 // stage('GPU') {
