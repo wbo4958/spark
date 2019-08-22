@@ -46,6 +46,9 @@ pipeline {
                    choices:["maven","sbt"],
                    description: "Build tool used to run Spark Project.")
                    
+            choice(name: 'HADOOP_PROFILE',
+                   choices:["hadoop3.2","hadoop2.7"],
+                   description: 'Hadoop profile used to build and test Spark project.')
         }
 
 
@@ -60,6 +63,7 @@ pipeline {
         BUILD_URL="${BUILD_URL}" 
         AMPLAB_JENKINS_BUILD_TOOL="${params.JENKINS_BUILD_TOOL}"
         AMPLAB_JENKINS="${params.AMPLAB_JENKINS}"
+        AMPLAB_JENKINS_BUILD_PROFILE="${params.HADOOP_PROFILE}"
     }
 
     stages {

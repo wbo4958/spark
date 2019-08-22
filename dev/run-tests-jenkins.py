@@ -204,7 +204,9 @@ def main():
 
     sha1 = "origin/pr/"+git_pr_obj.pr_id+"/merge"
 
-    os.environ["AMPLAB_JENKINS_BUILD_PROFILE"] = "hadoop2.7"
+    # Set "AMPLAB_JENKINS_BUILD_TOOL" to hadoop2.7, if it is "null"
+    if os.environ.get("AMPLAB_JENKINS_BUILD_PROFILE", "null") == "null":
+        os.environ["AMPLAB_JENKINS_BUILD_PROFILE"] = "hadoop2.7"
     if "test-maven" in git_pr_obj.pr_title:
         os.environ["AMPLAB_JENKINS_BUILD_TOOL"] = "maven"
     if "test-hadoop2.6" in git_pr_obj.pr_title:
