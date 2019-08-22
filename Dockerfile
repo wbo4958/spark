@@ -23,6 +23,8 @@ RUN DEBIAN_FRONTEND=noninteractive pip3 install \
 
 # Build script looks for javac in jre dir
 ENV JAVA_HOME "/usr/lib/jvm/java-8-openjdk-amd64"
+ENV LANG en_US.UTF-8
+ENV LC_ALL en_US.UTF-8
 
 # http://spark.apache.org/docs/latest/building-spark.html#setting-up-mavens-memory-usage
 # We have a pretty beefy server
