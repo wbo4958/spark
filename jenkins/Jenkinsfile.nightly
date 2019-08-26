@@ -43,5 +43,10 @@ pipeline {
                 artifactory_server.publishBuildInfo buildInfo
             }
         }
+        success {
+            build(job: 'spark/spark_deploy',
+                  parameters: [string(name: 'REF', value: REF),
+                               string(name: 'COMMIT', value: GIT_COMMIT)])
+        }
     }
 }
