@@ -9,8 +9,19 @@ RUN apt-get update && \
     openjdk-8-jdk \
     python3 \
     python3-pip \
+    python-numpy \
     scala \
     wget
+
+RUN apt-get install -y \
+    locales \
+    language-pack-fi  \
+    language-pack-en && \
+    export LANGUAGE=en_US.UTF-8 && \
+    export LANG=en_US.UTF-8 && \
+    export LC_ALL=en_US.UTF-8 && \
+    locale-gen en_US.UTF-8 && \
+    dpkg-reconfigure locales
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.5 1 && \
   update-alternatives --install /usr/bin/python python /usr/bin/python2.7 2 && \
