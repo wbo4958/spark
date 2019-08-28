@@ -115,6 +115,10 @@ pipeline {
             addGitLabMRComment(comment: "Pipeline is complete with no errors.")
             //'#00FF00' is colorCode for Green.
             // notifier("Pipeline successed for MR: ${gitlabMergeRequestIid}", '#00FF00')
+            build(job: 'spark/plugin_integration',
+                  parameters: [string(name: 'REF', value: 'master'),
+                               string(name: 'CUDF_VER', value: '0.9-SNAPSHOT'),
+                               booleanParam(name: 'BUILD_CENTOS7', value: false),])
         }
         failure {
             echo 'archiving log files'
