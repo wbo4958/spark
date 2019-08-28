@@ -40,3 +40,5 @@ ENV LC_ALL en_US.UTF-8
 # http://spark.apache.org/docs/latest/building-spark.html#setting-up-mavens-memory-usage
 # We have a pretty beefy server
 ENV MAVEN_OPTS "-Xmx20g -XX:ReservedCodeCacheSize=2g"
+
+RUN adduser --uid 26576 --gid 30 --shell /bin/bash svcngcc
