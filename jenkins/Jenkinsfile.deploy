@@ -37,10 +37,6 @@ pipeline {
                description: 'Commit to build')
     }
 
-    environment {
-        HOME = "${WORKSPACE}"
-    }
-
     stages {
         stage('Build') {
             parallel {
@@ -48,7 +44,6 @@ pipeline {
                     agent {
                         dockerfile {
                             label 'docker'
-                            args '-v /etc/passwd:/etc/passwd:ro'
                         }
                     }
                     steps {
@@ -74,7 +69,6 @@ pipeline {
                     agent {
                         dockerfile {
                             label 'docker'
-                            args '-v /etc/passwd:/etc/passwd:ro'
                         }
                     }
                     steps {
