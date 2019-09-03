@@ -75,11 +75,11 @@ pipeline {
                         checkout_commit()
                         updateGitlabCommitStatus(name: 'pipeline', state: 'running')
                         updateGitlabCommitStatus(name: 'run-tests-jenkins', state: 'running')
-                        sh './dev/make-distribution.sh --tgz --name hadoop3.2 -Phadoop-3.2 -Pyarn -Pkubernetes'
+                        sh './dev/make-distribution.sh --tgz --name hadoop3 -Phadoop-3.2 -Pyarn -Pkubernetes'
                         sh ' mvn deploy:deploy-file -DgroupId=org.apache -DartifactId=spark \
-                            -Dversion=3.0.0-SNAPSHOT -Dclassifier=bin-hadoop3.2 -Dpackaging=tar.gz \
+                            -Dversion=3.0.0-SNAPSHOT -Dclassifier=bin-hadoop3 -Dpackaging=tar.gz \
                             -Durl=https://gpuwa.nvidia.com/artifactory/sw-spark-maven-local \
-                            -DgeneratePom=false -Dfile=spark-3.0.0-SNAPSHOT-bin-hadoop3.2.tgz'
+                            -Dfile=spark-3.0.0-SNAPSHOT-bin-hadoop3.tgz'
                     }
                     post {
                         cleanup {
