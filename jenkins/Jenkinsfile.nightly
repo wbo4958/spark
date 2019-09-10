@@ -44,9 +44,31 @@ pipeline {
             }
         }
         success {
+            slack("#rapidsai-spark-cicd", "Success", color: "#33CC33")
             build(job: 'spark/spark_deploy',
                   parameters: [string(name: 'REF', value: REF),
                                string(name: 'COMMIT', value: GIT_COMMIT)])
         }
+        failure {
+            slack("#rapidsai-spark-cicd", "Failed", color: "#FF0000")
+        }
+        // failure condition doesn't trigger on unstable status
+        unstable {
+            slack("#rapidsai-spark-cicd", "Unstable", color: "#FFFF00")
+        }
     }
+
+}
+
+void slack(Map params = [:], String channel, String message) {
+    Map defaultParams = [
+            color: "#000000",
+            baseUrl: "https://nvidia.slack.com/services/hooks/jenkins-ci/",
+            tokenCredentialId: "slack_token"
+    ]
+
+    params["channel"] = channel
+    params["message"] = "${BUILD_URL}\n" + message
+
+    slackSend(defaultParams << params)
 }
