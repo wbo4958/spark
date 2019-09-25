@@ -101,11 +101,6 @@ pipeline {
     }//end of stages
 
     post {
-        always {
-            echo 'cleaning up workspace'
-            addGitLabMRComment(comment: "${BUILD_URL}testReport/")
-            deleteDir() /* clean up our workspace */
-        }
         success {
             updateGitlabCommitStatus(name: 'pipeline', state: 'success')
             addGitLabMRComment(comment: "Pipeline is complete with no errors.")
