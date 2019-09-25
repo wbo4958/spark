@@ -82,6 +82,9 @@ pipeline {
                             -Dfile=spark-3.0.0-SNAPSHOT-bin-hadoop3.tgz'
                     }
                     post {
+                        always {
+                            junit(testResults: '**/surefire-reports/*.xml', allowEmptyResults: 'true')
+                        }
                         cleanup {
                             deleteDir()
                         }
@@ -100,7 +103,6 @@ pipeline {
     post {
         always {
             echo 'cleaning up workspace'
-            junit(testResults: '**/surefire-reports/*.xml', allowEmptyResults: 'true')
             addGitLabMRComment(comment: "${BUILD_URL}testReport/")
             deleteDir() /* clean up our workspace */
         }
