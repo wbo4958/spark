@@ -93,6 +93,7 @@ pipeline {
                         }
                         failure {
                             updateGitlabCommitStatus(name: 'deploy etl', state: 'failed')
+                            archiveArtifacts artifacts: '**/*.log'
                         }
                     }
                 }
@@ -109,7 +110,6 @@ pipeline {
         }
         failure {
             echo 'archiving log files'
-            archiveArtifacts artifacts: '**/*.log'
             updateGitlabCommitStatus(name: 'pipeline', state: 'failed')
             addGitLabMRComment(comment: "Pipeline is complete with errors.")
             slack("#rapidsai-spark-cicd", "Failed", color: "#FF0000")
@@ -117,7 +117,6 @@ pipeline {
         // failure condition doesn't trigger on unstable status
         unstable {
             echo 'archiving log files'
-            archiveArtifacts artifacts: '**/*.log'
             updateGitlabCommitStatus(name: 'pipeline', state: 'failed')
             addGitLabMRComment(comment: "Pipeline is complete with errors.")
             slack("#rapidsai-spark-cicd", "Unstable", color: "#FFFF00")
