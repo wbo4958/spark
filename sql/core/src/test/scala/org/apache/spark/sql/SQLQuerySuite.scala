@@ -130,6 +130,7 @@ class SQLQuerySuite extends QueryTest with SharedSparkSession {
       // Examples demonstrate alternative names, see SPARK-20749
       "org.apache.spark.sql.catalyst.expressions.Length",
       // Uses settings without _FUNC_ in `SET spark.sql.parser.escapedStringLiterals=true`
+      "org.apache.spark.sql.catalyst.expressions.Like",
       "org.apache.spark.sql.catalyst.expressions.RLike")
     spark.sessionState.functionRegistry.listFunction().foreach { funcId =>
       val info = spark.sessionState.catalog.lookupFunctionInfo(funcId)
@@ -169,7 +170,9 @@ class SQLQuerySuite extends QueryTest with SharedSparkSession {
 
     withSQLConf(SQLConf.UTC_TIMESTAMP_FUNC_ENABLED.key -> "true") {
       spark.sessionState.functionRegistry.listFunction().par.foreach { funcId =>
-        val info = spark.sessionState.catalog.lookupFunctionInfo(funcId)
+        // Examples can change settings. We clone the session to prevent tests clashing.
+        val clonedSpark = spark.cloneSession()
+        val info = clonedSpark.sessionState.catalog.lookupFunctionInfo(funcId)
         val className = info.getClassName
         if (!ignoreSet.contains(className)) {
           withClue(s"Function '${info.getName}', Expression class '$className'") {
@@ -177,7 +180,7 @@ class SQLQuerySuite extends QueryTest with SharedSparkSession {
             checkExampleSyntax(example)
             example.split("  > ").toList.foreach(_ match {
               case exampleRe(sql, output) =>
-                val df = spark.sql(sql)
+                val df = clonedSpark.sql(sql)
                 val actual = unindentAndTrim(
                   hiveResultString(df.queryExecution.executedPlan).mkString("\n"))
                 val expected = unindentAndTrim(output)
