@@ -78,7 +78,6 @@ pipeline {
     post {
         always {
             echo 'cleaning up workspace'
-            junit(testResults: '**/surefire-reports/*.xml', allowEmptyResults: 'true')
             deleteDir() /* clean up our workspace */
         }
         success {
@@ -87,15 +86,11 @@ pipeline {
             build(job: 'spark/plugin_nightly', parameters: [string(name: 'REF', value: 'master')])
         }
         failure {
-            echo 'archiving log files'
-            archiveArtifacts artifacts: '**/*.log'
             updateGitlabCommitStatus(name: 'pipeline', state: 'failed')
             slack("#rapidsai-spark-cicd", "Failed", color: "#FF0000")
         }
         // failure condition doesn't trigger on unstable status
         unstable {
-            echo 'archiving log files'
-            archiveArtifacts artifacts: '**/*.log'
             updateGitlabCommitStatus(name: 'pipeline', state: 'failed')
             slack("#rapidsai-spark-cicd", "Unstable", color: "#FFFF00")
         }
