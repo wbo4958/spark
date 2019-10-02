@@ -38,8 +38,6 @@ pipeline {
     }
 
     stages {
-        stage('Build') {
-            parallel {
                 stage('hadoop-2.7 jars') {
                     agent {
                         dockerfile {
@@ -73,8 +71,6 @@ pipeline {
                             -Dfile=spark-3.0.0-SNAPSHOT-bin-hadoop3.tgz'
                     }
                 }
-            }//end of parallel
-        }//end of stage('Build')
     }//end of stages
 
     post {
