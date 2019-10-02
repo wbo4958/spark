@@ -76,22 +76,14 @@ pipeline {
     }//end of stages
 
     post {
-        always {
-            echo 'cleaning up workspace'
-            deleteDir() /* clean up our workspace */
-        }
         success {
-            updateGitlabCommitStatus(name: 'pipeline', state: 'success')
             slack("#rapidsai-spark-cicd", "Success", color: "#33CC33")
-            build(job: 'spark/plugin_nightly', parameters: [string(name: 'REF', value: 'master')])
         }
         failure {
-            updateGitlabCommitStatus(name: 'pipeline', state: 'failed')
             slack("#rapidsai-spark-cicd", "Failed", color: "#FF0000")
         }
         // failure condition doesn't trigger on unstable status
         unstable {
-            updateGitlabCommitStatus(name: 'pipeline', state: 'failed')
             slack("#rapidsai-spark-cicd", "Unstable", color: "#FFFF00")
         }
     }
