@@ -49,6 +49,10 @@ pipeline {
             choice(name: 'HADOOP_PROFILE',
                    choices:["hadoop3.2","hadoop2.7"],
                    description: 'Hadoop profile used to build and test Spark project.')
+
+            string(name: 'REF',
+                   defaultValue: 'nvmaster',
+                   description: 'Commit to build')
         }
 
 

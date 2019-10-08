@@ -46,6 +46,7 @@ pipeline {
         success {
             slack("#rapidsai-spark-cicd", "Success", color: "#33CC33")
             build(job: 'spark/spark_deploy',
+                  propagate: false,
                   parameters: [string(name: 'REF', value: REF),
                                string(name: 'COMMIT', value: GIT_COMMIT)])
         }
