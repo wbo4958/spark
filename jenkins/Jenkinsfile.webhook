@@ -8,6 +8,7 @@ def gitlabMergeRequestIid = gitlabMergeRequestIid ?: null
 def gitlabTargetBranch = gitlabTargetBranch ?: null
 def gitlabMergeRequestTargetProjectId = gitlabMergeRequestTargetProjectId ?:null
 def gitlabMergeRequestTitle = gitlabMergeRequestTitle ?: null
+def mergeREF = "merge-requests/${gitlabMergeRequestIid}"
 
 pipeline {
     agent any
@@ -28,7 +29,7 @@ pipeline {
             parallel {
                 stage('CPU') {
                     steps {
-                        build(job: 'spark/spark_cpu', parameters: [string(name: 'REF', value: REF),
+                        build(job: 'spark/spark_cpu', parameters: [string(name: 'REF', value: mergeREF),
                         string(name: 'GITLAB_MERGE_REQUEST_IID', value: gitlabMergeRequestIid),
                         string(name: 'GITLAB_TARGET_BRANCH', value: gitlabTargetBranch),
                         string(name: 'GITLAB_MERGE_REQUEST_TARGET_PROJECT_ID', value: gitlabMergeRequestTargetProjectId)])
