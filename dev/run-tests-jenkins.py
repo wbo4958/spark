@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
@@ -23,7 +23,6 @@
 # The Spark testsuites are ran only for specific modules based on the files changed.
 #
 
-from __future__ import print_function
 import os
 import sys
 import json
