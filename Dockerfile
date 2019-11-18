@@ -30,9 +30,7 @@ RUN add-apt-repository -y ppa:jonathonf/python-3.6 && \
   apt-get install -y python3.6
 
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1 && \
-  update-alternatives --install /usr/bin/python python /usr/bin/python2.7 2 && \
-  update-alternatives --set python3 /usr/bin/python3.6 && \
-  python -m pip install --upgrade pip
+  update-alternatives --set python3 /usr/bin/python3.6
 
 RUN DEBIAN_FRONTEND=noninteractive pip3 install \
     requests \
