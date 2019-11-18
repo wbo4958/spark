@@ -11,17 +11,23 @@ RUN apt-get update && \
     python3-pip \
     python-numpy \
     scala \
+    software-properties-common \
+    python-software-properties \
     wget
 
 RUN apt-get install -y \
     locales \
-    language-pack-fi  \
+    language-pack-fi \
     language-pack-en && \
     export LANGUAGE=en_US.UTF-8 && \
     export LANG=en_US.UTF-8 && \
     export LC_ALL=en_US.UTF-8 && \
     locale-gen en_US.UTF-8 && \
     dpkg-reconfigure locales
+
+RUN add-apt-repository -y ppa:jonathonf/python-3.6 && \
+  apt-get update && \
+  apt-get install -y python3.6
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1 && \
   update-alternatives --install /usr/bin/python python /usr/bin/python2.7 2 && \
