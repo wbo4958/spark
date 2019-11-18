@@ -23,9 +23,9 @@ RUN apt-get install -y \
     locale-gen en_US.UTF-8 && \
     dpkg-reconfigure locales
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.5 1 && \
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1 && \
   update-alternatives --install /usr/bin/python python /usr/bin/python2.7 2 && \
-  update-alternatives --set python /usr/bin/python3.5 && \
+  update-alternatives --set python /usr/bin/python3.6 && \
   python -m pip install --upgrade pip
 
 RUN DEBIAN_FRONTEND=noninteractive pip3 install \
