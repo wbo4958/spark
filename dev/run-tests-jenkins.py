@@ -208,10 +208,16 @@ def main():
         os.environ["AMPLAB_JENKINS_BUILD_PROFILE"] = "hadoop2.7"
     if "test-maven" in git_pr_obj.pr_title:
         os.environ["AMPLAB_JENKINS_BUILD_TOOL"] = "maven"
-    if "test-hadoop2.6" in git_pr_obj.pr_title:
-        os.environ["AMPLAB_JENKINS_BUILD_PROFILE"] = "hadoop2.6"
-    if "test-hadoop2.7" in git_pr_obj.pr_title:
+    # Switch the Hadoop profile based on the PR title:
+    if "test-hadoop2.7" in ghprb_pull_title:
         os.environ["AMPLAB_JENKINS_BUILD_PROFILE"] = "hadoop2.7"
+    if "test-hadoop3.2" in ghprb_pull_title:
+        os.environ["AMPLAB_JENKINS_BUILD_PROFILE"] = "hadoop3.2"
+    # Switch the Hive profile based on the PR title:
+    if "test-hive1.2" in ghprb_pull_title:
+        os.environ["AMPLAB_JENKINS_BUILD_HIVE_PROFILE"] = "hive1.2"
+    if "test-hive2.3" in ghprb_pull_title:
+        os.environ["AMPLAB_JENKINS_BUILD_HIVE_PROFILE"] = "hive2.3"
 
     pr_tests = [
         "pr_merge_ability",
