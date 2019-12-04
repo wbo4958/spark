@@ -514,13 +514,16 @@ class DataStreamReader(OptionUtils):
             raise TypeError("path can be only a single string")
 
     @since(2.3)
-    def orc(self, path, recursiveFileLookup=None):
+    def orc(self, path, mergeSchema=None, recursiveFileLookup=None):
         """Loads a ORC file stream, returning the result as a :class:`DataFrame`.
 
         .. note:: Evolving.
 
+        :param mergeSchema: sets whether we should merge schemas collected from all
+            ORC part-files. This will override ``spark.sql.orc.mergeSchema``.
+            The default value is specified in ``spark.sql.orc.mergeSchema``.
         :param recursiveFileLookup: recursively scan a directory for files. Using this option
-                                    disables `partition discovery`_.
+            disables `partition discovery`_.
 
         >>> orc_sdf = spark.readStream.schema(sdf_schema).orc(tempfile.mkdtemp())
         >>> orc_sdf.isStreaming
@@ -528,25 +531,24 @@ class DataStreamReader(OptionUtils):
         >>> orc_sdf.schema == sdf_schema
         True
         """
-        self._set_opts(recursiveFileLookup=recursiveFileLookup)
+        self._set_opts(mergeSchema=mergeSchema, recursiveFileLookup=recursiveFileLookup)
         if isinstance(path, basestring):
             return self._df(self._jreader.orc(path))
         else:
             raise TypeError("path can be only a single string")
 
     @since(2.0)
-    def parquet(self, path, recursiveFileLookup=None):
-        """Loads a Parquet file stream, returning the result as a :class:`DataFrame`.
-
-        :param recursiveFileLookup: recursively scan a directory for files. Using this option
-                                    disables `partition discovery`_.
-
-        You can set the following Parquet-specific option(s) for reading Parquet files:
-            * ``mergeSchema``: sets whether we should merge schemas collected from all \
-                Parquet part-files. This will override ``spark.sql.parquet.mergeSchema``. \
-                The default value is specified in ``spark.sql.parquet.mergeSchema``.
+    def parquet(self, path, mergeSchema=None, recursiveFileLookup=None):
+        """
+        Loads a Parquet file stream, returning the result as a :class:`DataFrame`.
 
         .. note:: Evolving.
+
+        :param mergeSchema: sets whether we should merge schemas collected from all
+            Parquet part-files. This will override ``spark.sql.parquet.mergeSchema``.
+            The default value is specified in ``spark.sql.parquet.mergeSchema``.
+        :param recursiveFileLookup: recursively scan a directory for files. Using this option
+                                    disables `partition discovery`_.
 
         >>> parquet_sdf = spark.readStream.schema(sdf_schema).parquet(tempfile.mkdtemp())
         >>> parquet_sdf.isStreaming
@@ -554,7 +556,7 @@ class DataStreamReader(OptionUtils):
         >>> parquet_sdf.schema == sdf_schema
         True
         """
-        self._set_opts(recursiveFileLookup=recursiveFileLookup)
+        self._set_opts(mergeSchema=mergeSchema, recursiveFileLookup=recursiveFileLookup)
         if isinstance(path, basestring):
             return self._df(self._jreader.parquet(path))
         else:
