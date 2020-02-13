@@ -89,7 +89,10 @@ pipeline {
 }
 
 def checkout_commit() {
-    checkout([$class: 'GitSCM', branches: [[name: "${COMMIT}"]],
+if (!params.COMMIT?.trim()) {
+        error "Must Specifiy parameter 'COMMIT'"
+    }
+    checkout([$class: 'GitSCM', branches: [[name: "${params.COMMIT}"]],
               userRemoteConfigs: [[credentialsId: 'svcngcc_pubpriv', url: "${GIT_URL}"]]])
 }
 
