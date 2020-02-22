@@ -2262,6 +2262,10 @@ object SQLConf {
    * The map contains info about removed SQL configs. Keys are SQL config names,
    * map values contain extra information like the version in which the config was removed,
    * config's default value and a comment.
+   *
+   * Please, add a removed SQL configuration property here only when it affects behaviours.
+   * For example, `spark.sql.variable.substitute.depth` was not added as it virtually
+   * became no-op later. By this, it makes migrations to new Spark versions painless.
    */
   val removedSQLConfigs: Map[String, RemovedConfig] = {
     val configs = Seq(
@@ -2881,10 +2885,10 @@ class SQLConf extends Serializable with Logging {
    * Return all the configuration definitions that have been defined in [[SQLConf]]. Each
    * definition contains key, defaultValue and doc.
    */
-  def getAllDefinedConfs: Seq[(String, String, String)] = sqlConfEntries.synchronized {
+  def getAllDefinedConfs: Seq[(String, String, String, String)] = sqlConfEntries.synchronized {
     sqlConfEntries.values.asScala.filter(_.isPublic).map { entry =>
       val displayValue = Option(getConfString(entry.key, null)).getOrElse(entry.defaultValueString)
-      (entry.key, displayValue, entry.doc)
+      (entry.key, displayValue, entry.doc, entry.version)
     }.toSeq
   }
 
