@@ -66,9 +66,9 @@ pipeline {
                         updateGitlabCommitStatus(name: 'make-distribution', state: 'running')
                         sh './dev/make-distribution.sh --tgz --name hadoop3 -Phadoop-3.2 -Pyarn -Pkubernetes'
                         sh ' mvn -B deploy:deploy-file -DgroupId=org.apache -DartifactId=spark \
-                            -Dversion=3.0.0-SNAPSHOT -Dclassifier=bin-hadoop3 -Dpackaging=tar.gz \
+                            -Dversion=3.1.0-SNAPSHOT -Dclassifier=bin-hadoop3 -Dpackaging=tar.gz \
                             -Durl=https://gpuwa.nvidia.com/artifactory/sw-spark-maven-local \
-                            -Dfile=spark-3.0.0-SNAPSHOT-bin-hadoop3.tgz'
+                            -Dfile=spark-3.1.0-SNAPSHOT-bin-hadoop3.tgz'
                     }
                 }
     }//end of stages
