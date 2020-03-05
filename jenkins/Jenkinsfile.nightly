@@ -25,7 +25,7 @@ pipeline {
             parallel {
                 stage('CPU') {
                     steps {
-                        build(job: 'spark/spark_cpu', parameters: [string(name: 'REF', value: REF), string(name: 'GITLAB_MERGE_REQUEST_IID', value: null),])
+                        build(job: 'spark/sparkmaster_cpu', parameters: [string(name: 'REF', value: REF), string(name: 'GITLAB_MERGE_REQUEST_IID', value: null),])
                     }
                 }
                 // stage('GPU') {
@@ -45,7 +45,7 @@ pipeline {
         }
         success {
             slack("#rapidsai-spark-cicd", "Success", color: "#33CC33")
-            build(job: 'spark/spark_deploy',
+            build(job: 'spark/sparkmaster_deploy',
                   propagate: false,
                   parameters: [string(name: 'REF', value: REF),
                                string(name: 'COMMIT', value: GIT_COMMIT)])
