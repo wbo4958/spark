@@ -66,10 +66,8 @@ install_app() {
     cd "${_DIR}" && tar -xzf "$2"
     if [ $? = 0 ]; then
       ret_val=$?
-      echo "RUNNING TAR OK"
     else
       ret_val=$?
-      echo "ERROR RUNNING TAR"
     fi
     rm -rf "$local_tarball"
     return $ret_val
