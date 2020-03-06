@@ -50,6 +50,7 @@ install_app() {
     # check if we already have the tarball
     # check if we have curl installed
     # download application
+    local retval=0
     [ ! -f "${local_tarball}" ] && [ $(command -v curl) ] && \
       echo "exec: curl ${curl_opts} ${remote_tarball}" 1>&2 && \
       curl ${curl_opts} "${remote_tarball}" > "${local_tarball}"
@@ -63,7 +64,15 @@ install_app() {
       echo "please install manually and try again." && \
       exit 2
     cd "${_DIR}" && tar -xzf "$2"
+    if [ $? = 0 ]; then
+      ret_val=$?
+      echo "RUNNING TAR OK"
+    else
+      ret_val=$?
+      echo "ERROR RUNNING TAR"
+    fi
     rm -rf "$local_tarball"
+    return $ret_val
   fi
 }
 
@@ -94,6 +103,13 @@ install_mvn() {
       "${APACHE_MIRROR}/maven/maven-3/${MVN_VERSION}/binaries" \
       "apache-maven-${MVN_VERSION}-bin.tar.gz" \
       "apache-maven-${MVN_VERSION}/bin/mvn"
+    if [ $? != 0 ]; then
+      # try again with different maven
+      install_app \
+      "http://gpuwa.nvidia.com/artifactory/sw-spark-maven/org/apache/maven/maven/3.6.3" \
+      "maven-3.6.3-bin.tar.gz" \
+      "apache-maven-${MVN_VERSION}/bin/mvn"
+    fi
 
     MVN_BIN="${_DIR}/apache-maven-${MVN_VERSION}/bin/mvn"
   fi
