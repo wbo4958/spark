@@ -22,9 +22,12 @@ import java.io.File
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
+import org.scalatest.Ignore
+
 import org.apache.spark._
 import org.apache.spark.internal.config.Tests.TEST_NO_STAGE_RETRY
 
+@Ignore // test is flaky in our ci
 class BarrierTaskContextSuite extends SparkFunSuite with LocalSparkContext {
 
   def initLocalClusterSparkContext(): Unit = {
