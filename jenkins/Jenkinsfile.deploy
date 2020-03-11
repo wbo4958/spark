@@ -49,7 +49,9 @@ pipeline {
                         checkout_commit()
                         updateGitlabCommitStatus(name: 'pipeline', state: 'running')
                         updateGitlabCommitStatus(name: 'make-distribution', state: 'running')
-                        sh './build/mvn -B -DskipTests --settings=settings.xml -Phadoop-2.7 -Pyarn -Pkubernetes -Pgpuwa deploy'
+                        retry(3) {
+                            sh './build/mvn -B -c -DskipTests --settings=settings.xml -Phadoop-2.7 -Pyarn -Pkubernetes -Pgpuwa deploy'
+                        }
                     }
                 }
 
@@ -65,10 +67,12 @@ pipeline {
                         updateGitlabCommitStatus(name: 'pipeline', state: 'running')
                         updateGitlabCommitStatus(name: 'make-distribution', state: 'running')
                         sh './dev/make-distribution.sh --tgz --name hadoop3 -Phadoop-3.2 -Pyarn -Pkubernetes'
-                        sh ' mvn -B deploy:deploy-file -DgroupId=org.apache -DartifactId=spark \
-                            -Dversion=3.1.0-SNAPSHOT -Dclassifier=bin-hadoop3 -Dpackaging=tar.gz \
-                            -Durl=https://gpuwa.nvidia.com/artifactory/sw-spark-maven-local \
-                            -Dfile=spark-3.1.0-SNAPSHOT-bin-hadoop3.tgz'
+                        retry(3) {
+                            sh ' mvn -B -c deploy:deploy-file -DgroupId=org.apache -DartifactId=spark \
+                                -Dversion=3.1.0-SNAPSHOT -Dclassifier=bin-hadoop3 -Dpackaging=tar.gz \
+                                -Durl=https://gpuwa.nvidia.com/artifactory/sw-spark-maven-local \
+                                -Dfile=spark-3.1.0-SNAPSHOT-bin-hadoop3.tgz'
+                        }
                     }
                 }
     }//end of stages
