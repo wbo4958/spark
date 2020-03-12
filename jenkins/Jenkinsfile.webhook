@@ -8,7 +8,7 @@ def gitlabMergeRequestIid = gitlabMergeRequestIid ?: null
 def gitlabTargetBranch = gitlabTargetBranch ?: null
 def gitlabMergeRequestTargetProjectId = gitlabMergeRequestTargetProjectId ?:null
 def gitlabMergeRequestTitle = gitlabMergeRequestTitle ?: null
-def mergeREF = "merge-requests/${gitlabMergeRequestIid}"
+def mergeREF = "merge-requests/${gitlabMergeRequestIid}/merge"
 
 pipeline {
     agent any
