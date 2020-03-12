@@ -25,6 +25,7 @@ pipeline {
         timestamps()
         timeout(time: 6, unit: 'HOURS')
         gitLabConnection('GitLab Master')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
     }
 
     parameters {

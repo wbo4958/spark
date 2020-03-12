@@ -23,6 +23,10 @@ pipeline {
 
     agent {label 'vanilla'}
 
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
     triggers {
         cron('0 */1 * * *')
     }
