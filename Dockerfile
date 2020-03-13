@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:bionic-20200219
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -7,12 +7,7 @@ RUN apt-get update && \
     git-core \
     maven \
     openjdk-8-jdk \
-    python3 \
-    python3-pip \
-    python-numpy \
     scala \
-    software-properties-common \
-    python-software-properties \
     wget
 
 RUN apt-get install -y \
@@ -25,14 +20,16 @@ RUN apt-get install -y \
     locale-gen en_US.UTF-8 && \
     dpkg-reconfigure locales
 
-RUN add-apt-repository -y ppa:jonathonf/python-3.6 && \
-  apt-get update && \
-  apt-get install -y python3.6
-
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1 && \
-  update-alternatives --install /usr/bin/python python /usr/bin/python3.6 2 && \
-  update-alternatives --set python3 /usr/bin/python3.6 && \
-  update-alternatives --set python /usr/bin/python3.6
+RUN apt-get update && \
+    apt install -y python python-pip && \
+    apt install -y python3 python3-pip && \
+    # We remove ensurepip since it adds no functionality since pip is
+    # installed on the image and it just takes up 1.6MB on the image
+    rm -r /usr/lib/python*/ensurepip && \
+    pip install --upgrade pip setuptools && \
+    # You may install with python3 packages by using pip3.6
+    # Removed the .cache to save space
+    rm -r /root/.cache && rm -rf /var/cache/apt/*
 
 RUN DEBIAN_FRONTEND=noninteractive pip3 install \
     requests \
