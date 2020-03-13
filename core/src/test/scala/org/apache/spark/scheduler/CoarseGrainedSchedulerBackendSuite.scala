@@ -248,7 +248,7 @@ class CoarseGrainedSchedulerBackendSuite extends SparkFunSuite with LocalSparkCo
 
     backend.driverEndpoint.send(ReviveOffers)
 
-    eventually(timeout(5 seconds)) {
+    eventually(timeout(30 seconds)) {
       execResources = backend.getExecutorAvailableResources("1")
       assert(execResources(GPU).availableAddrs.sorted === Array("1", "3"))
       assert(execResources(GPU).assignedAddrs === Array("0"))
@@ -257,7 +257,7 @@ class CoarseGrainedSchedulerBackendSuite extends SparkFunSuite with LocalSparkCo
     backend.driverEndpoint.send(
       StatusUpdate("1", 1, TaskState.FINISHED, buffer, taskResources))
 
-    eventually(timeout(5 seconds)) {
+    eventually(timeout(30 seconds)) {
       execResources = backend.getExecutorAvailableResources("1")
       assert(execResources(GPU).availableAddrs.sorted === Array("0", "1", "3"))
       assert(execResources(GPU).assignedAddrs.isEmpty)
