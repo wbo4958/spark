@@ -18,7 +18,6 @@
 package org.apache.spark.serializer
 
 import com.esotericsoftware.kryo.Kryo
-
 import org.scalatest.Ignore
 
 import org.apache.spark._
