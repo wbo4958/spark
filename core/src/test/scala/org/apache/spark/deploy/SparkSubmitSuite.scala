@@ -621,6 +621,7 @@ class SparkSubmitSuite
     }
   }
 
+  /*
   test("includes jars passed in through --jars") {
     val unusedJar = TestUtils.createJarWithClasses(Seq.empty)
     val jar1 = TestUtils.createJarWithClasses(Seq("SparkSubmitClassA"))
@@ -677,6 +678,7 @@ class SparkSubmitSuite
       runSparkSubmit(args)
     }
   }
+  */
 
   // TODO(SPARK-9603): Building a package is flaky on Jenkins Maven builds.
   // See https://gist.github.com/shivaram/3a2fecce60768a603dac for an error log
