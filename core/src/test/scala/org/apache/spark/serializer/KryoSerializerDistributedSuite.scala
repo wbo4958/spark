@@ -26,9 +26,9 @@ import org.apache.spark.internal.config
 import org.apache.spark.serializer.KryoDistributedTest._
 import org.apache.spark.util.Utils
 
+@Ignore
 class KryoSerializerDistributedSuite extends SparkFunSuite with LocalSparkContext {
 
-  @Ignore
   test("kryo objects are serialised consistently in different processes") {
     val conf = new SparkConf(false)
       .set(config.SERIALIZER, "org.apache.spark.serializer.KryoSerializer")
