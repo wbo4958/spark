@@ -1,4 +1,4 @@
-FROM ubuntu:bionic-20200219
+FROM ubuntu:xenial-20200212
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -21,14 +21,27 @@ RUN apt-get install -y \
     dpkg-reconfigure locales
 
 RUN apt-get update && \
-    apt install -y python python-pip && \
-    apt install -y python3 python3-pip && \
-    # We remove ensurepip since it adds no functionality since pip is
-    # installed on the image and it just takes up 1.6MB on the image
-    rm -r /usr/lib/python*/ensurepip && \
-    pip install --upgrade pip setuptools && \
-    # You may install with python3 packages by using pip3.6
-    # Removed the .cache to save space
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    build-essential \
+    libssl-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    llvm \
+    zip
+
+ENV PYTHON_ROOT /usr
+ENV PYTHON_VERSION 3.6.10
+
+RUN wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz && \
+    tar -xvf Python-${PYTHON_VERSION}.tgz && \
+    cd Python-${PYTHON_VERSION} && \
+    ./configure --prefix="${PYTHON_ROOT}" && \
+    make && \
+    make install && \
+    cd ..
+
+RUN rm -r /usr/lib/python*/ensurepip && \
+    pip3 install --upgrade pip setuptools && \
     rm -r /root/.cache && rm -rf /var/cache/apt/*
 
 RUN DEBIAN_FRONTEND=noninteractive pip3 install \
