@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-FROM nvidia/cuda:10.0-devel-ubuntu18.04 
+ARG CUDA_VER=10.1
+FROM nvidia/cuda:${CUDA_VER}-devel-ubuntu18.04
 ARG spark_uid=185
 
 # Install java dependencies 
@@ -55,8 +55,8 @@ WORKDIR /opt/spark/work-dir
 RUN chmod g+w /opt/spark/work-dir
 
 ENV TINI_VERSION v0.18.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /sbin/tini
-RUN chmod +rx /sbin/tini
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /usr/bin/tini
+RUN chmod +rx /usr/bin/tini
 
 ENTRYPOINT [ "/opt/entrypoint.sh" ]
 
