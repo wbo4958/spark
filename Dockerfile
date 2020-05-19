@@ -45,6 +45,7 @@ RUN rm -r /usr/lib/python*/ensurepip && \
     rm -r /root/.cache && rm -rf /var/cache/apt/*
 
 RUN DEBIAN_FRONTEND=noninteractive pip3 install \
+    flake8 \
     requests \
     numpy
 

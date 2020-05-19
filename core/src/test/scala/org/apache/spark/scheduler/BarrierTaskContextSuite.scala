@@ -102,7 +102,6 @@ class BarrierTaskContextSuite extends SparkFunSuite with LocalSparkContext with 
     )
   }
 
-  /* Comment out this test as fails CI regularlly
   test("successively sync with allGather and barrier") {
     val conf = new SparkConf()
       .setMaster("local-cluster[4, 1, 1024]")
@@ -132,7 +131,6 @@ class BarrierTaskContextSuite extends SparkFunSuite with LocalSparkContext with 
     val times2 = times.map(_._2)
     assert(times2.max - times2.min <= 1000)
   }
-  */
 
   // TODO (SPARK-31730): re-enable it
   ignore("support multiple barrier() call within a single task") {
