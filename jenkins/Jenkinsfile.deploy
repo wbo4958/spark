@@ -38,6 +38,10 @@ pipeline {
                description: 'Commit to build')
     }
 
+    environment {
+        URM_CREDS=credentials("svcngcc_artifactory")
+    }
+
     stages {
                 stage('hadoop-2.7 jars') {
                     agent {
@@ -51,7 +55,7 @@ pipeline {
                         updateGitlabCommitStatus(name: 'pipeline', state: 'running')
                         updateGitlabCommitStatus(name: 'make-distribution', state: 'running')
                         retry(3) {
-                            sh './build/mvn -B -c -DskipTests --settings=settings.xml -Phadoop-2.7 -Pyarn -Pkubernetes -Pgpuwa deploy'
+                            sh './build/mvn -B -c -DskipTests --settings=jenkins/settings.xml -Phadoop-2.7 -Pyarn -Pkubernetes deploy'
                         }
                     }
                 }
@@ -71,8 +75,9 @@ pipeline {
                         retry(3) {
                             sh ' mvn -B -c deploy:deploy-file -DgroupId=org.apache -DartifactId=spark \
                                 -Dversion=3.1.0-SNAPSHOT -Dclassifier=bin-hadoop3 -Dpackaging=tar.gz \
-                                -Durl=https://gpuwa.nvidia.com/artifactory/sw-spark-maven-local \
-                                -Dfile=spark-3.1.0-SNAPSHOT-bin-hadoop3.tgz'
+                                -Durl=https://urm.nvidia.com:443/artifactory/sw-spark-maven-local \
+                                -Dfile=spark-3.1.0-SNAPSHOT-bin-hadoop3.tgz \
+                                -s jenkins/settings.xml -DrepositoryId=snapshots'
                         }
                     }
                 }
