@@ -23,21 +23,16 @@
 # The Spark testsuites are ran only for specific modules based on the files changed.
 #
 
-import os
 import sys
 import json
 import requests
 import functools
 import subprocess
-from urllib.request import urlopen
-from urllib.request import Request
-from urllib.error import HTTPError, URLError
 
 from sparktestsupport import SPARK_HOME, ERROR_CODES, TEST_TIMEOUT
 from sparktestsupport.shellutils import run_cmd
 
 import json
-import importlib
 from GitPullRequestObj import *
 
 
