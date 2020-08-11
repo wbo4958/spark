@@ -29,9 +29,6 @@
 #   Target Branch in GitLab MR API response can be found under `target_branch`
 #
 
-import os
-
-
 class GitPullRequestObj(object):
 
     def __init__(self, pr_id, git_vendor, git_endpoint, project_url, oauth_key):
