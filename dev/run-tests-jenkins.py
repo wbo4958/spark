@@ -23,6 +23,7 @@
 # The Spark testsuites are ran only for specific modules based on the files changed.
 #
 
+import os
 import sys
 import json
 import requests
