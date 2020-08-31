@@ -96,7 +96,7 @@ install_mvn() {
     if [ $? != 0 ]; then
       # try again with different maven
       install_app \
-      "http://gpuwa.nvidia.com/artifactory/sw-spark-maven/org/apache/maven/maven/3.6.3" \
+      "http://urm.nvidia.com/artifactory/sw-spark-maven/org/apache/maven/maven/3.6.3" \
       "maven-3.6.3-bin.tar.gz" \
       "apache-maven-${MVN_VERSION}/bin/mvn"
     fi
