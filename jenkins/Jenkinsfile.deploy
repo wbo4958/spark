@@ -34,11 +34,11 @@ pipeline {
 
     parameters {
         string(name: 'REF',
-               defaultValue: '',
+               defaultValue: 'nvmaster',
                description: 'Commit to build')
 
         string(name: 'COMMIT',
-               defaultValue: '',
+               defaultValue: 'nvmaster',
                description: 'Commit to build')
     }
 
@@ -107,7 +107,7 @@ pipeline {
 }
 
 def checkout_commit() {
-if (!params.COMMIT?.trim()) {
+    if (!params.COMMIT?.trim()) {
         error "Must Specifiy parameter 'COMMIT'"
     }
     checkout([$class: 'GitSCM', branches: [[name: "${params.COMMIT}"]],
