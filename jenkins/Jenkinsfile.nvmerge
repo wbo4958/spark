@@ -79,7 +79,7 @@ pipeline {
                     updateGitlabCommitStatus(name: 'Jenkins CI', state: "success")
                 } else {
                     updateGitlabCommitStatus(name: 'Jenkins CI', state: "failed")
-                    slack("#rapidsai-spark-cicd", "Failed", color: "#FF0000")
+                    slack("#swrapids-spark-cicd", "Failed", color: "#FF0000")
                 }
             }
         }

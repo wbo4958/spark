@@ -64,18 +64,18 @@ pipeline {
             }
         }
         success {
-            slack("#rapidsai-spark-cicd", "Success", color: "#33CC33")
+            slack("#swrapids-spark-cicd", "Success", color: "#33CC33")
             build(job: 'spark/sparkmaster_deploy',
                   propagate: false,
                   parameters: [string(name: 'REF', value: REF),
                                string(name: 'COMMIT', value: GIT_COMMIT)])
         }
         failure {
-            slack("#rapidsai-spark-cicd", "Failed", color: "#FF0000")
+            slack("#swrapids-spark-cicd", "Failed", color: "#FF0000")
         }
         // failure condition doesn't trigger on unstable status
         unstable {
-            slack("#rapidsai-spark-cicd", "Unstable", color: "#FFFF00")
+            slack("#swrapids-spark-cicd", "Unstable", color: "#FFFF00")
         }
     }
 
