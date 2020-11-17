@@ -94,7 +94,6 @@ pipeline {
     post {
         success {
             slack("#swrapids-spark-cicd", "Success", color: "#33CC33")
-            build(job: 'spark/rapids_it-3.1.0-SNAPSHOT-0.3-github', propagate: false, parameters: [string(name: 'REF', value: 'branch-0.3')])
         }
         failure {
             slack("#swrapids-spark-cicd", "Failed", color: "#FF0000")
