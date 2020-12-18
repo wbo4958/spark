@@ -60,6 +60,7 @@ def make_rest_api_calls(request_type, url, headers, payload=None):
 
     response.raise_for_status()
 
+
 def post_pr_message(git_pr_obj):
     """
     Creates GitHub/GitLab PR comments API end point using properties of GitPullRequestObj
