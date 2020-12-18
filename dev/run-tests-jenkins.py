@@ -34,7 +34,7 @@ from sparktestsupport import SPARK_HOME, ERROR_CODES, TEST_TIMEOUT
 from sparktestsupport.shellutils import run_cmd
 
 import json
-from GitPullRequestObj import *
+from GitPullRequestObj import GitPullRequestObj
 
 
 def make_rest_api_calls(request_type, url, headers, payload=None):
