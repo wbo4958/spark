@@ -1405,6 +1405,14 @@ class Analyzer(override val catalogManager: CatalogManager)
             if oldVersion.outputSet.intersect(conflictingAttributes).nonEmpty =>
           Seq((oldVersion, oldVersion.copy(output = output.map(_.newInstance()))))
 
+        case oldVersion @ FlatMapCoGroupsInPandas(_, _, _, output, _, _)
+            if oldVersion.outputSet.intersect(conflictingAttributes).nonEmpty =>
+          Seq((oldVersion, oldVersion.copy(output = output.map(_.newInstance()))))
+
+        case oldVersion @ MapInPandas(_, output, _)
+            if oldVersion.outputSet.intersect(conflictingAttributes).nonEmpty =>
+          Seq((oldVersion, oldVersion.copy(output = output.map(_.newInstance()))))
+
         case oldVersion: Generate
             if oldVersion.producedAttributes.intersect(conflictingAttributes).nonEmpty =>
           val newOutput = oldVersion.generatorOutput.map(_.newInstance())
@@ -1766,6 +1774,21 @@ class Analyzer(override val catalogManager: CatalogManager)
     def expandStarExpression(expr: Expression, child: LogicalPlan): Expression = {
       expr.transformUp {
         case f1: UnresolvedFunction if containsStar(f1.arguments) =>
+          // SPECIAL CASE: We want to block count(tblName.*) because in spark, count(tblName.*) will
+          // be expanded while count(*) will be converted to count(1). They will produce different
+          // results and confuse users if there is any null values. For count(t1.*, t2.*), it is
+          // still allowed, since it's well-defined in spark.
+          if (!conf.allowStarWithSingleTableIdentifierInCount &&
+              f1.name.database.isEmpty &&
+              f1.name.funcName == "count" &&
+              f1.arguments.length == 1) {
+            f1.arguments.foreach {
+              case u: UnresolvedStar if u.isQualifiedByTable(child, resolver) =>
+                throw QueryCompilationErrors
+                  .singleTableStarInCountNotAllowedError(u.target.get.mkString("."))
+              case _ => // do nothing
+            }
+          }
           f1.copy(arguments = f1.arguments.flatMap {
             case s: Star => s.expand(child, resolver)
             case o => o :: Nil
