@@ -219,6 +219,12 @@ class Analyzer(override val catalogManager: CatalogManager)
    */
   val postHocResolutionRules: Seq[Rule[LogicalPlan]] = Nil
 
+  private def typeCoercionRules(): List[Rule[LogicalPlan]] = if (conf.ansiEnabled) {
+    AnsiTypeCoercion.typeCoercionRules
+  } else {
+    TypeCoercion.typeCoercionRules
+  }
+
   override def batches: Seq[Batch] = Seq(
     Batch("Substitution", fixedPoint,
       // This rule optimizes `UpdateFields` expression chains so looks more like optimization rule.
@@ -278,7 +284,7 @@ class Analyzer(override val catalogManager: CatalogManager)
       ResolveRandomSeed ::
       ResolveBinaryArithmetic ::
       ResolveUnion ::
-      TypeCoercion.typeCoercionRules ++
+      typeCoercionRules ++
       extendedResolutionRules : _*),
     Batch("Apply Char Padding", Once,
       ApplyCharTypePadding),
@@ -861,7 +867,20 @@ class Analyzer(override val catalogManager: CatalogManager)
   }
 
   private def isResolvingView: Boolean = AnalysisContext.get.catalogAndNamespace.nonEmpty
-  private def referredTempViewNames: Seq[Seq[String]] = AnalysisContext.get.referredTempViewNames
+  private def isReferredTempViewName(nameParts: Seq[String]): Boolean = {
+    AnalysisContext.get.referredTempViewNames.exists { n =>
+      (n.length == nameParts.length) && n.zip(nameParts).forall {
+        case (a, b) => resolver(a, b)
+      }
+    }
+  }
+
+  private def unwrapRelationPlan(plan: LogicalPlan): LogicalPlan = {
+    EliminateSubqueryAliases(plan) match {
+      case v: View if v.isDataFrameTempView => v.child
+      case other => other
+    }
+  }
 
   /**
    * Resolve relations to temp views. This is not an actual rule, and is called by
@@ -887,7 +906,7 @@ class Analyzer(override val catalogManager: CatalogManager)
       case write: V2WriteCommand =>
         write.table match {
           case UnresolvedRelation(ident, _, false) =>
-            lookupTempView(ident, performCheck = true).map(EliminateSubqueryAliases(_)).map {
+            lookupTempView(ident, performCheck = true).map(unwrapRelationPlan).map {
               case r: DataSourceV2Relation => write.withNewTable(r)
               case _ => throw QueryCompilationErrors.writeIntoTempViewNotAllowedError(ident.quoted)
             }.getOrElse(write)
@@ -924,7 +943,7 @@ class Analyzer(override val catalogManager: CatalogManager)
         isStreaming: Boolean = false,
         performCheck: Boolean = false): Option[LogicalPlan] = {
       // Permanent View can't refer to temp views, no need to lookup at all.
-      if (isResolvingView && !referredTempViewNames.contains(identifier)) return None
+      if (isResolvingView && !isReferredTempViewName(identifier)) return None
 
       val tmpView = identifier match {
         case Seq(part1) => v1SessionCatalog.lookupTempView(part1)
@@ -942,7 +961,7 @@ class Analyzer(override val catalogManager: CatalogManager)
   // If we are resolving relations insides views, we need to expand single-part relation names with
   // the current catalog and namespace of when the view was created.
   private def expandRelationName(nameParts: Seq[String]): Seq[String] = {
-    if (!isResolvingView || referredTempViewNames.contains(nameParts)) return nameParts
+    if (!isResolvingView || isReferredTempViewName(nameParts)) return nameParts
 
     if (nameParts.length == 1) {
       AnalysisContext.get.catalogAndNamespace :+ nameParts.head
@@ -1139,7 +1158,10 @@ class Analyzer(override val catalogManager: CatalogManager)
           case other => other
         }
 
-        EliminateSubqueryAliases(relation) match {
+        // Inserting into a file-based temporary view is allowed.
+        // (e.g., spark.read.parquet("path").createOrReplaceTempView("t").
+        // Thus, we need to look at the raw plan if `relation` is a temporary view.
+        unwrapRelationPlan(relation) match {
           case v: View =>
             throw QueryCompilationErrors.insertIntoViewNotAllowedError(v.desc.identifier, table)
           case other => i.copy(table = other)
