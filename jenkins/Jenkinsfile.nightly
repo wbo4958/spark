@@ -45,12 +45,12 @@ pipeline {
             parallel {
                 stage('CPU') {
                     steps {
-                        build(job: 'spark/sparkmaster_cpu', parameters: [string(name: 'REF', value: REF), string(name: 'GITLAB_MERGE_REQUEST_IID', value: ''),])
+                        build(job: 'spark/sparkmaster_cpu', parameters: [string(name: 'REF', value: REF), string(name: 'GITLAB_MERGE_REQUEST_IID', value: 'null'),])
                     }
                 }
                 // stage('GPU') {
                 //     steps {
-                //         build(job: 'spark/gpu', parameters: [string(name: 'REF', value: REF), string(name: 'GITLAB_MERGE_REQUEST_IID', value: null),])
+                //         build(job: 'spark/gpu', parameters: [string(name: 'REF', value: REF), string(name: 'GITLAB_MERGE_REQUEST_IID', value: 'null'),])
                 //     }
                 // }
             }
