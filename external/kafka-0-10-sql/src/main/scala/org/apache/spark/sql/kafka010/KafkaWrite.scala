@@ -14,23 +14,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.spark.sql.kafka010
 
-package org.apache.spark.sql.catalyst
+import java.{util => ju}
 
-import org.apache.spark.sql.Encoder
-import org.apache.spark.sql.errors.QueryExecutionErrors
+import org.apache.spark.sql.connector.write.{BatchWrite, Write}
+import org.apache.spark.sql.connector.write.streaming.StreamingWrite
+import org.apache.spark.sql.types.StructType
 
-package object encoders {
-  /**
-   * Returns an internal encoder object that can be used to serialize / deserialize JVM objects
-   * into Spark SQL rows.  The implicit encoder should always be unresolved (i.e. have no attribute
-   * references from a specific schema.)  This requirement allows us to preserve whether a given
-   * object type is being bound by name or by ordinal when doing resolution.
-   */
-  def encoderFor[A : Encoder]: ExpressionEncoder[A] = implicitly[Encoder[A]] match {
-    case e: ExpressionEncoder[A] =>
-      e.assertUnresolved()
-      e
-    case _ => throw QueryExecutionErrors.unsupportedEncoderError()
+case class KafkaWrite(
+    topic: Option[String],
+    producerParams: ju.Map[String, Object],
+    schema: StructType) extends Write {
+
+  override def description(): String = "Kafka"
+
+  override def toBatch: BatchWrite = {
+    assert(schema != null)
+    new KafkaBatchWrite(topic, producerParams, schema)
+  }
+
+  override def toStreaming: StreamingWrite = {
+    assert(schema != null)
+    new KafkaStreamingWrite(topic, producerParams, schema)
   }
 }

@@ -15,22 +15,34 @@
  * limitations under the License.
  */
 
-package org.apache.spark.sql.catalyst
+package org.apache.spark.sql.catalyst.expressions
 
-import org.apache.spark.sql.Encoder
-import org.apache.spark.sql.errors.QueryExecutionErrors
+import org.apache.spark.SparkFunSuite
 
-package object encoders {
-  /**
-   * Returns an internal encoder object that can be used to serialize / deserialize JVM objects
-   * into Spark SQL rows.  The implicit encoder should always be unresolved (i.e. have no attribute
-   * references from a specific schema.)  This requirement allows us to preserve whether a given
-   * object type is being bound by name or by ordinal when doing resolution.
-   */
-  def encoderFor[A : Encoder]: ExpressionEncoder[A] = implicitly[Encoder[A]] match {
-    case e: ExpressionEncoder[A] =>
-      e.assertUnresolved()
-      e
-    case _ => throw QueryExecutionErrors.unsupportedEncoderError()
+class TryEvalSuite extends SparkFunSuite with ExpressionEvalHelper {
+  test("try_add") {
+    Seq(
+      (1, 1, 2),
+      (Int.MaxValue, 1, null),
+      (Int.MinValue, -1, null)
+    ).foreach { case (a, b, expected) =>
+      val left = Literal(a)
+      val right = Literal(b)
+      val input = TryEval(Add(left, right, failOnError = true))
+      checkEvaluation(input, expected)
+    }
+  }
+
+  test("try_divide") {
+    Seq(
+      (3.0, 2.0, 1.5),
+      (1.0, 0.0, null),
+      (-1.0, 0.0, null)
+    ).foreach { case (a, b, expected) =>
+      val left = Literal(a)
+      val right = Literal(b)
+      val input = TryEval(Divide(left, right, failOnError = true))
+      checkEvaluation(input, expected)
+    }
   }
 }
