@@ -26,6 +26,49 @@ _COMPILE_JVM_OPTS="-Xmx2g -XX:ReservedCodeCacheSize=1g"
 
 # Installs any application tarball given a URL, the expected tarball name,
 # and, optionally, a checkable binary path to determine if the binary has
+# already been installed
+## Arg1 - URL
+## Arg2 - Tarball Name
+## Arg3 - Checkable Binary
+install_app_internal() {
+  local remote_tarball="$1/$2"
+  local local_tarball="${_DIR}/$2"
+  local binary="${_DIR}/$3"
+
+  local curl_opts="--silent --show-error -L"
+  local wget_opts="--no-verbose"
+
+  if [ -z "$3" -o ! -f "$binary" ]; then
+    # check if we already have the tarball
+    # check if we have curl installed
+    # download application
+    local retval=0
+    [ ! -f "${local_tarball}" ] && [ $(command -v curl) ] && \
+      echo "exec: curl ${curl_opts} ${remote_tarball}" 1>&2 && \
+      curl ${curl_opts} "${remote_tarball}" > "${local_tarball}"
+    # if the file still doesn't exist, lets try `wget` and cross our fingers
+    [ ! -f "${local_tarball}" ] && [ $(command -v wget) ] && \
+      echo "exec: wget ${wget_opts} ${remote_tarball}" 1>&2 && \
+      wget ${wget_opts} -O "${local_tarball}" "${remote_tarball}"
+    # if both were unsuccessful, exit
+    [ ! -f "${local_tarball}" ] && \
+      echo -n "ERROR: Cannot download $2 with cURL or wget; " && \
+      echo "please install manually and try again." && \
+      exit 2
+    cd "${_DIR}" && tar -xzf "$2"
+    if [ $? = 0 ]; then
+      ret_val=$?
+    else
+      ret_val=$?
+    fi
+    rm -rf "$local_tarball"
+    return $ret_val
+  fi
+}
+
+
+# Installs any application tarball given a URL, the expected tarball name,
+# and, optionally, a checkable binary path to determine if the binary has
 # already been installed. Arguments:
 # 1 - Mirror host
 # 2 - URL path on host
@@ -100,7 +143,7 @@ install_app() {
 
     rm -rf "${local_tarball}"
     rm -f "${local_checksum}"
-    return ret_val
+    return $ret_val
   fi
 }
 
@@ -137,9 +180,10 @@ install_mvn() {
       "sha512" \
       "${MVN_TARBALL}" \
       "apache-maven-${MVN_VERSION}/bin/mvn"
+
     if [ $? != 0 ]; then
       # try again with different maven
-      install_app \
+      install_app_internal \
       "http://urm.nvidia.com/artifactory/sw-spark-maven/org/apache/maven/maven/3.6.3" \
       "maven-3.6.3-bin.tar.gz" \
       "apache-maven-${MVN_VERSION}/bin/mvn"
