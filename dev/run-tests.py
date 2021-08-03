@@ -716,7 +716,7 @@ def main():
     should_run_java_style_checks = False
     if not should_only_test_modules:
         # license checks
-        #run_apache_rat_checks()
+        # run_apache_rat_checks()
 
         # style checks
         if not changed_files or any(f.endswith(".scala")
