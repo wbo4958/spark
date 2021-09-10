@@ -44,6 +44,7 @@ pipeline {
 
     environment {
         URM_CREDS=credentials("svcngcc_artifactory")
+        MAVEN_OPTS="-Xmx2g -XX:ReservedCodeCacheSize=1g -Xss256m"
     }
 
     stages {
