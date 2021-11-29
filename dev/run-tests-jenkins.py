@@ -198,7 +198,36 @@ def main():
         os.environ["AMPLAB_JENKINS_BUILD_PROFILE"] = "hadoop2.7"
     if "test-maven" in git_pr_obj.pr_title:
         os.environ["AMPLAB_JENKINS_BUILD_TOOL"] = "maven"
+    if "test-hadoop3.2" in ghprb_pull_title:
+        os.environ["AMPLAB_JENKINS_BUILD_PROFILE"] = "hadoop3.2"
+    # Switch the Scala profile based on the PR title:
+    if "test-scala2.13" in ghprb_pull_title:
+        os.environ["AMPLAB_JENKINS_BUILD_SCALA_PROFILE"] = "scala2.13"
 
+    build_display_name = os.environ["BUILD_DISPLAY_NAME"]
+    build_url = os.environ["BUILD_URL"]
+
+    project_url = os.getenv("SPARK_PROJECT_URL", "https://github.com/apache/spark")
+    commit_url = project_url + "/commit/" + ghprb_actual_commit
+
+    # GitHub doesn't auto-link short hashes when submitted via the API, unfortunately. :(
+    short_commit_hash = ghprb_actual_commit[0:7]
+
+    # format: http://linux.die.net/man/1/timeout
+    # must be less than the timeout configured on Jenkins. Usually Jenkins's timeout is higher
+    # then this. Please consult with the build manager or a committer when it should be increased.
+    tests_timeout = "500m"
+
+    # Array to capture all test names to run on the pull request. These tests are represented
+    # by their file equivalents in the dev/tests/ directory.
+    #
+    # To write a PR test:
+    #   * the file must reside within the dev/tests directory
+    #   * be an executable bash script
+    #   * accept three arguments on the command line, the first being the GitHub PR long commit
+    #     hash, the second the GitHub SHA1 hash, and the final the current PR hash
+    #   * and, lastly, return string output to be included in the pr message output that will
+    #     be posted to GitHub
     pr_tests = [
         "pr_merge_ability",
         "pr_public_classes"
