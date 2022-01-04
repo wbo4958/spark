@@ -20,7 +20,7 @@
 pipeline {
     agent {
         dockerfile {
-            label 'spark'
+            label 'docker'
             args '-v ${HOME}/.m2:${HOME}/.m2:rw -v ${HOME}/.sparkStaging:${HOME}/.sparkStaging:rw -v ${HOME}/.ivy2:${HOME}/.ivy2:rw -v ${HOME}/.zinc:${HOME}/.zinc:rw -v /etc/passwd:/etc/passwd:ro'
         }
     }
