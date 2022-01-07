@@ -60,7 +60,7 @@ pipeline {
                         updateGitlabCommitStatus(name: 'pipeline', state: 'running')
                         updateGitlabCommitStatus(name: 'make-distribution', state: 'running')
                         retry(3) {
-                            sh './build/mvn -B -c -DskipTests --settings=jenkins/settings.xml -Phadoop-2.7 -Pyarn -Pkubernetes deploy'
+                            sh './build/mvn -B -c -DskipTests --settings=jenkins/settings.xml -Phadoop-2 -Pyarn -Pkubernetes deploy'
                         }
                     }
                 }
@@ -76,7 +76,7 @@ pipeline {
                         checkout_commit()
                         updateGitlabCommitStatus(name: 'pipeline', state: 'running')
                         updateGitlabCommitStatus(name: 'make-distribution', state: 'running')
-                        sh './dev/make-distribution.sh --tgz --name hadoop3.2 -Phadoop-3.2 -Pyarn -Pkubernetes -Phive'
+                        sh './dev/make-distribution.sh --tgz --name hadoop3.2 -Phadoop-3 -Pyarn -Pkubernetes -Phive'
                         script {
                             def SPARK_VER=sh(returnStdout: true,
                                 script: "mvn help:evaluate -Dexpression=project.version -q -N -DforceStdout")

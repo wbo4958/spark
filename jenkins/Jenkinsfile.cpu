@@ -48,7 +48,7 @@ pipeline {
                    description: "Build tool used to run Spark Project.")
                    
             choice(name: 'HADOOP_PROFILE',
-                   choices:["hadoop3.2","hadoop2.7"],
+                   choices:["hadoop3","hadoop2"],
                    description: 'Hadoop profile used to build and test Spark project.')
 
             string(name: 'REF',
