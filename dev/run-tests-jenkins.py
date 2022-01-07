@@ -90,7 +90,7 @@ def run_pr_checks(pr_tests, head_sha, sha1):
     @return a list of messages to post back to Github/GitLab.
     """
     # Ensure we save off the current HEAD to revert to
-    current_pr_head = run_cmd(['git', 'rev-parse', 'HEAD'], return_output=True).strip()
+    current_pr_head = run_cmd(["git", "rev-parse", "HEAD"], return_output=True).strip()
     pr_results = list()
 
     for pr_test in pr_tests:
@@ -99,7 +99,7 @@ def run_pr_checks(pr_tests, head_sha, sha1):
                                    head_sha, sha1],
                                   return_output=True).rstrip())
         # Ensure, after each test, that we're back on the current PR
-        run_cmd(['git', 'checkout', '-f', current_pr_head])
+        run_cmd(["git", "checkout", "-f", current_pr_head])
     return pr_results
 
 
@@ -109,39 +109,38 @@ def run_tests():
     under the various failure scenarios.
     @return a list containing the test result code and the result note to post to Github/GitLab.
     """
-    test_result_code = subprocess.Popen(['timeout',
-                                        TEST_TIMEOUT,
-                                        os.path.join(SPARK_HOME,
-                                                     'dev',
-                                                     'run-tests')]).wait()
+    test_result_code = subprocess.Popen(
+        ["timeout", tests_timeout, os.path.join(SPARK_HOME, "dev", "run-tests")]
+    ).wait()
 
     failure_note_by_errcode = {
         # error to denote run-tests script failures:
-        1: 'executing the `dev/run-tests` script',
-        ERROR_CODES["BLOCK_GENERAL"]: 'some tests',
-        ERROR_CODES["BLOCK_RAT"]: 'RAT tests',
-        ERROR_CODES["BLOCK_SCALA_STYLE"]: 'Scala style tests',
-        ERROR_CODES["BLOCK_JAVA_STYLE"]: 'Java style tests',
-        ERROR_CODES["BLOCK_PYTHON_STYLE"]: 'Python style tests',
-        ERROR_CODES["BLOCK_R_STYLE"]: 'R style tests',
-        ERROR_CODES["BLOCK_DOCUMENTATION"]: 'to generate documentation',
-        ERROR_CODES["BLOCK_BUILD"]: 'to build',
-        ERROR_CODES["BLOCK_BUILD_TESTS"]: 'build dependency tests',
-        ERROR_CODES["BLOCK_MIMA"]: 'MiMa tests',
-        ERROR_CODES["BLOCK_SPARK_UNIT_TESTS"]: 'Spark unit tests',
-        ERROR_CODES["BLOCK_PYSPARK_UNIT_TESTS"]: 'PySpark unit tests',
-        ERROR_CODES["BLOCK_PYSPARK_PIP_TESTS"]: 'PySpark pip packaging tests',
-        ERROR_CODES["BLOCK_SPARKR_UNIT_TESTS"]: 'SparkR unit tests',
-        ERROR_CODES["BLOCK_TIMEOUT"]: 'from timeout after a configured wait of `%s`' % (
-            TEST_TIMEOUT)
+        1: "executing the `dev/run-tests` script",
+        ERROR_CODES["BLOCK_GENERAL"]: "some tests",
+        ERROR_CODES["BLOCK_RAT"]: "RAT tests",
+        ERROR_CODES["BLOCK_SCALA_STYLE"]: "Scala style tests",
+        ERROR_CODES["BLOCK_JAVA_STYLE"]: "Java style tests",
+        ERROR_CODES["BLOCK_PYTHON_STYLE"]: "Python style tests",
+        ERROR_CODES["BLOCK_R_STYLE"]: "R style tests",
+        ERROR_CODES["BLOCK_DOCUMENTATION"]: "to generate documentation",
+        ERROR_CODES["BLOCK_BUILD"]: "to build",
+        ERROR_CODES["BLOCK_BUILD_TESTS"]: "build dependency tests",
+        ERROR_CODES["BLOCK_MIMA"]: "MiMa tests",
+        ERROR_CODES["BLOCK_SPARK_UNIT_TESTS"]: "Spark unit tests",
+        ERROR_CODES["BLOCK_PYSPARK_UNIT_TESTS"]: "PySpark unit tests",
+        ERROR_CODES["BLOCK_PYSPARK_PIP_TESTS"]: "PySpark pip packaging tests",
+        ERROR_CODES["BLOCK_SPARKR_UNIT_TESTS"]: "SparkR unit tests",
+        ERROR_CODES["BLOCK_TIMEOUT"]: "from timeout after a configured wait of `%s`"
+        % (tests_timeout),
     }
 
     if test_result_code == 0:
-        test_result_note = ' * This patch passes all tests.'
+        test_result_note = " * This patch passes all tests."
     else:
         note = failure_note_by_errcode.get(
-            test_result_code, "due to an unknown error code, %s" % test_result_code)
-        test_result_note = ' * This patch **fails %s**.' % note
+            test_result_code, "due to an unknown error code, %s" % test_result_code
+        )
+        test_result_note = " * This patch **fails %s**." % note
 
     return [test_result_code, test_result_note]
 
