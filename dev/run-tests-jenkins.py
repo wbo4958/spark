@@ -110,7 +110,7 @@ def run_tests():
     @return a list containing the test result code and the result note to post to Github/GitLab.
     """
     test_result_code = subprocess.Popen(
-        ["timeout", tests_timeout, os.path.join(SPARK_HOME, "dev", "run-tests")]
+        ["timeout", TEST_TIMEOUT, os.path.join(SPARK_HOME, "dev", "run-tests")]
     ).wait()
 
     failure_note_by_errcode = {
@@ -131,7 +131,7 @@ def run_tests():
         ERROR_CODES["BLOCK_PYSPARK_PIP_TESTS"]: "PySpark pip packaging tests",
         ERROR_CODES["BLOCK_SPARKR_UNIT_TESTS"]: "SparkR unit tests",
         ERROR_CODES["BLOCK_TIMEOUT"]: "from timeout after a configured wait of `%s`"
-        % (tests_timeout),
+        % (TEST_TIMEOUT),
     }
 
     if test_result_code == 0:
