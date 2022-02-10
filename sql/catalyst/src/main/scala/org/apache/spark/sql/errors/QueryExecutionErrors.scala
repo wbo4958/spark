@@ -89,9 +89,9 @@ object QueryExecutionErrors {
       messageParameters = Array(s"Cannot terminate expression: $generator"))
   }
 
-  def castingCauseOverflowError(t: Any, targetType: String): ArithmeticException = {
+  def castingCauseOverflowError(t: Any, dataType: DataType): ArithmeticException = {
     new SparkArithmeticException(errorClass = "CAST_CAUSES_OVERFLOW",
-      messageParameters = Array(t.toString, targetType, SQLConf.ANSI_ENABLED.key))
+      messageParameters = Array(t.toString, dataType.catalogString, SQLConf.ANSI_ENABLED.key))
   }
 
   def cannotChangeDecimalPrecisionError(
@@ -179,11 +179,6 @@ object QueryExecutionErrors {
       new SparkNoSuchElementException(errorClass = "MAP_KEY_DOES_NOT_EXIST",
         messageParameters = Array(key.toString, SQLConf.ANSI_STRICT_INDEX_OPERATOR.key))
     }
-  }
-
-  def rowFromCSVParserNotExpectedError(): Throwable = {
-    new SparkIllegalArgumentException(errorClass = "ROW_FROM_CSV_PARSER_NOT_EXPECTED",
-      messageParameters = Array.empty)
   }
 
   def inputTypeUnsupportedError(dataType: DataType): Throwable = {
