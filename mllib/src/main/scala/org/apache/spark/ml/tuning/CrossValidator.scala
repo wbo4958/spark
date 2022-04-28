@@ -30,7 +30,7 @@ import org.apache.spark.annotation.Since
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.ml.evaluation.Evaluator
-import org.apache.spark.ml.param.{IntParam, Param, ParamMap, ParamValidators}
+import org.apache.spark.ml.param.{BooleanParam, IntParam, Param, ParamMap, ParamValidators}
 import org.apache.spark.ml.param.shared.{HasCollectSubModels, HasParallelism}
 import org.apache.spark.ml.util._
 import org.apache.spark.ml.util.Instrumentation.instrumented
@@ -66,7 +66,21 @@ private[ml] trait CrossValidatorParams extends ValidatorParams {
 
   def getFoldCol: String = $(foldCol)
 
-  setDefault(foldCol -> "", numFolds -> 3)
+  /**
+   * Whether to validate the fold column.
+   *
+   * If true,
+   *  1. check the fold column range [0, numFolds).
+   *  2. for each fold, check if both train and validation are empty.
+   *
+   * If false, skip the checkings.
+   */
+  val validateFoldCol: BooleanParam = new BooleanParam(this, "validateFoldCol",
+    "whether to validate the fold column")
+
+  def getValidateFoldCol: Boolean = $(validateFoldCol)
+
+  setDefault(foldCol -> "", numFolds -> 3, validateFoldCol -> true)
 }
 
 /**
@@ -156,16 +170,20 @@ class CrossValidator @Since("1.2.0") (@Since("1.4.0") override val uid: String)
       Some(Array.fill($(numFolds))(Array.ofDim[Model[_]](epm.length)))
     } else None
 
-    // Compute metrics for each model over each split
-    val (splits, schemaWithoutFold) = if ($(foldCol) == "") {
-      (MLUtils.kFold(dataset.toDF.rdd, $(numFolds), $(seed)), schema)
+    val splits = if ($(foldCol) == "") {
+      MLUtils.kFold(dataset.toDF.rdd, $(numFolds), $(seed)).map { case (training, validation) =>
+        val trainingDataset = sparkSession.createDataFrame(training, schema)
+        val validationDataset = sparkSession.createDataFrame(validation, schema)
+        (trainingDataset, validationDataset)
+      }
     } else {
-      val filteredSchema = StructType(schema.filter(_.name != $(foldCol)).toArray)
-      (MLUtils.kFold(dataset.toDF, $(numFolds), $(foldCol)), filteredSchema)
+      MLUtils.kFold(dataset.toDF, $(numFolds), $(foldCol), $(validateFoldCol))
     }
+
+    // Compute metrics for each model over each split
     val metrics = splits.zipWithIndex.map { case ((training, validation), splitIndex) =>
-      val trainingDataset = sparkSession.createDataFrame(training, schemaWithoutFold).cache()
-      val validationDataset = sparkSession.createDataFrame(validation, schemaWithoutFold).cache()
+      val trainingDataset = training.cache()
+      val validationDataset = validation.cache()
       instr.logDebug(s"Train split $splitIndex with multiple sets of parameters.")
 
       // Fit models in a Future for training in parallel

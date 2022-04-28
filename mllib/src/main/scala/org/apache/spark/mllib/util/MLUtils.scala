@@ -28,7 +28,7 @@ import org.apache.spark.mllib.linalg._
 import org.apache.spark.mllib.linalg.BLAS.dot
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.{PartitionwiseSampledRDD, RDD}
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.text.TextFileFormat
 import org.apache.spark.sql.functions._
@@ -255,27 +255,37 @@ object MLUtils extends Logging {
    * Version of `kFold()` taking a fold column name.
    */
   @Since("3.1.0")
-  def kFold(df: DataFrame, numFolds: Int, foldColName: String): Array[(RDD[Row], RDD[Row])] = {
+  def kFold(df: DataFrame, numFolds: Int, foldColName: String, validateFoldCol: Boolean = true):
+      Array[(DataFrame, DataFrame)] = {
     val foldCol = df.col(foldColName)
-    val checker = udf { foldNum: Int =>
-      // Valid fold number is in range [0, numFolds).
-      if (foldNum < 0 || foldNum >= numFolds) {
-        throw new SparkException(s"Fold number must be in range [0, $numFolds), but got $foldNum.")
+
+    val checkerCond = if (validateFoldCol) {
+      val checker = udf { foldNum: Int =>
+        // Valid fold number is in range [0, numFolds).
+        if (foldNum < 0 || foldNum >= numFolds) {
+          throw new SparkException(s"Fold number must be in range [0, $numFolds)," +
+            s"but got $foldNum.")
+        }
+        true
       }
-      true
-    }
+      checker(foldCol)
+    } else lit(true)
+
     (0 until numFolds).map { fold =>
       val training = df
-        .filter(checker(foldCol) && foldCol =!= fold)
-        .drop(foldColName).rdd
+        .filter(checkerCond && foldCol =!= fold)
+        .drop(foldColName)
       val validation = df
-        .filter(checker(foldCol) && foldCol === fold)
-        .drop(foldColName).rdd
-      if (training.isEmpty()) {
-        throw new SparkException(s"The training data at fold $fold is empty.")
-      }
-      if (validation.isEmpty()) {
-        throw new SparkException(s"The validation data at fold $fold is empty.")
+        .filter(checkerCond && foldCol === fold)
+        .drop(foldColName)
+
+      if (validateFoldCol) {
+        if (training.isEmpty) {
+          throw new SparkException(s"The training data at fold $fold is empty.")
+        }
+        if (validation.isEmpty) {
+          throw new SparkException(s"The validation data at fold $fold is empty.")
+        }
       }
       (training, validation)
     }.toArray
