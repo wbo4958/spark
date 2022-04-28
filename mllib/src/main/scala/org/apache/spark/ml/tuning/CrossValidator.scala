@@ -123,6 +123,10 @@ class CrossValidator @Since("1.2.0") (@Since("1.4.0") override val uid: String)
   @Since("3.1.0")
   def setFoldCol(value: String): this.type = set(foldCol, value)
 
+  /** @group setParam */
+  @Since("3.4.0")
+  def setValidateFoldCol(value: Boolean): this.type = set(validateFoldCol, value)
+
   /**
    * Set the maximum level of parallelism to evaluate models in parallel.
    * Default is 1 for serial evaluation

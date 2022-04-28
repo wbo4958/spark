@@ -362,16 +362,18 @@ class MLUtilsSuite extends SparkFunSuite with MLlibTestSparkContext {
   test("kFold with fold column") {
     val data = sc.parallelize(1 to 100, 2).map(x => (x, if (x <= 50) 0 else 1)).toDF("i", "fold")
     val collectedData = data.collect().map(_.getInt(0)).sorted
-    val twoFoldedRdd = kFold(data, 2, "fold")
-    assert(twoFoldedRdd(0)._1.collect().map(_.getInt(0)).sorted ===
-      twoFoldedRdd(1)._2.collect().map(_.getInt(0)).sorted)
-    assert(twoFoldedRdd(0)._2.collect().map(_.getInt(0)).sorted ===
-      twoFoldedRdd(1)._1.collect().map(_.getInt(0)).sorted)
+    val twoFoldedDataFrame = kFold(data, 2, "fold")
+    assert(twoFoldedDataFrame(0)._1.collect().map(_.getInt(0)).sorted ===
+      twoFoldedDataFrame(1)._2.collect().map(_.getInt(0)).sorted)
+    assert(twoFoldedDataFrame(0)._2.collect().map(_.getInt(0)).sorted ===
+      twoFoldedDataFrame(1)._1.collect().map(_.getInt(0)).sorted)
 
-    val result1 = twoFoldedRdd(0)._1.union(twoFoldedRdd(0)._2).collect().map(_.getInt(0)).sorted
+    val result1 = twoFoldedDataFrame(0)._1.union(twoFoldedDataFrame(0)._2).collect()
+      .map(_.getInt(0)).sorted
     assert(result1 ===  collectedData,
       "Each training+validation set combined should contain all of the data.")
-    val result2 = twoFoldedRdd(1)._1.union(twoFoldedRdd(1)._2).collect().map(_.getInt(0)).sorted
+    val result2 = twoFoldedDataFrame(1)._1.union(twoFoldedDataFrame(1)._2).collect()
+      .map(_.getInt(0)).sorted
     assert(result2 ===  collectedData,
       "Each training+validation set combined should contain all of the data.")
   }
@@ -383,9 +385,13 @@ class MLUtilsSuite extends SparkFunSuite with MLlibTestSparkContext {
     }
     assert(err1.getMessage.contains("Fold number must be in range [0, 2), but got 2."))
 
+    kFold(data, 2, "fold", false)(0)._1.collect()
+
     val err2 = intercept[SparkException] {
       kFold(data, 4, "fold")(0)._1.collect()
     }
     assert(err2.getMessage.contains("The validation data at fold 3 is empty."))
+
+    kFold(data, 4, "fold", false)(0)._1.collect()
   }
 }
