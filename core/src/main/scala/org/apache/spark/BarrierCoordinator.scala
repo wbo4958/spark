@@ -177,7 +177,7 @@ private[spark] class BarrierCoordinator(
           s"$taskId, msg: ${request.message} current progress: ${requesters.size}/$numTasks. " +
           s" total msgs ${messages.mkString(",")}")
         if (requesters.size == numTasks) {
-          requesters.foreach(_.reply(messages))
+          requesters.foreach(_.reply(messages.clone()))
           // Finished current barrier() call successfully, clean up ContextBarrierState and
           // increase the barrier epoch.
           logInfo(s"Barrier sync epoch $barrierEpoch from $barrierId received all updates from " +
