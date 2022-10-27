@@ -29,6 +29,11 @@ private[netty] abstract class NettyRpcCallContext(override val senderAddress: Rp
   protected def send(message: Any): Unit
 
   override def reply(response: Any): Unit = {
+    logInfo("----------- NettyRpcCallContext reply " + response)
+    response match {
+      case x: Array[String] => logInfo("reply msg: " + x.mkString(","))
+      case _ => _
+    }
     send(response)
   }
 
