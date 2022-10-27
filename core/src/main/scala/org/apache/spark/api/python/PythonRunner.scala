@@ -308,6 +308,7 @@ private[spark] abstract class BasePythonRunner[IN, OUT](
                       val length = input.readInt()
                       val message = new Array[Byte](length)
                       input.readFully(message)
+                      logInfo("Received allGather request from python worker. msg: " + message)
                       barrierAndServe(requestMethod, sock, new String(message, UTF_8))
                     case _ =>
                       val out = new DataOutputStream(new BufferedOutputStream(
@@ -474,6 +475,7 @@ private[spark] abstract class BasePythonRunner[IN, OUT](
             context.asInstanceOf[BarrierTaskContext].barrier()
             Array(BarrierTaskContextMessageProtocol.BARRIER_RESULT_SUCCESS)
           case BarrierTaskContextMessageProtocol.ALL_GATHER_FUNCTION =>
+            logInfo("----- run barrierAndServe message: " + message)
             context.asInstanceOf[BarrierTaskContext].allGather(message)
         }
         logInfo("--- barrierAndServe: " + messages.mkString(",") + " len: " + messages.length)
