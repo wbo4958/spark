@@ -476,6 +476,7 @@ private[spark] abstract class BasePythonRunner[IN, OUT](
           case BarrierTaskContextMessageProtocol.ALL_GATHER_FUNCTION =>
             context.asInstanceOf[BarrierTaskContext].allGather(message)
         }
+        logInfo("--- barrierAndServe: " + messages.mkString(",") + " len: " + messages.length)
         out.writeInt(messages.length)
         messages.foreach(writeUTF(_, out))
       } catch {
@@ -488,6 +489,7 @@ private[spark] abstract class BasePythonRunner[IN, OUT](
 
     def writeUTF(str: String, dataOut: DataOutputStream): Unit = {
       val bytes = str.getBytes(UTF_8)
+      logInfo("--- writeUTF: " + str + " len: " + bytes.length)
       dataOut.writeInt(bytes.length)
       dataOut.write(bytes)
     }

@@ -559,6 +559,7 @@ class UTF8Deserializer(Serializer):
         elif length == SpecialLengths.NULL:
             return None
         s = stream.read(length)
+        print(f"UTF8Deserializer loads, length: {length}, final s: {s}")
         return s.decode("utf-8") if self.use_unicode else s
 
     def load_stream(self, stream):

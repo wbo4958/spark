@@ -147,6 +147,7 @@ def _load_from_socket(
 
     # Collect result.
     len = read_int(sockfile)
+    print(f"------- len is {len}")
     res = []
     for i in range(len):
         res.append(UTF8Deserializer().loads(sockfile))
