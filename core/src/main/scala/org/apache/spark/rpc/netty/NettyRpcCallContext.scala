@@ -32,7 +32,7 @@ private[netty] abstract class NettyRpcCallContext(override val senderAddress: Rp
     logInfo("----------- NettyRpcCallContext reply " + response)
     response match {
       case x: Array[String] => logInfo("reply msg: " + x.mkString(","))
-      case _ => _
+      case _ =>
     }
     send(response)
   }
