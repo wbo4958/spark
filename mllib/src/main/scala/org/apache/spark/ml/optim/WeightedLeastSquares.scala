@@ -251,7 +251,6 @@ private[ml] class WeightedLeastSquares(
       } else {
         None
       }
-      new QuasiNewtonSolver(fitIntercept, maxIter, tol, effectiveL1RegFun)
     } else {
       new CholeskySolver
     }

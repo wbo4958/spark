@@ -84,7 +84,8 @@ class PCA @Since("1.5.0") (
    * Computes a [[PCAModel]] that contains the principal components of the input vectors.
    */
   @Since("2.0.0")
-  override def fit(dataset: Dataset[_]): PCAModel = {
+  override def fitImpl(dataset: Dataset[_]): PCAModel = {
+
     transformSchema(dataset.schema, logging = true)
     val input = dataset.select($(inputCol)).rdd.map {
       case Row(v: Vector) => OldVectors.fromML(v)

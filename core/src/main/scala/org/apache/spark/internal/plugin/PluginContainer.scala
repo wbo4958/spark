@@ -37,7 +37,7 @@ sealed abstract class PluginContainer {
 
 }
 
-private class DriverPluginContainer(
+class DriverPluginContainer(
     sc: SparkContext,
     resources: java.util.Map[String, ResourceInformation],
     plugins: Seq[SparkPlugin])
@@ -68,6 +68,8 @@ private class DriverPluginContainer(
     sc.env.rpcEnv.setupEndpoint(classOf[PluginEndpoint].getName(),
       new PluginEndpoint(pluginsByName, sc.env.rpcEnv))
   }
+
+  def getDriverPlugins: Seq[(String, DriverPlugin, PluginContextImpl)] = driverPlugins
 
   override def registerMetrics(appId: String): Unit = {
     driverPlugins.foreach { case (_, plugin, ctx) =>

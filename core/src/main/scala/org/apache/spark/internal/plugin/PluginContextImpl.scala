@@ -30,7 +30,7 @@ import org.apache.spark.resource.ResourceInformation
 import org.apache.spark.rpc.RpcEnv
 import org.apache.spark.util.RpcUtils
 
-private class PluginContextImpl(
+class PluginContextImpl(
     pluginName: String,
     rpcEnv: RpcEnv,
     metricsSystem: MetricsSystem,

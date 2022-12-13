@@ -63,7 +63,15 @@ abstract class Estimator[M <: Model[M]] extends PipelineStage {
    * Fits a model to the input data.
    */
   @Since("2.0.0")
-  def fit(dataset: Dataset[_]): M
+  def fit(dataset: Dataset[_]): M = {
+    val pluginOpt = MLPlugin.getPlugin(dataset)
+    pluginOpt.map(plugin => plugin.fit(this, dataset).asInstanceOf[M])
+      .getOrElse(fitImpl(dataset))
+  }
+
+  def fitImpl(dataset: Dataset[_]): M = {
+    throw new UnsupportedOperationException("fit_internal is not implemented")
+  }
 
   /**
    * Fits multiple models to the input data with multiple sets of parameters.

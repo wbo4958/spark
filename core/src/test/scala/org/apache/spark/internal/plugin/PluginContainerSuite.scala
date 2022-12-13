@@ -128,6 +128,11 @@ class PluginContainerSuite extends SparkFunSuite with BeforeAndAfterEach with Lo
     sc = new SparkContext(conf)
     // Just check plugin is loaded. The plugin code below checks whether a single copy was loaded.
     assert(TestSparkPlugin.driverPlugin != null)
+
+    val plugins = sc.getPlugins
+    assert(plugins.size === 1)
+
+
   }
 
   test("SPARK-33088: executor tasks trigger plugin calls") {
