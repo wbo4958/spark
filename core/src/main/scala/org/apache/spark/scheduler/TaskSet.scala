@@ -17,6 +17,8 @@
 
 package org.apache.spark.scheduler
 
+import org.apache.spark.resource.ResourceProfile
+
 import java.util.Properties
 
 /**
@@ -30,7 +32,8 @@ private[spark] class TaskSet(
     val priority: Int,
     val properties: Properties,
     val resourceProfileId: Int,
-    val shuffleId: Option[Int]) {
+    val shuffleId: Option[Int],
+    val resourceProfile: ResourceProfile) {
   val id: String = stageId + "." + stageAttemptId
 
   override def toString: String = "TaskSet " + id

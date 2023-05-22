@@ -18,10 +18,10 @@
 package org.apache.spark.scheduler
 
 import scala.collection.mutable.HashSet
-
 import org.apache.spark.executor.TaskMetrics
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.{DeterministicLevel, RDD}
+import org.apache.spark.resource.ResourceProfile
 import org.apache.spark.util.CallSite
 
 /**
@@ -60,7 +60,8 @@ private[scheduler] abstract class Stage(
     val parents: List[Stage],
     val firstJobId: Int,
     val callSite: CallSite,
-    val resourceProfileId: Int)
+    val resourceProfileId: Int,
+    val resourceProfile: ResourceProfile)
   extends Logging {
 
   val numPartitions = rdd.partitions.length

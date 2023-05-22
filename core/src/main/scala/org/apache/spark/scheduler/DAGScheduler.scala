@@ -494,7 +494,7 @@ private[spark] class DAGScheduler(
     val id = nextStageId.getAndIncrement()
     val stage = new ShuffleMapStage(
       id, rdd, numTasks, parents, jobId, rdd.creationSite, shuffleDep, mapOutputTracker,
-      resourceProfile.id)
+      resourceProfile.id, resourceProfile)
 
     stageIdToStage(id) = stage
     shuffleIdToMapStage(shuffleDep.shuffleId) = stage
@@ -624,7 +624,7 @@ private[spark] class DAGScheduler(
     val parents = getOrCreateParentStages(shuffleDeps, jobId)
     val id = nextStageId.getAndIncrement()
     val stage = new ResultStage(id, rdd, func, partitions, parents, jobId,
-      callSite, resourceProfile.id)
+      callSite, resourceProfile.id, resourceProfile)
     stageIdToStage(id) = stage
     updateJobIdStageIdMaps(jobId, stage)
     stage
@@ -1591,7 +1591,7 @@ private[spark] class DAGScheduler(
 
       taskScheduler.submitTasks(new TaskSet(
         tasks.toArray, stage.id, stage.latestInfo.attemptNumber, jobId, properties,
-        stage.resourceProfileId, shuffleId))
+        stage.resourceProfileId, shuffleId, stage.resourceProfile))
     } else {
       // Because we posted SparkListenerStageSubmitted earlier, we should mark
       // the stage as completed here in case there are no tasks to run

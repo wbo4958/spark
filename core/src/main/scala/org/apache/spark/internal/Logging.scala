@@ -130,7 +130,7 @@ trait Logging {
       // If Log4j 2 is used but is initialized by default configuration,
       // load a default properties file
       // scalastyle:off println
-      if (Logging.islog4j2DefaultConfigured()) {
+      if (!Logging.islog4j2DefaultConfigured()) {
         Logging.defaultSparkLog4jConfig = true
         val defaultLogProps = "org/apache/spark/log4j2-defaults.properties"
         Option(Utils.getSparkClassLoader.getResource(defaultLogProps)) match {

@@ -150,7 +150,7 @@ private[spark] class ExecutorAllocationManager(
   private var addTime: Long = NOT_SET
 
   // Polling loop interval (ms)
-  private val intervalMillis: Long = 100
+  private val intervalMillis: Long = 10000
 
   // Listener for Spark events that impact the allocation policy
   val listener = new ExecutorAllocationListener

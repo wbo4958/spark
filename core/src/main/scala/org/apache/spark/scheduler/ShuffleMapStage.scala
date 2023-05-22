@@ -18,9 +18,9 @@
 package org.apache.spark.scheduler
 
 import scala.collection.mutable.HashSet
-
 import org.apache.spark.{MapOutputTrackerMaster, ShuffleDependency}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.resource.ResourceProfile
 import org.apache.spark.util.CallSite
 
 /**
@@ -43,8 +43,10 @@ private[spark] class ShuffleMapStage(
     callSite: CallSite,
     val shuffleDep: ShuffleDependency[_, _, _],
     mapOutputTrackerMaster: MapOutputTrackerMaster,
-    resourceProfileId: Int)
-  extends Stage(id, rdd, numTasks, parents, firstJobId, callSite, resourceProfileId) {
+    resourceProfileId: Int,
+    resourceProfile: ResourceProfile)
+  extends Stage(id, rdd, numTasks, parents, firstJobId, callSite, resourceProfileId,
+    resourceProfile) {
 
   private[this] var _mapStageJobs: List[ActiveJob] = Nil
 

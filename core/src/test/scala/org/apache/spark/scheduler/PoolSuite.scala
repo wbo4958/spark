@@ -19,13 +19,11 @@ package org.apache.spark.scheduler
 
 import java.io.FileNotFoundException
 import java.util.Properties
-
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.util.VersionInfo
-
 import org.apache.spark.{LocalSparkContext, SparkConf, SparkContext, SparkFunSuite, TestUtils}
 import org.apache.spark.internal.config.SCHEDULER_ALLOCATION_FILE
-import org.apache.spark.resource.ResourceProfile
+import org.apache.spark.resource.{ResourceProfile, ResourceProfileBuilder}
 import org.apache.spark.scheduler.SchedulingMode._
 import org.apache.spark.util.Utils
 
@@ -45,7 +43,7 @@ class PoolSuite extends SparkFunSuite with LocalSparkContext {
       new FakeTask(stageId, i, Nil)
     }
     new TaskSetManager(taskScheduler, new TaskSet(tasks, stageId, 0, 0, null,
-      ResourceProfile.DEFAULT_RESOURCE_PROFILE_ID, None), 0)
+      ResourceProfile.DEFAULT_RESOURCE_PROFILE_ID, None, new ResourceProfileBuilder().build()), 0)
   }
 
   def scheduleTaskAndVerifyId(taskId: Int, rootPool: Pool, expectedStageId: Int): Unit = {
