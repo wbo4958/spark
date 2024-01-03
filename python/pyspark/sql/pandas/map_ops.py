@@ -70,6 +70,8 @@ class PandasMapOpsMixin:
             :class:`pyspark.sql.types.DataType` object or a DDL-formatted type string.
         barrier : bool, optional, default False
             Use barrier mode execution.
+        profile : :class:`pyspark.resource.ResourceProfile`. The optional ResourceProfile
+            to be used for mapInPandas.
 
             .. versionadded: 3.5.0
 
@@ -192,6 +194,8 @@ class PandasMapOpsMixin:
             :class:`pyspark.sql.types.DataType` object or a DDL-formatted type string.
         barrier : bool, optional, default False
             Use barrier mode execution.
+        profile : :class:`pyspark.resource.ResourceProfile`. The optional ResourceProfile
+            to be used for mapInPandas.
 
             .. versionadded: 3.5.0
 
