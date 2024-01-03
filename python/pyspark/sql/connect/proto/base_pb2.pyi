@@ -1411,6 +1411,7 @@ class ExecutePlanResponse(google.protobuf.message.Message):
     GET_RESOURCES_COMMAND_RESULT_FIELD_NUMBER: builtins.int
     STREAMING_QUERY_MANAGER_COMMAND_RESULT_FIELD_NUMBER: builtins.int
     RESULT_COMPLETE_FIELD_NUMBER: builtins.int
+    CREATE_RESOURCE_PROFILE_COMMAND_RESULT_FIELD_NUMBER: builtins.int
     EXTENSION_FIELD_NUMBER: builtins.int
     METRICS_FIELD_NUMBER: builtins.int
     OBSERVED_METRICS_FIELD_NUMBER: builtins.int
@@ -1459,6 +1460,11 @@ class ExecutePlanResponse(google.protobuf.message.Message):
     def result_complete(self) -> global___ExecutePlanResponse.ResultComplete:
         """Response type informing if the stream is complete in reattachable execution."""
     @property
+    def create_resource_profile_command_result(
+        self,
+    ) -> pyspark.sql.connect.proto.commands_pb2.CreateResourceProfileCommandResult:
+        """Response for command that creates ResourceProfile."""
+    @property
     def extension(self) -> google.protobuf.any_pb2.Any:
         """Support arbitrary result objects."""
     @property
@@ -1494,6 +1500,8 @@ class ExecutePlanResponse(google.protobuf.message.Message):
         streaming_query_manager_command_result: pyspark.sql.connect.proto.commands_pb2.StreamingQueryManagerCommandResult
         | None = ...,
         result_complete: global___ExecutePlanResponse.ResultComplete | None = ...,
+        create_resource_profile_command_result: pyspark.sql.connect.proto.commands_pb2.CreateResourceProfileCommandResult
+        | None = ...,
         extension: google.protobuf.any_pb2.Any | None = ...,
         metrics: global___ExecutePlanResponse.Metrics | None = ...,
         observed_metrics: collections.abc.Iterable[global___ExecutePlanResponse.ObservedMetrics]
@@ -1505,6 +1513,8 @@ class ExecutePlanResponse(google.protobuf.message.Message):
         field_name: typing_extensions.Literal[
             "arrow_batch",
             b"arrow_batch",
+            "create_resource_profile_command_result",
+            b"create_resource_profile_command_result",
             "extension",
             b"extension",
             "get_resources_command_result",
@@ -1532,6 +1542,8 @@ class ExecutePlanResponse(google.protobuf.message.Message):
         field_name: typing_extensions.Literal[
             "arrow_batch",
             b"arrow_batch",
+            "create_resource_profile_command_result",
+            b"create_resource_profile_command_result",
             "extension",
             b"extension",
             "get_resources_command_result",
@@ -1575,6 +1587,7 @@ class ExecutePlanResponse(google.protobuf.message.Message):
             "get_resources_command_result",
             "streaming_query_manager_command_result",
             "result_complete",
+            "create_resource_profile_command_result",
             "extension",
         ]
         | None
