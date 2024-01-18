@@ -35,3 +35,4 @@ class ResourceProfile:
         rp = pb2.ResourceProfile(executor_resources=self._exec_req,
                                  task_resources=self._task_req)
         self._id = session.client.build_resource_profile(rp)
+        print("-------------- finished build resource profile -------------")

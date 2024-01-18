@@ -185,6 +185,7 @@ class ResourceProfileBuilder:
 
         # TODO: ignore[attr-defined] will be removed, once SparkContext is inlined
         _jvm = SparkContext._jvm
+        _jvm = None
         if _jvm is not None:
             self._jvm = _jvm
             self._java_resource_profile_builder = (
@@ -290,6 +291,7 @@ class ResourceProfileBuilder:
 
     @property
     def build(self) -> ResourceProfile:
+        print("---- build ---")
         if self._java_resource_profile_builder is not None:
             jresourceProfile = self._java_resource_profile_builder.build()
             return ResourceProfile(_java_resource_profile=jresourceProfile)
@@ -298,6 +300,7 @@ class ResourceProfileBuilder:
             # return ResourceProfile(
             #     _exec_req=self._executor_resource_requests, _task_req=self._task_resource_requests
             # )
+            print("---- xxx ---")
 
             from pyspark.sql.connect.resource.profile import ResourceProfile as RemoteResourceProfile
             return RemoteResourceProfile(
