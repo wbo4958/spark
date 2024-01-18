@@ -34,7 +34,7 @@ class SparkConnectBuildResourceProfileHandler(
    * @param req
    * @return
    */
-  def transformResourceProfile(rp: proto.BuildResourceProfileRequest.ResourceProfile):
+  def transformResourceProfile(rp: proto.ResourceProfile):
       ResourceProfile = {
     val ereqs = rp.getExecutorResourcesMap.asScala.map {
       case (name, res) => name -> new ExecutorResourceRequest(
