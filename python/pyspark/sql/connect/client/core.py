@@ -543,6 +543,13 @@ class ConfigResult:
             warnings=list(pb.warnings),
         )
 
+class BuildResourceProfileResult:
+    def __init__(self, id: int):
+        self.id = id
+
+    @classmethod
+    def fromProto(cls, pb: pb2.BuildResourceProfileResponse) -> "BuildResourceProfileResult":
+        return BuildResourceProfileResult(pb.id)
 
 class SparkConnectClient(object):
     """
@@ -1625,6 +1632,7 @@ class SparkConnectClient(object):
             pb2.AnalyzePlanResponse,
             pb2.FetchErrorDetailsResponse,
             pb2.ReleaseSessionResponse,
+            pb2.BuildResourceProfileResponse,
         ],
     ) -> None:
         """
@@ -1652,3 +1660,8 @@ class SparkConnectClient(object):
         else:
             # Update the server side session ID.
             self._server_session_id = response.server_side_session_id
+
+    def build_resource_profile(self, profile: pb2.ResourceProfile) -> int:
+        resp = self._stub.BuildResourceProfile(profile)
+        self._verify_response_integrity(resp)
+        return BuildResourceProfileResult.fromProto(resp).id

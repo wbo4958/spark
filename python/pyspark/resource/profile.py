@@ -294,7 +294,13 @@ class ResourceProfileBuilder:
             jresourceProfile = self._java_resource_profile_builder.build()
             return ResourceProfile(_java_resource_profile=jresourceProfile)
         else:
-            return ResourceProfile(
+            # TODO add remote check
+            # return ResourceProfile(
+            #     _exec_req=self._executor_resource_requests, _task_req=self._task_resource_requests
+            # )
+
+            from pyspark.sql.connect.resource.profile import ResourceProfile as RemoteResourceProfile
+            return RemoteResourceProfile(
                 _exec_req=self._executor_resource_requests, _task_req=self._task_resource_requests
             )
 
