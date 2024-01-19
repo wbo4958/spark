@@ -23,16 +23,24 @@ class ResourceProfile:
         self._task_req = {}
 
         for key, value in _exec_req.items():
-            self._exec_req[key] = pb2.ExecutorResourceRequest(resource_name=value.resourceName,
-                                                              amount=value.amount,
-                                                              discovery_script=value.discoveryScript,
-                                                              vendor=value.vendor)
+            self._exec_req[key] = pb2.ExecutorResourceRequest(
+                resource_name=value.resourceName,
+                amount=value.amount,
+                discovery_script=value.discoveryScript,
+                vendor=value.vendor)
 
         for key, value in _task_req.items():
-            self._task_req[key] = pb2.TaskResourceRequest(resource_name=value.resourceName,
-                                                          amount=value.amount)
+            self._task_req[key] = pb2.TaskResourceRequest(
+                resource_name=value.resourceName,
+                amount=value.amount)
 
-        rp = pb2.ResourceProfile(executor_resources=self._exec_req,
-                                 task_resources=self._task_req)
-        self._id = session.client.build_resource_profile(rp)
+        self._remote_profile = pb2.ResourceProfile(
+            executor_resources=self._exec_req,
+            task_resources=self._task_req)
+
+        self._id = session.client.build_resource_profile(self._remote_profile)
         print("-------------- finished build resource profile -------------")
+
+    @property
+    def id(self) -> int:
+        return self._id

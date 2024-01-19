@@ -56,8 +56,10 @@ class SparkConnectBuildResourceProfileHandler(
       SparkConnectService
         .getOrCreateIsolatedSession(request.getUserContext.getUserId, request.getSessionId)
 
+    val session = holder.session
     // TODO check the exception
     val rp = transformResourceProfile(request.getProfile)
+    session.sparkContext.resourceProfileManager.addResourceProfile(rp)
 
     val builder = proto.BuildResourceProfileResponse.newBuilder()
     builder.setId(rp.id)
