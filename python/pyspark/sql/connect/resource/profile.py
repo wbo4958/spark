@@ -1,7 +1,6 @@
 from typing import Optional, Dict
 
 from pyspark.resource import ExecutorResourceRequest, TaskResourceRequest
-from pyspark.sql.connect.session import SparkSession
 
 import pyspark.sql.connect.proto as pb2
 
@@ -12,6 +11,7 @@ class ResourceProfile:
             _exec_req: Optional[Dict[str, ExecutorResourceRequest]] = None,
             _task_req: Optional[Dict[str, TaskResourceRequest]] = None,
     ):
+        from pyspark.sql.connect.session import SparkSession
         session = SparkSession.getActiveSession()
         if session is None:
             raise "SparkSession should be initialized first."
