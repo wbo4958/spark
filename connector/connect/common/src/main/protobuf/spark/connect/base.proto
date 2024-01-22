@@ -980,8 +980,8 @@ message BuildResourceProfileRequest {
   // (Required) User context
   UserContext user_context = 2;
 
+  // (Required) The ResourceProfile to be build on the Spark Connect server side.
   ResourceProfile profile = 3;
-
 }
 
 // Response to the build resource profile request.
@@ -991,8 +991,8 @@ message BuildResourceProfileResponse {
   // session has not changed.
   string server_side_session_id = 4;
 
-  // The resource profile id.
-  int32 id = 5;
+  // (Required) The resource profile id.
+  int32 profile_id = 5;
 }
 
 // Main interface for the SparkConnect service.
@@ -1040,6 +1040,6 @@ service SparkConnectService {
   // FetchErrorDetails retrieves the matched exception with details based on a provided error id.
   rpc FetchErrorDetails(FetchErrorDetailsRequest) returns (FetchErrorDetailsResponse) {}
 
+  // Build ResourceProfile and return the profile id
   rpc BuildResourceProfile(BuildResourceProfileRequest) returns (BuildResourceProfileResponse) {}
 }
-

@@ -106,6 +106,12 @@ class ResourceProfile:
             self._executor_resource_requests = _exec_req or {}
             self._task_resource_requests = _task_req or {}
 
+            from pyspark.sql import is_remote
+            if is_remote():
+                from pyspark.sql.connect.resource.profile import _ResourceProfile
+                self._id = _ResourceProfile(self._executor_resource_requests,
+                                            self._task_resource_requests).id
+
     @property
     def id(self) -> int:
         """
@@ -118,10 +124,14 @@ class ResourceProfile:
         if self._java_resource_profile is not None:
             return self._java_resource_profile.id()
         else:
-            raise RuntimeError(
-                "SparkContext must be created to get the id, get the id "
-                "after adding the ResourceProfile to an RDD"
-            )
+            from pyspark.sql import is_remote
+            if is_remote():
+                return self._id
+            else:
+                raise RuntimeError(
+                    "SparkContext must be created to get the id, get the id "
+                    "after adding the ResourceProfile to an RDD"
+                )
 
     @property
     def taskResources(self) -> Dict[str, TaskResourceRequest]:
@@ -185,8 +195,9 @@ class ResourceProfileBuilder:
 
         # TODO: ignore[attr-defined] will be removed, once SparkContext is inlined
         _jvm = SparkContext._jvm
-        _jvm = None
-        if _jvm is not None:
+
+        from pyspark.sql import is_remote
+        if _jvm is not None and not is_remote():
             self._jvm = _jvm
             self._java_resource_profile_builder = (
                 _jvm.org.apache.spark.resource.ResourceProfileBuilder()
@@ -291,21 +302,14 @@ class ResourceProfileBuilder:
 
     @property
     def build(self) -> ResourceProfile:
-        print("---- build ---")
         if self._java_resource_profile_builder is not None:
             jresourceProfile = self._java_resource_profile_builder.build()
             return ResourceProfile(_java_resource_profile=jresourceProfile)
         else:
-            # TODO add remote check
-            # return ResourceProfile(
-            #     _exec_req=self._executor_resource_requests, _task_req=self._task_resource_requests
-            # )
-            print("---- xxx ---")
-
-            from pyspark.sql.connect.resource.profile import ResourceProfile as RemoteResourceProfile
-            return RemoteResourceProfile(
-                _exec_req=self._executor_resource_requests, _task_req=self._task_resource_requests
+            return ResourceProfile(
+                    _exec_req=self._executor_resource_requests, _task_req=self._task_resource_requests
             )
+
 
 
 def _test() -> None:

@@ -31,10 +31,10 @@ class SparkConnectBuildResourceProfileHandler(
 
   /**
    * transform the spark connect ResourceProfile to spark ResourceProfile
-   * @param req
-   * @return
+   * @param rp Spark connect ResourceProfile
+   * @return the Spark connect ResourceProfile
    */
-  def transformResourceProfile(rp: proto.ResourceProfile):
+  private def transformResourceProfile(rp: proto.ResourceProfile):
       ResourceProfile = {
     val ereqs = rp.getExecutorResourcesMap.asScala.map {
       case (name, res) => name -> new ExecutorResourceRequest(
@@ -62,7 +62,7 @@ class SparkConnectBuildResourceProfileHandler(
     session.sparkContext.resourceProfileManager.addResourceProfile(rp)
 
     val builder = proto.BuildResourceProfileResponse.newBuilder()
-    builder.setId(rp.id)
+    builder.setProfileId(rp.id)
 
     builder.setSessionId(request.getSessionId)
     builder.setServerSideSessionId(holder.serverSessionId)

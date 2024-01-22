@@ -19,7 +19,7 @@ from pyspark.errors.exceptions.base import (
     PySparkIndexError,
     PySparkAttributeError,
 )
-from pyspark.sql.connect.resource.profile import ResourceProfile
+from pyspark.resource import ResourceProfile
 from pyspark.sql.connect.utils import check_dependencies
 
 check_dependencies(__name__)

@@ -780,6 +780,10 @@ class SparkSession:
         """
         return DataFrame(CachedRemoteRelation(remote_id), self)
 
+    @property
+    def session_id(self) -> str:
+        return self._session_id
+
     @staticmethod
     def _start_connect_server(master: str, opts: Dict[str, Any]) -> None:
         """
@@ -914,10 +918,6 @@ class SparkSession:
                 error_class="SESSION_OR_CONTEXT_EXISTS",
                 message_parameters={},
             )
-
-    @property
-    def session_id(self) -> str:
-        return self._session_id
 
 
 SparkSession.__doc__ = PySparkSession.__doc__
