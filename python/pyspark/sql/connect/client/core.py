@@ -551,7 +551,7 @@ class BuildResourceProfileResult:
 
     @classmethod
     def fromProto(cls, pb: pb2.BuildResourceProfileResponse) -> "BuildResourceProfileResult":
-        return BuildResourceProfileResult(pb.id)
+        return BuildResourceProfileResult(pb.profile_id)
 
 class SparkConnectClient(object):
     """
