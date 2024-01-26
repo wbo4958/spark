@@ -16,10 +16,13 @@
 #
 import unittest
 
+from pyspark import SparkConf
 from pyspark.resource import ExecutorResourceRequests, ResourceProfileBuilder, TaskResourceRequests
+from pyspark.sql import SparkSession
+from pyspark.testing.utils import PySparkErrorTestUtils
 
 
-class ResourceProfileTests(unittest.TestCase):
+class ResourceProfileTests(unittest.TestCase, PySparkErrorTestUtils):
     def test_profile_before_sc(self):
         rpb = ResourceProfileBuilder()
         ereqs = ExecutorResourceRequests().cores(2).memory("6g").memoryOverhead("1g")
@@ -69,6 +72,22 @@ class ResourceProfileTests(unittest.TestCase):
         rp3 = rpb.build
         assert_request_contents(rp3.executorResources, rp3.taskResources)
         sc.stop()
+
+    def test_connect_profile(self):
+        rpb = ResourceProfileBuilder()
+        ereqs = ExecutorResourceRequests().cores(2).memory("6g").memoryOverhead("1g")
+        ereqs.pysparkMemory("2g").offheapMemory("3g").resource("gpu", 2, "testGpus", "nvidia.com")
+        treqs = TaskResourceRequests().cpus(2).resource("gpu", 2)
+        rp = rpb.require(ereqs).require(treqs).build
+        with self.assertRaises(RuntimeError) as pe:
+            rp.id
+        assert ("SparkContext must be created to get the id, get the id after adding "
+                "the ResourceProfile to an RDD") in pe.exception.args[0]
+
+        spark = SparkSession.builder.remote("local-cluster[1, 2, 1024]").getOrCreate()
+        # no exception
+        rp.id
+        spark.close
 
 
 if __name__ == "__main__":
