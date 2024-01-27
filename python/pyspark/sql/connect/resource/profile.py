@@ -25,12 +25,14 @@ import pyspark.sql.connect.proto as pb2
 class _ResourceProfile:
     """The internal _ResourceProfile is used to create the Spark ResourceProfile
     on the server side and store the generated profile id."""
+
     def __init__(
         self,
         exec_req: Optional[Dict[str, ExecutorResourceRequest]] = None,
         task_req: Optional[Dict[str, TaskResourceRequest]] = None,
     ):
         from pyspark.sql.connect.session import SparkSession
+
         session = SparkSession.getActiveSession()
         if session is None:
             raise "SparkSession should be initialized first before ResourceProfile creation."
@@ -46,16 +48,17 @@ class _ResourceProfile:
                 resource_name=value.resourceName,
                 amount=value.amount,
                 discovery_script=value.discoveryScript,
-                vendor=value.vendor)
+                vendor=value.vendor,
+            )
 
         for key, value in task_req.items():
             self._task_req[key] = pb2.TaskResourceRequest(
-                resource_name=value.resourceName,
-                amount=value.amount)
+                resource_name=value.resourceName, amount=value.amount
+            )
 
         self._remote_profile = pb2.ResourceProfile(
-            executor_resources=self._exec_req,
-            task_resources=self._task_req)
+            executor_resources=self._exec_req, task_resources=self._task_req
+        )
 
         self._id = session.client.build_resource_profile(self._remote_profile)
 

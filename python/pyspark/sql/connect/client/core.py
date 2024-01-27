@@ -545,6 +545,7 @@ class ConfigResult:
             warnings=list(pb.warnings),
         )
 
+
 class BuildResourceProfileResult:
     def __init__(self, id: int):
         self.id = id
@@ -552,6 +553,7 @@ class BuildResourceProfileResult:
     @classmethod
     def fromProto(cls, pb: pb2.BuildResourceProfileResponse) -> "BuildResourceProfileResult":
         return BuildResourceProfileResult(pb.profile_id)
+
 
 class SparkConnectClient(object):
     """

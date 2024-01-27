@@ -2041,8 +2041,11 @@ class DataFrame:
 
         return DataFrame(
             plan.MapPartitions(
-                child=self._plan, function=udf_obj, cols=self.columns, is_barrier=barrier,
-                profile=profile
+                child=self._plan,
+                function=udf_obj,
+                cols=self.columns,
+                is_barrier=barrier,
+                profile=profile,
             ),
             session=self._session,
         )
@@ -2054,8 +2057,9 @@ class DataFrame:
         barrier: bool = False,
         profile: Optional[ResourceProfile] = None,
     ) -> "DataFrame":
-        return self._map_partitions(func, schema, PythonEvalType.SQL_MAP_PANDAS_ITER_UDF, barrier,
-                                    profile)
+        return self._map_partitions(
+            func, schema, PythonEvalType.SQL_MAP_PANDAS_ITER_UDF, barrier, profile
+        )
 
     mapInPandas.__doc__ = PySparkDataFrame.mapInPandas.__doc__
 
@@ -2066,8 +2070,9 @@ class DataFrame:
         barrier: bool = False,
         profile: Optional[ResourceProfile] = None,
     ) -> "DataFrame":
-        return self._map_partitions(func, schema, PythonEvalType.SQL_MAP_ARROW_ITER_UDF, barrier,
-                                    profile)
+        return self._map_partitions(
+            func, schema, PythonEvalType.SQL_MAP_ARROW_ITER_UDF, barrier, profile
+        )
 
     mapInArrow.__doc__ = PySparkDataFrame.mapInArrow.__doc__
 
