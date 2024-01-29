@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+from threading import RLock
 from typing import overload, Dict, Union, Optional
 
 from py4j.java_gateway import JavaObject
@@ -99,22 +99,17 @@ class ResourceProfile:
         _exec_req: Optional[Dict[str, ExecutorResourceRequest]] = None,
         _task_req: Optional[Dict[str, TaskResourceRequest]] = None,
     ):
+        # profile id
+        self._id: Optional[int] = None
+        # lock to protect _id
+        self._lock = RLock()
+
         if _java_resource_profile is not None:
             self._java_resource_profile = _java_resource_profile
         else:
             self._java_resource_profile = None
             self._executor_resource_requests = _exec_req or {}
             self._task_resource_requests = _task_req or {}
-
-            from pyspark.sql import is_remote
-
-            self._is_remote = is_remote()
-            if self._is_remote:
-                from pyspark.sql.connect.resource.profile import _ResourceProfile
-
-                self._id = _ResourceProfile(
-                    self._executor_resource_requests, self._task_resource_requests
-                ).id
 
     @property
     def id(self) -> int:
@@ -124,26 +119,26 @@ class ResourceProfile:
         int
             A unique id of this :class:`ResourceProfile`
         """
-
-        if self._java_resource_profile is not None:
-            return self._java_resource_profile.id()
-        else:
-            if self._is_remote:
-                return self._id
-            else:
-                from pyspark.sql import is_remote
-
-                # It's not remote when creating ResourceProfile, However, it is remote now.
-                if is_remote():
-                    raise RuntimeError(
-                        "Spark Connect Session must be created to get the id "
-                        "before creating ResourceProfile"
-                    )
+        with self._lock:
+            if self._id is None:
+                if self._java_resource_profile is not None:
+                    self._id = self._java_resource_profile.id()
                 else:
-                    raise RuntimeError(
-                        "SparkContext must be created to get the id, get the id "
-                        "after adding the ResourceProfile to an RDD"
-                    )
+                    from pyspark.sql import is_remote
+
+                    if is_remote():
+                        from pyspark.sql.connect.resource.profile import _ResourceProfile
+
+                        rp = _ResourceProfile(
+                            self._executor_resource_requests, self._task_resource_requests
+                        )
+                        self._id = rp.id
+                    else:
+                        raise RuntimeError(
+                            "SparkContext must be created to get the id, get the id "
+                            "after adding the ResourceProfile to an RDD"
+                        )
+            return self._id
 
     @property
     def taskResources(self) -> Dict[str, TaskResourceRequest]:
