@@ -27,12 +27,6 @@ from pyspark.testing.sqlutils import (
 )
 from pyspark.testing.utils import ReusedPySparkTestCase
 
-if have_pyarrow:
-    import pyarrow as pa
-
-if have_pandas:
-    import pandas as pd
-
 
 @unittest.skipIf(
     not have_pandas or not have_pyarrow,

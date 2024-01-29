@@ -17,6 +17,8 @@
 import sys
 from typing import Union, TYPE_CHECKING, Optional
 
+from py4j.java_gateway import JavaObject
+
 from pyspark.resource.requests import ExecutorResourceRequests, TaskResourceRequests
 
 from pyspark.rdd import PythonEvalType
@@ -151,20 +153,7 @@ class PandasMapOpsMixin:
         )  # type: ignore[call-overload]
         udf_column = udf(*[self[col] for col in self.columns])
 
-        jrp = None
-        if profile is not None:
-            if profile._java_resource_profile is not None:
-                jrp = profile._java_resource_profile
-            else:
-                assert self.ctx._jvm is not None
-
-                builder = self.ctx._jvm.org.apache.spark.resource.ResourceProfileBuilder()
-                ereqs = ExecutorResourceRequests(self.ctx._jvm, profile._executor_resource_requests)
-                treqs = TaskResourceRequests(self.ctx._jvm, profile._task_resource_requests)
-                builder.require(ereqs._java_executor_resource_requests)
-                builder.require(treqs._java_task_resource_requests)
-                jrp = builder.build()
-
+        jrp = self._build_java_profile(profile)
         jdf = self._jdf.mapInPandas(udf_column._jc.expr(), barrier, jrp)
         return DataFrame(jdf, self.sparkSession)
 
@@ -251,22 +240,30 @@ class PandasMapOpsMixin:
         )  # type: ignore[call-overload]
         udf_column = udf(*[self[col] for col in self.columns])
 
+        jrp = self._build_java_profile(profile)
+        jdf = self._jdf.mapInArrow(udf_column._jc.expr(), barrier, jrp)
+        return DataFrame(jdf, self.sparkSession)
+
+    def _build_java_profile(
+        self, profile: Optional[ResourceProfile] = None
+    ) -> Optional[JavaObject]:
+        assert isinstance(self, DataFrame)
+
         jrp = None
         if profile is not None:
             if profile._java_resource_profile is not None:
                 jrp = profile._java_resource_profile
             else:
-                assert self.ctx._jvm is not None
+                jvm = self.sparkSession.sparkContext._jvm
+                assert jvm is not None
 
-                builder = self.ctx._jvm.org.apache.spark.resource.ResourceProfileBuilder()
-                ereqs = ExecutorResourceRequests(self.ctx._jvm, profile._executor_resource_requests)
-                treqs = TaskResourceRequests(self.ctx._jvm, profile._task_resource_requests)
+                builder = jvm.org.apache.spark.resource.ResourceProfileBuilder()
+                ereqs = ExecutorResourceRequests(jvm, profile._executor_resource_requests)
+                treqs = TaskResourceRequests(jvm, profile._task_resource_requests)
                 builder.require(ereqs._java_executor_resource_requests)
                 builder.require(treqs._java_task_resource_requests)
                 jrp = builder.build()
-
-        jdf = self._jdf.mapInArrow(udf_column._jc.expr(), barrier, jrp)
-        return DataFrame(jdf, self.sparkSession)
+        return jrp
 
 
 def _test() -> None:

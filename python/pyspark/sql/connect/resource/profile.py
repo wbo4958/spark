@@ -35,7 +35,9 @@ class _ResourceProfile:
 
         session = SparkSession.getActiveSession()
         if session is None:
-            raise "SparkSession should be initialized first before ResourceProfile creation."
+            raise RuntimeError(
+                "SparkSession should be initialized before ResourceProfile creation."
+            )
 
         exec_req = exec_req or {}
         task_req = task_req or {}
@@ -51,9 +53,9 @@ class _ResourceProfile:
                 vendor=value.vendor,
             )
 
-        for key, value in task_req.items():
-            self._task_req[key] = pb2.TaskResourceRequest(
-                resource_name=value.resourceName, amount=value.amount
+        for k, v in task_req.items():
+            self._task_req[k] = pb2.TaskResourceRequest(
+                resource_name=v.resourceName, amount=v.amount
             )
 
         self._remote_profile = pb2.ResourceProfile(
