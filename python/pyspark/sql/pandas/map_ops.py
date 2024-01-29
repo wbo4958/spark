@@ -249,6 +249,7 @@ class PandasMapOpsMixin:
     ) -> Optional[JavaObject]:
         """Build the java ResourceProfile based on PySpark ResourceProfile"""
         from pyspark.sql import DataFrame
+
         assert isinstance(self, DataFrame)
 
         jrp = None
