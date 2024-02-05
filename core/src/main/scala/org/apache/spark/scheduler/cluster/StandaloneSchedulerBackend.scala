@@ -229,6 +229,7 @@ private[spark] class StandaloneSchedulerBackend(
    */
   protected override def doRequestTotalExecutors(
       resourceProfileToTotalExecs: Map[ResourceProfile, Int]): Future[Boolean] = {
+    logInfo("doRequestTotalExecutors resourceProfileToTotalExecs: " + resourceProfileToTotalExecs)
     // resources profiles not supported
     Option(client) match {
       case Some(c) =>

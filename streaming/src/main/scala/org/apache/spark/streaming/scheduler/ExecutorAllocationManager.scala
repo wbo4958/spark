@@ -95,11 +95,11 @@ private[streaming] class ExecutorAllocationManager(
       val ratio = averageBatchProcTime.toDouble / batchDurationMs
       logInfo(s"Average: $averageBatchProcTime, ratio = $ratio" )
       if (ratio >= scalingUpRatio) {
-        logDebug("Requesting executors")
+        logInfo("Requesting executors")
         val numNewExecutors = math.max(math.round(ratio).toInt, 1)
         requestExecutors(numNewExecutors)
       } else if (ratio <= scalingDownRatio) {
-        logDebug("Killing executors")
+        logInfo("Killing executors")
         killExecutor()
       }
     }
@@ -111,7 +111,7 @@ private[streaming] class ExecutorAllocationManager(
   private def requestExecutors(numNewExecutors: Int): Unit = {
     require(numNewExecutors >= 1)
     val allExecIds = client.getExecutorIds()
-    logDebug(s"Executors (${allExecIds.size}) = ${allExecIds}")
+    logInfo(s"Executors (${allExecIds.size}) = ${allExecIds}")
     val targetTotalExecutors =
       math.max(math.min(maxNumExecutors, allExecIds.size + numNewExecutors), minNumExecutors)
     // Just map the targetTotalExecutors to the default ResourceProfile
@@ -125,14 +125,14 @@ private[streaming] class ExecutorAllocationManager(
   /** Kill an executor that is not running any receiver, if possible */
   private def killExecutor(): Unit = {
     val allExecIds = client.getExecutorIds()
-    logDebug(s"Executors (${allExecIds.size}) = ${allExecIds}")
+    logInfo(s"Executors (${allExecIds.size}) = ${allExecIds}")
 
     if (allExecIds.nonEmpty && allExecIds.size > minNumExecutors) {
       val execIdsWithReceivers = receiverTracker.allocatedExecutors().values.flatten.toSeq
       logInfo(s"Executors with receivers (${execIdsWithReceivers.size}): ${execIdsWithReceivers}")
 
       val removableExecIds = allExecIds.diff(execIdsWithReceivers)
-      logDebug(s"Removable executors (${removableExecIds.size}): ${removableExecIds}")
+      logInfo(s"Removable executors (${removableExecIds.size}): ${removableExecIds}")
       if (removableExecIds.nonEmpty) {
         val execIdToRemove = removableExecIds(Random.nextInt(removableExecIds.size))
         if (conf.get(DECOMMISSION_ENABLED)) {
@@ -154,7 +154,7 @@ private[streaming] class ExecutorAllocationManager(
   private def addBatchProcTime(timeMs: Long): Unit = synchronized {
     batchProcTimeSum += timeMs
     batchProcTimeCount += 1
-    logDebug(
+    logInfo(
       s"Added batch processing time $timeMs, sum = $batchProcTimeSum, count = $batchProcTimeCount")
   }
 
@@ -174,7 +174,7 @@ private[streaming] class ExecutorAllocationManager(
   }
 
   override def onBatchCompleted(batchCompleted: StreamingListenerBatchCompleted): Unit = {
-    logDebug("onBatchCompleted called: " + batchCompleted)
+    logInfo("onBatchCompleted called: " + batchCompleted)
     if (!batchCompleted.batchInfo.outputOperationInfos.values.exists(_.failureReason.nonEmpty)) {
       batchCompleted.batchInfo.processingDelay.foreach(addBatchProcTime)
     }

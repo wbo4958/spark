@@ -833,6 +833,9 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
       numLocalityAwareTasksPerResourceProfileId: Map[Int, Int],
       hostToLocalTaskCount: Map[Int, Map[String, Int]]
   ): Boolean = {
+    logInfo("requestTotalExecutors, resourceProfileIdToNumExecutors: " +
+      resourceProfileIdToNumExecutors + " numLocalityAwareTasksPerResourceProfileId: " +
+      numLocalityAwareTasksPerResourceProfileId)
     val totalExecs = resourceProfileIdToNumExecutors.values.sum
     if (totalExecs < 0) {
       throw new IllegalArgumentException(
@@ -869,6 +872,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
 
   private def updateExecRequestTime(profileId: Int, delta: Int) = {
     val times = execRequestTimes.getOrElseUpdate(profileId, Queue[(Int, Long)]())
+    logInfo("updateExecRequestTime times: " + times + " delta: " + delta)
     if (delta > 0) {
       // Add the request to the end, constant time op
       times += ((delta, System.currentTimeMillis()))

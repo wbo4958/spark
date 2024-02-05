@@ -142,6 +142,7 @@ private[spark] class ExecutorMonitor(
    * This covers both kills and decommissions.
    */
   def executorsKilled(ids: Seq[String]): Unit = {
+    logInfo("executorsKilled " + ids.mkString(", "))
     ids.foreach { id =>
       val tracker = executors.get(id)
       if (tracker != null) {
@@ -155,6 +156,7 @@ private[spark] class ExecutorMonitor(
   }
 
   private[spark] def executorsDecommissioned(ids: Seq[String]): Unit = {
+    logInfo("executorsDecommissioned " + ids.mkString(", "))
     ids.foreach { id =>
       val tracker = executors.get(id)
       if (tracker != null) {
@@ -216,12 +218,12 @@ private[spark] class ExecutorMonitor(
         case Some(jobs) =>
           // If a shuffle is being re-used, we need to re-scan the executors and update their
           // tracker with the information that the shuffle data they're storing is in use.
-          logDebug(s"Reusing shuffle $shuffle in job ${event.jobId}.")
+          logInfo(s"Reusing shuffle $shuffle in job ${event.jobId}.")
           updateExecutors = true
           jobs
 
         case _ =>
-          logDebug(s"Registered new shuffle $shuffle (from stage $stageId).")
+          logInfo(s"Registered new shuffle $shuffle (from stage $stageId).")
           val jobs = new mutable.ArrayBuffer[Int]()
           shuffleToActiveJobs(shuffle) = jobs
           jobs
@@ -244,7 +246,7 @@ private[spark] class ExecutorMonitor(
       }
 
       if (activatedExecs.nonEmpty) {
-        logDebug(s"Activated executors $activatedExecs due to shuffle data needed by new job" +
+        logInfo(s"Activated executors $activatedExecs due to shuffle data needed by new job" +
           s"${event.jobId}.")
       }
 
@@ -253,8 +255,10 @@ private[spark] class ExecutorMonitor(
       }
     }
 
+
     stageToShuffleID ++= shuffleStages
     jobToStageIDs(event.jobId) = shuffleStages.map(_._1)
+    logInfo("onJobStart stageToShuffleID: " + stageToShuffleID.mkString(", "))
   }
 
   override def onJobEnd(event: SparkListenerJobEnd): Unit = {
@@ -274,16 +278,17 @@ private[spark] class ExecutorMonitor(
         updateExecutors = true
       }
     }
+    logInfo("onJobEnd updateExecutors:" + updateExecutors)
 
     if (updateExecutors) {
-      if (log.isDebugEnabled()) {
+//      if (log.isDebugEnabled()) {
         if (activeShuffles.nonEmpty) {
-          logDebug(
+          logInfo(
             s"Job ${event.jobId} ended, shuffles ${activeShuffles.mkString(",")} still active.")
         } else {
-          logDebug(s"Job ${event.jobId} ended, no active shuffles remain.")
+          logInfo(s"Job ${event.jobId} ended, no active shuffles remain.")
         }
-      }
+//      }
 
       val deactivatedExecs = new ExecutorIdCollector()
       executors.asScala.foreach { case (id, exec) =>
@@ -296,7 +301,7 @@ private[spark] class ExecutorMonitor(
       }
 
       if (deactivatedExecs.nonEmpty) {
-        logDebug(s"Executors $deactivatedExecs do not have active shuffle data after job " +
+        logInfo(s"Executors $deactivatedExecs do not have active shuffle data after job " +
           s"${event.jobId} finished.")
       }
     }
@@ -307,7 +312,9 @@ private[spark] class ExecutorMonitor(
   }
 
   override def onTaskStart(event: SparkListenerTaskStart): Unit = {
+
     val executorId = event.taskInfo.executorId
+    logInfo("onTaskStart executorId: " + executorId)
     // Guard against a late arriving task start event (SPARK-26927).
     if (client.isExecutorActive(executorId)) {
       val exec = ensureExecutorIsTracked(executorId, UNKNOWN_RESOURCE_PROFILE_ID)
@@ -319,6 +326,8 @@ private[spark] class ExecutorMonitor(
     val executorId = event.taskInfo.executorId
     val exec = executors.get(executorId)
     if (exec != null) {
+      logInfo("onTaskEnd executorId: " + executorId)
+
       // If the task succeeded and the stage generates shuffle data, record that this executor
       // holds data for the shuffle. This code will track all executors that generate shuffle
       // for the stage, even if speculative tasks generate duplicate shuffle data and end up
@@ -381,6 +390,9 @@ private[spark] class ExecutorMonitor(
       return
     }
 
+    val id = event.blockUpdatedInfo.blockManagerId.executorId
+    logInfo(s"onBlockUpdated executorId: ${id}")
+
     val exec = ensureExecutorIsTracked(event.blockUpdatedInfo.blockManagerId.executorId,
       UNKNOWN_RESOURCE_PROFILE_ID)
 
@@ -432,6 +444,7 @@ private[spark] class ExecutorMonitor(
   }
 
   override def onUnpersistRDD(event: SparkListenerUnpersistRDD): Unit = {
+    logInfo(s"onUnpersistRDD rddId: ${event.rddId}")
     executors.values().asScala.foreach { exec =>
       exec.cachedBlocks -= event.rddId
       if (exec.cachedBlocks.isEmpty) {
@@ -448,6 +461,7 @@ private[spark] class ExecutorMonitor(
   override def rddCleaned(rddId: Int): Unit = { }
 
   override def shuffleCleaned(shuffleId: Int): Unit = {
+    logInfo(s"shuffleCleaned shuffleId: ${shuffleId}")
     // Only post the event if tracking is enabled
     if (shuffleTrackingEnabled) {
       // Because this is called in a completely separate thread, we post a custom event to the
@@ -492,18 +506,20 @@ private[spark] class ExecutorMonitor(
   // Visible for testing.
   private[scheduler] def ensureExecutorIsTracked(
       id: String, resourceProfileId: Int) : Tracker = {
+    logInfo("ensureExecutorIsTracked id:" + id + " resourceProfileId: " + resourceProfileId)
+
     val numExecsWithRpId = execResourceProfileCount.computeIfAbsent(resourceProfileId, _ => 0)
     val execTracker = executors.computeIfAbsent(id, _ => {
         val newcount = numExecsWithRpId + 1
         execResourceProfileCount.put(resourceProfileId, newcount)
-        logDebug(s"Executor added with ResourceProfile id: $resourceProfileId " +
+        logInfo(s"Executor added with ResourceProfile id: $resourceProfileId " +
           s"count is now $newcount")
         new Tracker(resourceProfileId)
       })
     // if we had added executor before without knowing the resource profile id, fix it up
     if (execTracker.resourceProfileId == UNKNOWN_RESOURCE_PROFILE_ID &&
         resourceProfileId != UNKNOWN_RESOURCE_PROFILE_ID) {
-      logDebug(s"Executor: $id, resource profile id was unknown, setting " +
+      logInfo(s"Executor: $id, resource profile id was unknown, setting " +
         s"it to $resourceProfileId")
       execTracker.resourceProfileId = resourceProfileId
       // fix up the counts for each resource profile id
@@ -523,7 +539,7 @@ private[spark] class ExecutorMonitor(
   }
 
   private def cleanupShuffle(id: Int): Unit = {
-    logDebug(s"Cleaning up state related to shuffle $id.")
+    logInfo(s"Cleaning up state related to shuffle $id.")
     shuffleToActiveJobs -= id
     executors.asScala.foreach { case (_, exec) =>
       exec.removeShuffle(id)
@@ -556,11 +572,15 @@ private[spark] class ExecutorMonitor(
 
     def updateRunningTasks(delta: Int): Unit = {
       runningTasks = math.max(0, runningTasks + delta)
+
       idleStart = if (runningTasks == 0) clock.nanoTime() else -1L
+      logInfo(s"updateRunningTasks runningTasks: ${runningTasks} idleStart: ${idleStart}")
       updateTimeout()
     }
 
     def updateTimeout(): Unit = {
+      logInfo(s"updateTimeout timeoutAt: ${timeoutAt}")
+
       val oldDeadline = timeoutAt
       val newDeadline = if (idleStart >= 0) {
         val _cacheTimeout = if (cachedBlocks.nonEmpty) storageTimeoutNs else 0
@@ -589,12 +609,14 @@ private[spark] class ExecutorMonitor(
     }
 
     def addShuffle(id: Int): Unit = {
+      logInfo(s"addShuffle shuffleId: ${id}, origin: " + shuffleIds.mkString(", "))
       if (shuffleIds.add(id)) {
         hasActiveShuffle = true
       }
     }
 
     def removeShuffle(id: Int): Unit = {
+      logInfo(s"removeShuffle shuffleId: ${id}, origin: " + shuffleIds.mkString(", "))
       if (shuffleIds.remove(id) && shuffleIds.isEmpty) {
         hasActiveShuffle = false
         if (isIdle) {
@@ -604,6 +626,7 @@ private[spark] class ExecutorMonitor(
     }
 
     def updateActiveShuffles(ids: Iterable[Int]): Unit = {
+      logInfo(s"updateActiveShuffles shuffleIds: ${ids}, origin: " + shuffleIds.mkString(", "))
       val hadActiveShuffle = hasActiveShuffle
       hasActiveShuffle = ids.exists(shuffleIds.contains)
       if (hadActiveShuffle && isIdle) {
