@@ -258,7 +258,8 @@ private[spark] class ExecutorMonitor(
 
     stageToShuffleID ++= shuffleStages
     jobToStageIDs(event.jobId) = shuffleStages.map(_._1)
-    logInfo("onJobStart stageToShuffleID: " + stageToShuffleID.mkString(", "))
+    logInfo("onJobStart stageToShuffleID: " + stageToShuffleID.mkString(", ") +
+      " jobToStageIDs: " + jobToStageIDs.mkString(","))
   }
 
   override def onJobEnd(event: SparkListenerJobEnd): Unit = {
@@ -351,7 +352,8 @@ private[spark] class ExecutorMonitor(
   override def onExecutorAdded(event: SparkListenerExecutorAdded): Unit = {
     val exec = ensureExecutorIsTracked(event.executorId, event.executorInfo.resourceProfileId)
     exec.updateRunningTasks(0)
-    logInfo(s"New executor ${event.executorId} has registered (new total is ${executors.size()})")
+    logInfo(s"onExecutorAdded New executor ${event.executorId} has registered " +
+      s"(new total is ${executors.size()})")
   }
 
   private def decrementExecResourceProfileCount(rpId: Int): Unit = {
@@ -506,20 +508,21 @@ private[spark] class ExecutorMonitor(
   // Visible for testing.
   private[scheduler] def ensureExecutorIsTracked(
       id: String, resourceProfileId: Int) : Tracker = {
-    logInfo("ensureExecutorIsTracked id:" + id + " resourceProfileId: " + resourceProfileId)
+    logInfo("ensureExecutorIsTracked executor id:" + id +
+      " resourceProfileId: " + resourceProfileId)
 
     val numExecsWithRpId = execResourceProfileCount.computeIfAbsent(resourceProfileId, _ => 0)
     val execTracker = executors.computeIfAbsent(id, _ => {
         val newcount = numExecsWithRpId + 1
         execResourceProfileCount.put(resourceProfileId, newcount)
-        logInfo(s"Executor added with ResourceProfile id: $resourceProfileId " +
-          s"count is now $newcount")
+        logInfo(s"ensureExecutorIsTracked Executor added with ResourceProfile id: $resourceProfileId " +
+          s"executor count is now $newcount")
         new Tracker(resourceProfileId)
       })
     // if we had added executor before without knowing the resource profile id, fix it up
     if (execTracker.resourceProfileId == UNKNOWN_RESOURCE_PROFILE_ID &&
         resourceProfileId != UNKNOWN_RESOURCE_PROFILE_ID) {
-      logInfo(s"Executor: $id, resource profile id was unknown, setting " +
+      logInfo(s"ensureExecutorIsTracked Executor: $id, resource profile id was unknown, setting " +
         s"it to $resourceProfileId")
       execTracker.resourceProfileId = resourceProfileId
       // fix up the counts for each resource profile id

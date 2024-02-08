@@ -152,7 +152,7 @@ private[spark] class ExecutorAllocationManager(
   private var addTime: Long = NOT_SET
 
   // Polling loop interval (ms)
-  private val intervalMillis: Long = 5000
+  private val intervalMillis: Long = 500
 
   // Listener for Spark events that impact the allocation policy
   val listener = new ExecutorAllocationListener
@@ -293,8 +293,9 @@ private[spark] class ExecutorAllocationManager(
     val numRunningOrPendingTasks = pendingTask + pendingSpeculative + running
     val rp = resourceProfileManager.resourceProfileFromId(rpId)
     val tasksPerExecutor = rp.maxTasksPerExecutor(conf)
-    logInfo(s"max needed for rpId: $rpId numpending: $numRunningOrPendingTasks," +
-      s" tasksperexecutor: $tasksPerExecutor")
+    logInfo(s"maxNumExecutorsNeededPerResourceProfile max needed for rpId: $rpId " +
+      s"num pending: $numRunningOrPendingTasks," +
+      s" tasks per executor: $tasksPerExecutor")
     val maxNeeded = math.ceil(numRunningOrPendingTasks * executorAllocationRatio /
       tasksPerExecutor).toInt
 
@@ -361,6 +362,7 @@ private[spark] class ExecutorAllocationManager(
    * @return the delta in the target number of executors.
    */
   private def updateAndSyncNumExecutorsTarget(now: Long): Int = synchronized {
+    logInfo(s"updateAndSyncNumExecutorsTarget now: ${now} initializing: ${initializing}" )
     if (initializing) {
       // Do not change our target while we are still initializing,
       // Otherwise the first job may have to ramp up unnecessarily
@@ -428,7 +430,7 @@ private[spark] class ExecutorAllocationManager(
     // Only call cluster manager if target has changed.
     if (updates.size > 0) {
       val requestAcknowledged = try {
-        logInfo("requesting updates: " + updates)
+        logInfo("doUpdateRequest requesting updates: " + updates)
         testing ||
           client.requestTotalExecutors(
             numExecutorsTargetPerResourceProfileId.toMap,
@@ -450,7 +452,7 @@ private[spark] class ExecutorAllocationManager(
           totalDelta += delta
           if (delta > 0) {
             val executorsString = "executor" + { if (delta > 1) "s" else "" }
-            logInfo(s"Requesting $delta new $executorsString because tasks are backlogged " +
+            logInfo(s"doUpdateRequest Requesting $delta new $executorsString because tasks are backlogged " +
               s"(new desired total will be ${numExecutorsTargetPerResourceProfileId(rpId)} " +
               s"for resource profile id: ${rpId})")
             numExecutorsToAddPerResourceProfileId(rpId) =
@@ -459,11 +461,11 @@ private[spark] class ExecutorAllocationManager(
               } else {
                 1
               }
-            logInfo(s"Starting timer to add more executors (to " +
+            logInfo(s"doUpdateRequest Starting timer to add more executors (to " +
               s"expire in $sustainedSchedulerBacklogTimeoutS seconds)")
             addTime = now + TimeUnit.SECONDS.toNanos(sustainedSchedulerBacklogTimeoutS)
           } else {
-            logInfo(s"Lowering target number of executors to" +
+            logInfo(s"doUpdateRequest Lowering target number of executors to" +
               s" ${numExecutorsTargetPerResourceProfileId(rpId)} (previously " +
               s"${targetNum.oldNumExecutorsTarget} for resource profile id: ${rpId}) " +
               "because not all requested executors " +
@@ -481,7 +483,7 @@ private[spark] class ExecutorAllocationManager(
         0
       }
     } else {
-      logInfo("No change in number of executors")
+      logInfo("doUpdateRequest No change in number of executors")
       0
     }
   }
@@ -697,6 +699,9 @@ private[spark] class ExecutorAllocationManager(
       val stageAttemptId = stageSubmitted.stageInfo.attemptNumber()
       val stageAttempt = StageAttempt(stageId, stageAttemptId)
       val numTasks = stageSubmitted.stageInfo.numTasks
+
+      logInfo(s"onStageSubmitted stageId: ${stageId} numTasks: ${numTasks}")
+
       allocationManager.synchronized {
         stageAttemptToNumTasks(stageAttempt) = numTasks
         allocationManager.onSchedulerBacklogged()
@@ -773,6 +778,9 @@ private[spark] class ExecutorAllocationManager(
       val stageAttemptId = taskStart.stageAttemptId
       val stageAttempt = StageAttempt(stageId, stageAttemptId)
       val taskIndex = taskStart.taskInfo.index
+
+      logInfo(s"onTaskStart stageId: ${stageId} taskIndex: ${taskIndex}")
+
       allocationManager.synchronized {
         stageAttemptToNumRunningTask(stageAttempt) =
           stageAttemptToNumRunningTask.getOrElse(stageAttempt, 0) + 1
@@ -797,6 +805,9 @@ private[spark] class ExecutorAllocationManager(
       val stageAttemptId = taskEnd.stageAttemptId
       val stageAttempt = StageAttempt(stageId, stageAttemptId)
       val taskIndex = taskEnd.taskInfo.index
+
+      logInfo(s"onTaskEnd stageId: ${stageId} taskIndex: ${taskIndex}")
+
       allocationManager.synchronized {
         if (stageAttemptToNumRunningTask.contains(stageAttempt)) {
           stageAttemptToNumRunningTask(stageAttempt) -= 1
@@ -841,6 +852,8 @@ private[spark] class ExecutorAllocationManager(
       val stageAttemptId = speculativeTask.stageAttemptId
       val stageAttempt = StageAttempt(stageId, stageAttemptId)
       val taskIndex = speculativeTask.taskIndex
+      logInfo(s"onSpeculativeTaskSubmitted stageId: ${stageId}, taskIndex: ${taskIndex}")
+
       allocationManager.synchronized {
         stageAttemptToPendingSpeculativeTasks.getOrElseUpdate(stageAttempt,
           new mutable.HashSet[Int]).add(taskIndex)
@@ -853,6 +866,8 @@ private[spark] class ExecutorAllocationManager(
       val stageId = unschedulableTaskSetAdded.stageId
       val stageAttemptId = unschedulableTaskSetAdded.stageAttemptId
       val stageAttempt = StageAttempt(stageId, stageAttemptId)
+      logInfo(s"onUnschedulableTaskSetAdded stageId: ${stageId}")
+
       allocationManager.synchronized {
         unschedulableTaskSets.add(stageAttempt)
         allocationManager.onSchedulerBacklogged()
@@ -864,6 +879,8 @@ private[spark] class ExecutorAllocationManager(
       val stageId = unschedulableTaskSetRemoved.stageId
       val stageAttemptId = unschedulableTaskSetRemoved.stageAttemptId
       val stageAttempt = StageAttempt(stageId, stageAttemptId)
+      logInfo(s"onUnschedulableTaskSetRemoved stageId: ${stageId}")
+
       allocationManager.synchronized {
         // Clear unschedulableTaskSets since atleast one task becomes schedulable now
         unschedulableTaskSets.remove(stageAttempt)
