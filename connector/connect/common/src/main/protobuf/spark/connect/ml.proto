@@ -1,0 +1,125 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = 'proto3';
+import "relations.proto";
+import "expressions.proto";
+
+package spark.connect;
+
+option java_multiple_files = true;
+option java_package = "org.apache.spark.connect.proto";
+
+// Question: Do we need to cache the estimator for reusing?
+message Estimator {
+  // Name identifier of the Estimator. This is used implicitly in the
+  // backend when the estimator is registered in the session.
+  string name = 1;
+  Relation input = 2;
+
+  // The parameters to instantiate the Estimator
+  map<string, Expression.Literal> parameters = 3;
+}
+
+message MlObject {
+  // The real object will be got from the cache according to the object_id;
+  int64 object_id = 1;
+
+  // Object name
+  string name = 2;
+
+  // The method to be applied on the Object.
+  string method = 3;
+
+  // The parameters passed to the method
+  map<string, Expression.Literal> parameters = 4;
+}
+
+message Model {
+  MlObject model = 1;
+
+  // Input is for model transform/evaluation.
+  Relation input = 2;
+}
+
+message Summary {
+  MlObject summary = 1;
+}
+
+message Evaluator {
+  // Name identifier of the Evaluator.
+  string name = 1;
+
+  // Input is for evaluation.
+  Relation input = 2;
+
+  // The parameters for evaluator.
+  map<string, Expression.Literal> parameters = 3;
+}
+
+
+
+message DataHolder {
+  // DataHolder breaks down the class into piece
+  // for example, the Matrix will be broken down to
+  // Map ("numRows": int,
+  // "numCols": int,
+  // "isTransposed": bool,
+  // "values": array[double])
+  // with these information, we can reconstruct the data type in python.
+  // can be vector/matrix ...
+
+  TypeName name = 1;
+
+  map<string, Expression.Literal> parameters = 2;
+
+  enum TypeName {
+    VECTOR = 0;
+    MATRIX = 1;
+  }
+}
+
+
+message MLCommand {
+  oneof request {
+    Estimator estimator = 1;
+    Model model = 2;
+    Evaluator evaluator = 3;
+    Summary summary = 4;
+  }
+}
+
+message Command {
+  oneof command_type {
+    MLCommand run_ml_command = 500;
+  }
+}
+
+message MLResult {
+  oneof result {
+    Expression.Literal scalar = 1;
+    DataHolder data_holder = 2;
+    Relation relation = 3;
+  }
+}
+
+message ExecutePlanResponse {
+  // Union type for the different response messages.
+  oneof response_type {
+    MLResult ml_result = 500;
+  }
+}
