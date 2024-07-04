@@ -40,6 +40,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.connect.common.InvalidPlanInput
 import org.apache.spark.sql.connect.config.Connect
+import org.apache.spark.sql.connect.ml.ModelCache
 import org.apache.spark.sql.connect.planner.PythonStreamingQueryListener
 import org.apache.spark.sql.connect.planner.StreamingForeachBatchHelper
 import org.apache.spark.sql.connect.service.SessionHolder.{ERROR_CACHE_SIZE, ERROR_CACHE_TIMEOUT_SEC}
@@ -75,6 +76,8 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
           .build[proto.Relation, LogicalPlan]())
     }
   }
+
+  private[connect] lazy val mlCache = new ModelCache()
 
   // Time when the session was started.
   private val startTimeMs: Long = System.currentTimeMillis()

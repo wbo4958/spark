@@ -19,18 +19,18 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Generic, Optional, List, Type, TypeVar, TYPE_CHECKING
 
 from pyspark import since
-from pyspark.sql import DataFrame
+from pyspark.ml.connect.serialize import serialize_ml_params, deserialize
+from pyspark.sql import DataFrame, is_remote, SparkSession
 from pyspark.ml import Estimator, Predictor, PredictionModel, Transformer, Model
 from pyspark.ml.base import _PredictorParams
 from pyspark.ml.param import Param, Params
 from pyspark.ml.util import _jvm
 from pyspark.ml.common import inherit_doc, _java2py, _py2java
-
+from pyspark.sql.connect.proto import ml_pb2
 
 if TYPE_CHECKING:
     from pyspark.ml._typing import ParamMap
     from py4j.java_gateway import JavaObject, JavaClass
-
 
 T = TypeVar("T")
 JW = TypeVar("JW", bound="JavaWrapper")
@@ -48,12 +48,12 @@ class JavaWrapper:
         self._java_obj = java_obj
 
     def __del__(self) -> None:
-        from pyspark.core.context import SparkContext
-
-        if SparkContext._active_spark_context and self._java_obj is not None:
-            SparkContext._active_spark_context._gateway.detach(  # type: ignore[union-attr]
-                self._java_obj
-            )
+        if self._java_obj is not None:
+            from pyspark.core.context import SparkContext
+            if SparkContext._active_spark_context:
+                SparkContext._active_spark_context._gateway.detach(  # type: ignore[union-attr]
+                    self._java_obj
+                )
 
     @classmethod
     def _create_from_java_class(cls: Type[JW], java_class: str, *args: Any) -> JW:
@@ -64,6 +64,30 @@ class JavaWrapper:
         return cls(java_obj)
 
     def _call_java(self, name: str, *args: Any) -> Any:
+        if is_remote():
+            # if not hasattr(self, "_cached_remote_id"):
+            #     raise AttributeError(f"{self.__class__.__name__} doesn't support remote")
+            # else:
+            key = f"{self._java_obj}.{name}"
+            # TODO support args
+
+            client = SparkSession.getActiveSession().client
+            model_attr_command_proto = ml_pb2.MlCommand.FetchModelAttr(
+                model_ref=ml_pb2.ModelRef(id=key),
+                name=name
+            )
+            req = client._execute_plan_request_with_metadata()
+            req.plan.ml_command.fetch_model_attr.CopyFrom(model_attr_command_proto)
+
+            resp = client.execute_ml(req)
+
+            ret = deserialize(resp, client)
+            if resp.HasField("model_info"):
+                self._java_obj = ret
+                return None
+            else:
+                return ret
+
         from pyspark.core.context import SparkContext
 
         m = getattr(self._java_obj, name)
@@ -78,6 +102,9 @@ class JavaWrapper:
         """
         Returns a new Java object.
         """
+        if is_remote():
+            return None
+
         from pyspark.core.context import SparkContext
 
         sc = SparkContext._active_spark_context
@@ -391,9 +418,33 @@ class JavaEstimator(JavaParams, Estimator[JM], metaclass=ABCMeta):
         self._transfer_params_to_java()
         return self._java_obj.fit(dataset._jdf)
 
+    def _fit_remote(self, dataset: DataFrame) -> str:
+        import pyspark.sql.connect.proto.ml_pb2 as ml_pb2
+        client = dataset.sparkSession.client
+        dataset_relation = dataset._plan.plan(client)
+        estimator_proto = ml_pb2.MlStage(
+            name=self.__class__.__name__,
+            params=serialize_ml_params(self, client),
+            uid=self.uid,
+            type=ml_pb2.MlStage.ESTIMATOR,
+        )
+        fit_command_proto = ml_pb2.MlCommand.Fit(
+            estimator=estimator_proto,
+            dataset=dataset_relation,
+        )
+        req = client._execute_plan_request_with_metadata()
+        req.plan.ml_command.fit.CopyFrom(fit_command_proto)
+        model_id = deserialize(client.execute_ml(req), client)
+        return model_id
+
     def _fit(self, dataset: DataFrame) -> JM:
-        java_model = self._fit_java(dataset)
+        if is_remote():
+            java_model = self._fit_remote(dataset)
+        else:
+            java_model = self._fit_java(dataset)
         model = self._create_model(java_model)
+        # if is_remote():
+        #     model._java_obj = model_id
         return self._copyValues(model)
 
 
@@ -435,7 +486,7 @@ class JavaModel(JavaTransformer, Model, metaclass=ABCMeta):
         other ML classes).
         """
         super(JavaModel, self).__init__(java_model)
-        if java_model is not None:
+        if java_model is not None and not is_remote():
             # SPARK-10931: This is a temporary fix to allow models to own params
             # from estimators. Eventually, these params should be in models through
             # using common base classes between estimators and models.

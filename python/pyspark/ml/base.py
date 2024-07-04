@@ -216,6 +216,8 @@ class Transformer(Params, metaclass=ABCMeta):
     .. versionadded:: 1.3.0
     """
 
+    _cached_remote_id = None
+
     @abstractmethod
     def _transform(self, dataset: DataFrame) -> DataFrame:
         """
