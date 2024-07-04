@@ -1057,6 +1057,24 @@ class SparkConnectClient(object):
                     },
                 )
 
+    def execute_ml(self, req: pb2.ExecutePlanRequest):
+        """
+        Execute the ML command request and return ML response result
+        Parameters
+        ----------
+        req : pb2.ExecutePlanRequest
+            Proto representation of the plan.
+        """
+        logger.info("Execute ML")
+        try:
+            for attempt in self._retrying():
+                with attempt:
+                    for b in self._stub.ExecutePlan(req, metadata=self._builder.metadata()):
+                        assert b.HasField("ml_command_result")
+                        return b.ml_command_result
+        except grpc.RpcError as rpc_error:
+            self._handle_error(rpc_error)
+
     def same_semantics(self, plan: pb2.Plan, other: pb2.Plan) -> bool:
         """
         return if two plans have the same semantics.
