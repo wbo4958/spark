@@ -48,7 +48,8 @@ class JavaWrapper:
         self._java_obj = java_obj
 
     def __del__(self) -> None:
-        if self._java_obj is not None:
+        # TODO remove the object on the server side
+        if self._java_obj is not None and not is_remote():
             from pyspark.core.context import SparkContext
             if SparkContext._active_spark_context:
                 SparkContext._active_spark_context._gateway.detach(  # type: ignore[union-attr]
@@ -63,30 +64,30 @@ class JavaWrapper:
         java_obj = JavaWrapper._new_java_obj(java_class, *args)
         return cls(java_obj)
 
+    def _call_remote(self, name: str, *args: Any) -> Any:
+        key = f"{self._java_obj}.{name}"
+        # TODO support args
+
+        client = SparkSession.getActiveSession().client
+        model_attr_command_proto = ml_pb2.MlCommand.FetchModelAttr(
+            model_ref=ml_pb2.ModelRef(id=key),
+            name=name
+        )
+        req = client._execute_plan_request_with_metadata()
+        req.plan.ml_command.fetch_model_attr.CopyFrom(model_attr_command_proto)
+
+        resp = client.execute_ml(req)
+
+        ret = deserialize(resp, client)
+        if resp.HasField("model_info"):
+            self._java_obj = ret
+            return None
+        else:
+            return ret
+
     def _call_java(self, name: str, *args: Any) -> Any:
         if is_remote():
-            # if not hasattr(self, "_cached_remote_id"):
-            #     raise AttributeError(f"{self.__class__.__name__} doesn't support remote")
-            # else:
-            key = f"{self._java_obj}.{name}"
-            # TODO support args
-
-            client = SparkSession.getActiveSession().client
-            model_attr_command_proto = ml_pb2.MlCommand.FetchModelAttr(
-                model_ref=ml_pb2.ModelRef(id=key),
-                name=name
-            )
-            req = client._execute_plan_request_with_metadata()
-            req.plan.ml_command.fetch_model_attr.CopyFrom(model_attr_command_proto)
-
-            resp = client.execute_ml(req)
-
-            ret = deserialize(resp, client)
-            if resp.HasField("model_info"):
-                self._java_obj = ret
-                return None
-            else:
-                return ret
+            return self._call_remote(name, args)
 
         from pyspark.core.context import SparkContext
 
@@ -443,8 +444,6 @@ class JavaEstimator(JavaParams, Estimator[JM], metaclass=ABCMeta):
         else:
             java_model = self._fit_java(dataset)
         model = self._create_model(java_model)
-        # if is_remote():
-        #     model._java_obj = model_id
         return self._copyValues(model)
 
 
