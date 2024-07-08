@@ -21,32 +21,10 @@ package spark.connect;
 
 import "spark/connect/expressions.proto";
 import "spark/connect/relations.proto";
+import "spark/connect/ml_common.proto";
 
 option java_multiple_files = true;
 option java_package = "org.apache.spark.connect.proto";
-
-// MlParams stores param settings for
-// ML Estimator / Transformer / Model / Evaluator
-message MlParams {
-  // user-supplied params
-  map<string, Expression.Literal> params = 1;
-}
-
-// MlStage stores ML stage data (Estimator or Evaluator)
-message MlStage {
-  // The name of the stage in the registry
-  string name = 1;
-  // param settings for the stage
-  MlParams params = 2;
-  // unique id of the stage
-  string uid = 3;
-  StageType type = 4;
-  enum StageType {
-    UNSPECIFIED = 0;
-    ESTIMATOR = 1;
-    EVALUATOR = 2;
-  }
-}
 
 // a MlCommand is a type container that has exactly one ML command set
 message MlCommand {
@@ -82,13 +60,6 @@ message MlCommandResponse {
     MlParams params = 3;
   }
 }
-
-// ModelRef represents a reference to server side `Model` instance
-message ModelRef {
-  // The ID is used to lookup the model instance in server side.
-  string id = 1;
-}
-
 
 message Vector {
   oneof one_of {
