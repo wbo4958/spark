@@ -36,4 +36,6 @@ print(model.intercept)
 
 model.transform(df).show()
 
+model.summary.roc.show()
+
 # df.show()

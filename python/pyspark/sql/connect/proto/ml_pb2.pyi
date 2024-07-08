@@ -179,6 +179,7 @@ class MlCommandResponse(google.protobuf.message.Message):
     MATRIX_FIELD_NUMBER: builtins.int
     STAGE_FIELD_NUMBER: builtins.int
     MODEL_REF_FIELD_NUMBER: builtins.int
+    IS_DATAFRAME_FIELD_NUMBER: builtins.int
     @property
     def literal(self) -> pyspark.sql.connect.proto.expressions_pb2.Expression.Literal: ...
     @property
@@ -191,6 +192,7 @@ class MlCommandResponse(google.protobuf.message.Message):
     def stage(self) -> pyspark.sql.connect.proto.ml_common_pb2.MlStage: ...
     @property
     def model_ref(self) -> pyspark.sql.connect.proto.ml_common_pb2.ModelRef: ...
+    is_dataframe: builtins.bool
     def __init__(
         self,
         *,
@@ -200,10 +202,13 @@ class MlCommandResponse(google.protobuf.message.Message):
         matrix: global___Matrix | None = ...,
         stage: pyspark.sql.connect.proto.ml_common_pb2.MlStage | None = ...,
         model_ref: pyspark.sql.connect.proto.ml_common_pb2.ModelRef | None = ...,
+        is_dataframe: builtins.bool = ...,
     ) -> None: ...
     def HasField(
         self,
         field_name: typing_extensions.Literal[
+            "is_dataframe",
+            b"is_dataframe",
             "literal",
             b"literal",
             "matrix",
@@ -223,6 +228,8 @@ class MlCommandResponse(google.protobuf.message.Message):
     def ClearField(
         self,
         field_name: typing_extensions.Literal[
+            "is_dataframe",
+            b"is_dataframe",
             "literal",
             b"literal",
             "matrix",
@@ -245,7 +252,9 @@ class MlCommandResponse(google.protobuf.message.Message):
             "ml_command_response_type", b"ml_command_response_type"
         ],
     ) -> (
-        typing_extensions.Literal["literal", "model_info", "vector", "matrix", "stage", "model_ref"]
+        typing_extensions.Literal[
+            "literal", "model_info", "vector", "matrix", "stage", "model_ref", "is_dataframe"
+        ]
         | None
     ): ...
 

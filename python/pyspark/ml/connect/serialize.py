@@ -24,6 +24,9 @@ from pyspark.ml.linalg import Vectors, Matrices
 
 def deserialize(ml_command_result: pb2.ml_pb2.MlCommandResponse, client, **kwargs):
 
+    if ml_command_result.HasField("is_dataframe"):
+        return ml_command_result.is_dataframe
+
     if ml_command_result.HasField("literal"):
         return LiteralExpression._to_value(ml_command_result.literal)
 

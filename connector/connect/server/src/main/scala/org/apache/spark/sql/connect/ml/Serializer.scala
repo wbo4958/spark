@@ -19,6 +19,7 @@ package org.apache.spark.sql.connect.ml
 
 import org.apache.spark.connect.proto
 import org.apache.spark.ml.linalg.{Matrix, Vector}
+import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.connect.common.LiteralValueProtoConverter
 
 object Serializer {
@@ -34,7 +35,12 @@ object Serializer {
           .setLiteral(LiteralValueProtoConverter.toLiteralProto(data))
           .build()
 
-      case _ =>
+      case _: Dataset[_] =>
+        proto.MlCommandResponse.newBuilder()
+          .setIsDataframe(true)
+          .build()
+
+      case _ => // if didn't match, we just return the method chain to client
         proto.MlCommandResponse
           .newBuilder().setModelRef(proto.ModelRef.newBuilder().setId(objIdentifier))
           .build()

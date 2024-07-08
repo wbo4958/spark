@@ -68,6 +68,7 @@ class JavaWrapper:
         key = f"{self._java_obj}.{name}"
         # TODO support args
 
+        session = SparkSession.getActiveSession()
         client = SparkSession.getActiveSession().client
         model_attr_command_proto = pb2.ml_pb2.MlCommand.FetchModelAttr(
             model_ref=pb2.ml_common_pb2.ModelRef(id=key),
@@ -82,6 +83,11 @@ class JavaWrapper:
         if resp.HasField("model_info"):
             self._java_obj = ret
             return None
+        if resp.HasField("is_dataframe"):
+            from pyspark.ml.remote.proto import _ModelTransformRelationPlan
+            plan = _ModelTransformRelationPlan(None, f"{self._java_obj}.{name}", None)
+            from pyspark.sql.connect.dataframe import DataFrame as RemoteDataFrame
+            return RemoteDataFrame(plan, session)
         else:
             return ret
 

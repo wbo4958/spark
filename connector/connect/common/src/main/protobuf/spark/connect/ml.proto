@@ -53,12 +53,14 @@ message MlCommandResponse {
     Matrix matrix = 4;
     MlStage stage = 5;
     ModelRef model_ref = 6;
+    bool is_dataframe = 7;
   }
   message ModelInfo {
     ModelRef model_ref = 1;
     string model_uid = 2;
     MlParams params = 3;
   }
+
 }
 
 message Vector {

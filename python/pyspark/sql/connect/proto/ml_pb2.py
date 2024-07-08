@@ -34,7 +34,7 @@ from pyspark.sql.connect.proto import ml_common_pb2 as spark_dot_connect_dot_ml_
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
-    b'\n\x16spark/connect/ml.proto\x12\rspark.connect\x1a\x1fspark/connect/expressions.proto\x1a\x1dspark/connect/relations.proto\x1a\x1dspark/connect/ml_common.proto"\xf1\x02\n\tMlCommand\x12\x30\n\x03\x66it\x18\x01 \x01(\x0b\x32\x1c.spark.connect.MlCommand.FitH\x00R\x03\x66it\x12S\n\x10\x66\x65tch_model_attr\x18\x02 \x01(\x0b\x32\'.spark.connect.MlCommand.FetchModelAttrH\x00R\x0e\x66\x65tchModelAttr\x1an\n\x03\x46it\x12\x34\n\testimator\x18\x01 \x01(\x0b\x32\x16.spark.connect.MlStageR\testimator\x12\x31\n\x07\x64\x61taset\x18\x02 \x01(\x0b\x32\x17.spark.connect.RelationR\x07\x64\x61taset\x1aZ\n\x0e\x46\x65tchModelAttr\x12\x34\n\tmodel_ref\x18\x01 \x01(\x0b\x32\x17.spark.connect.ModelRefR\x08modelRef\x12\x12\n\x04name\x18\x02 \x01(\tR\x04nameB\x11\n\x0fml_command_type"\x97\x04\n\x11MlCommandResponse\x12=\n\x07literal\x18\x01 \x01(\x0b\x32!.spark.connect.Expression.LiteralH\x00R\x07literal\x12K\n\nmodel_info\x18\x02 \x01(\x0b\x32*.spark.connect.MlCommandResponse.ModelInfoH\x00R\tmodelInfo\x12/\n\x06vector\x18\x03 \x01(\x0b\x32\x15.spark.connect.VectorH\x00R\x06vector\x12/\n\x06matrix\x18\x04 \x01(\x0b\x32\x15.spark.connect.MatrixH\x00R\x06matrix\x12.\n\x05stage\x18\x05 \x01(\x0b\x32\x16.spark.connect.MlStageH\x00R\x05stage\x12\x36\n\tmodel_ref\x18\x06 \x01(\x0b\x32\x17.spark.connect.ModelRefH\x00R\x08modelRef\x1a\x8f\x01\n\tModelInfo\x12\x34\n\tmodel_ref\x18\x01 \x01(\x0b\x32\x17.spark.connect.ModelRefR\x08modelRef\x12\x1b\n\tmodel_uid\x18\x02 \x01(\tR\x08modelUid\x12/\n\x06params\x18\x03 \x01(\x0b\x32\x17.spark.connect.MlParamsR\x06paramsB\x1a\n\x18ml_command_response_type"\xe8\x01\n\x06Vector\x12\x33\n\x05\x64\x65nse\x18\x01 \x01(\x0b\x32\x1b.spark.connect.Vector.DenseH\x00R\x05\x64\x65nse\x12\x36\n\x06sparse\x18\x02 \x01(\x0b\x32\x1c.spark.connect.Vector.SparseH\x00R\x06sparse\x1a\x1d\n\x05\x44\x65nse\x12\x14\n\x05value\x18\x01 \x03(\x01R\x05value\x1aH\n\x06Sparse\x12\x12\n\x04size\x18\x01 \x01(\x05R\x04size\x12\x14\n\x05index\x18\x02 \x03(\x01R\x05index\x12\x14\n\x05value\x18\x03 \x03(\x01R\x05valueB\x08\n\x06one_of"\xaa\x03\n\x06Matrix\x12\x33\n\x05\x64\x65nse\x18\x01 \x01(\x0b\x32\x1b.spark.connect.Matrix.DenseH\x00R\x05\x64\x65nse\x12\x36\n\x06sparse\x18\x02 \x01(\x0b\x32\x1c.spark.connect.Matrix.SparseH\x00R\x06sparse\x1ax\n\x05\x44\x65nse\x12\x19\n\x08num_rows\x18\x01 \x01(\x05R\x07numRows\x12\x19\n\x08num_cols\x18\x02 \x01(\x05R\x07numCols\x12\x14\n\x05value\x18\x03 \x03(\x01R\x05value\x12#\n\ris_transposed\x18\x04 \x01(\x08R\x0cisTransposed\x1a\xae\x01\n\x06Sparse\x12\x19\n\x08num_rows\x18\x01 \x01(\x05R\x07numRows\x12\x19\n\x08num_cols\x18\x02 \x01(\x05R\x07numCols\x12\x16\n\x06\x63olptr\x18\x03 \x03(\x01R\x06\x63olptr\x12\x1b\n\trow_index\x18\x04 \x03(\x01R\x08rowIndex\x12\x14\n\x05value\x18\x05 \x03(\x01R\x05value\x12#\n\ris_transposed\x18\x06 \x01(\x08R\x0cisTransposedB\x08\n\x06one_ofB"\n\x1eorg.apache.spark.connect.protoP\x01\x62\x06proto3'
+    b'\n\x16spark/connect/ml.proto\x12\rspark.connect\x1a\x1fspark/connect/expressions.proto\x1a\x1dspark/connect/relations.proto\x1a\x1dspark/connect/ml_common.proto"\xf1\x02\n\tMlCommand\x12\x30\n\x03\x66it\x18\x01 \x01(\x0b\x32\x1c.spark.connect.MlCommand.FitH\x00R\x03\x66it\x12S\n\x10\x66\x65tch_model_attr\x18\x02 \x01(\x0b\x32\'.spark.connect.MlCommand.FetchModelAttrH\x00R\x0e\x66\x65tchModelAttr\x1an\n\x03\x46it\x12\x34\n\testimator\x18\x01 \x01(\x0b\x32\x16.spark.connect.MlStageR\testimator\x12\x31\n\x07\x64\x61taset\x18\x02 \x01(\x0b\x32\x17.spark.connect.RelationR\x07\x64\x61taset\x1aZ\n\x0e\x46\x65tchModelAttr\x12\x34\n\tmodel_ref\x18\x01 \x01(\x0b\x32\x17.spark.connect.ModelRefR\x08modelRef\x12\x12\n\x04name\x18\x02 \x01(\tR\x04nameB\x11\n\x0fml_command_type"\xbc\x04\n\x11MlCommandResponse\x12=\n\x07literal\x18\x01 \x01(\x0b\x32!.spark.connect.Expression.LiteralH\x00R\x07literal\x12K\n\nmodel_info\x18\x02 \x01(\x0b\x32*.spark.connect.MlCommandResponse.ModelInfoH\x00R\tmodelInfo\x12/\n\x06vector\x18\x03 \x01(\x0b\x32\x15.spark.connect.VectorH\x00R\x06vector\x12/\n\x06matrix\x18\x04 \x01(\x0b\x32\x15.spark.connect.MatrixH\x00R\x06matrix\x12.\n\x05stage\x18\x05 \x01(\x0b\x32\x16.spark.connect.MlStageH\x00R\x05stage\x12\x36\n\tmodel_ref\x18\x06 \x01(\x0b\x32\x17.spark.connect.ModelRefH\x00R\x08modelRef\x12#\n\x0cis_dataframe\x18\x07 \x01(\x08H\x00R\x0bisDataframe\x1a\x8f\x01\n\tModelInfo\x12\x34\n\tmodel_ref\x18\x01 \x01(\x0b\x32\x17.spark.connect.ModelRefR\x08modelRef\x12\x1b\n\tmodel_uid\x18\x02 \x01(\tR\x08modelUid\x12/\n\x06params\x18\x03 \x01(\x0b\x32\x17.spark.connect.MlParamsR\x06paramsB\x1a\n\x18ml_command_response_type"\xe8\x01\n\x06Vector\x12\x33\n\x05\x64\x65nse\x18\x01 \x01(\x0b\x32\x1b.spark.connect.Vector.DenseH\x00R\x05\x64\x65nse\x12\x36\n\x06sparse\x18\x02 \x01(\x0b\x32\x1c.spark.connect.Vector.SparseH\x00R\x06sparse\x1a\x1d\n\x05\x44\x65nse\x12\x14\n\x05value\x18\x01 \x03(\x01R\x05value\x1aH\n\x06Sparse\x12\x12\n\x04size\x18\x01 \x01(\x05R\x04size\x12\x14\n\x05index\x18\x02 \x03(\x01R\x05index\x12\x14\n\x05value\x18\x03 \x03(\x01R\x05valueB\x08\n\x06one_of"\xaa\x03\n\x06Matrix\x12\x33\n\x05\x64\x65nse\x18\x01 \x01(\x0b\x32\x1b.spark.connect.Matrix.DenseH\x00R\x05\x64\x65nse\x12\x36\n\x06sparse\x18\x02 \x01(\x0b\x32\x1c.spark.connect.Matrix.SparseH\x00R\x06sparse\x1ax\n\x05\x44\x65nse\x12\x19\n\x08num_rows\x18\x01 \x01(\x05R\x07numRows\x12\x19\n\x08num_cols\x18\x02 \x01(\x05R\x07numCols\x12\x14\n\x05value\x18\x03 \x03(\x01R\x05value\x12#\n\ris_transposed\x18\x04 \x01(\x08R\x0cisTransposed\x1a\xae\x01\n\x06Sparse\x12\x19\n\x08num_rows\x18\x01 \x01(\x05R\x07numRows\x12\x19\n\x08num_cols\x18\x02 \x01(\x05R\x07numCols\x12\x16\n\x06\x63olptr\x18\x03 \x03(\x01R\x06\x63olptr\x12\x1b\n\trow_index\x18\x04 \x03(\x01R\x08rowIndex\x12\x14\n\x05value\x18\x05 \x03(\x01R\x05value\x12#\n\ris_transposed\x18\x06 \x01(\x08R\x0cisTransposedB\x08\n\x06one_ofB"\n\x1eorg.apache.spark.connect.protoP\x01\x62\x06proto3'
 )
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
@@ -49,19 +49,19 @@ if _descriptor._USE_C_DESCRIPTORS == False:
     _MLCOMMAND_FETCHMODELATTR._serialized_start = 397
     _MLCOMMAND_FETCHMODELATTR._serialized_end = 487
     _MLCOMMANDRESPONSE._serialized_start = 509
-    _MLCOMMANDRESPONSE._serialized_end = 1044
-    _MLCOMMANDRESPONSE_MODELINFO._serialized_start = 873
-    _MLCOMMANDRESPONSE_MODELINFO._serialized_end = 1016
-    _VECTOR._serialized_start = 1047
-    _VECTOR._serialized_end = 1279
-    _VECTOR_DENSE._serialized_start = 1166
-    _VECTOR_DENSE._serialized_end = 1195
-    _VECTOR_SPARSE._serialized_start = 1197
-    _VECTOR_SPARSE._serialized_end = 1269
-    _MATRIX._serialized_start = 1282
-    _MATRIX._serialized_end = 1708
-    _MATRIX_DENSE._serialized_start = 1401
-    _MATRIX_DENSE._serialized_end = 1521
-    _MATRIX_SPARSE._serialized_start = 1524
-    _MATRIX_SPARSE._serialized_end = 1698
+    _MLCOMMANDRESPONSE._serialized_end = 1081
+    _MLCOMMANDRESPONSE_MODELINFO._serialized_start = 910
+    _MLCOMMANDRESPONSE_MODELINFO._serialized_end = 1053
+    _VECTOR._serialized_start = 1084
+    _VECTOR._serialized_end = 1316
+    _VECTOR_DENSE._serialized_start = 1203
+    _VECTOR_DENSE._serialized_end = 1232
+    _VECTOR_SPARSE._serialized_start = 1234
+    _VECTOR_SPARSE._serialized_end = 1306
+    _MATRIX._serialized_start = 1319
+    _MATRIX._serialized_end = 1745
+    _MATRIX_DENSE._serialized_start = 1438
+    _MATRIX_DENSE._serialized_end = 1558
+    _MATRIX_SPARSE._serialized_start = 1561
+    _MATRIX_SPARSE._serialized_end = 1735
 # @@protoc_insertion_point(module_scope)
