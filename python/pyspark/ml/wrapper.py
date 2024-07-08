@@ -19,7 +19,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Generic, Optional, List, Type, TypeVar, TYPE_CHECKING
 
 from pyspark import since
-from pyspark.ml.connect.serialize import serialize_ml_params, deserialize
+from pyspark.ml.remote.serialize import serialize_ml_params, deserialize
 from pyspark.sql import DataFrame, is_remote, SparkSession
 from pyspark.ml import Estimator, Predictor, PredictionModel, Transformer, Model
 from pyspark.ml.base import _PredictorParams

@@ -1,7 +1,5 @@
-from pyspark.ml.connect.serialize import serialize_ml_params
 from pyspark.sql.connect.plan import LogicalPlan
 import pyspark.sql.connect.proto as pb2
-import pyspark.sql.connect.proto.ml_pb2 as ml_pb2
 import pyspark.sql.connect.proto.ml_common_pb2 as ml_common_pb2
 
 
