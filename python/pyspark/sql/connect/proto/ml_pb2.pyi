@@ -37,122 +37,18 @@ import builtins
 import collections.abc
 import google.protobuf.descriptor
 import google.protobuf.internal.containers
-import google.protobuf.internal.enum_type_wrapper
 import google.protobuf.message
 import pyspark.sql.connect.proto.expressions_pb2
+import pyspark.sql.connect.proto.ml_common_pb2
 import pyspark.sql.connect.proto.relations_pb2
 import sys
-import typing
 
-if sys.version_info >= (3, 10):
+if sys.version_info >= (3, 8):
     import typing as typing_extensions
 else:
     import typing_extensions
 
 DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
-
-class MlParams(google.protobuf.message.Message):
-    """MlParams stores param settings for
-    ML Estimator / Transformer / Model / Evaluator
-    """
-
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
-
-    class ParamsEntry(google.protobuf.message.Message):
-        DESCRIPTOR: google.protobuf.descriptor.Descriptor
-
-        KEY_FIELD_NUMBER: builtins.int
-        VALUE_FIELD_NUMBER: builtins.int
-        key: builtins.str
-        @property
-        def value(self) -> pyspark.sql.connect.proto.expressions_pb2.Expression.Literal: ...
-        def __init__(
-            self,
-            *,
-            key: builtins.str = ...,
-            value: pyspark.sql.connect.proto.expressions_pb2.Expression.Literal | None = ...,
-        ) -> None: ...
-        def HasField(
-            self, field_name: typing_extensions.Literal["value", b"value"]
-        ) -> builtins.bool: ...
-        def ClearField(
-            self, field_name: typing_extensions.Literal["key", b"key", "value", b"value"]
-        ) -> None: ...
-
-    PARAMS_FIELD_NUMBER: builtins.int
-    @property
-    def params(
-        self,
-    ) -> google.protobuf.internal.containers.MessageMap[
-        builtins.str, pyspark.sql.connect.proto.expressions_pb2.Expression.Literal
-    ]:
-        """user-supplied params"""
-    def __init__(
-        self,
-        *,
-        params: collections.abc.Mapping[
-            builtins.str, pyspark.sql.connect.proto.expressions_pb2.Expression.Literal
-        ]
-        | None = ...,
-    ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["params", b"params"]) -> None: ...
-
-global___MlParams = MlParams
-
-class MlStage(google.protobuf.message.Message):
-    """MlStage stores ML stage data (Estimator or Evaluator)"""
-
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
-
-    class _StageType:
-        ValueType = typing.NewType("ValueType", builtins.int)
-        V: typing_extensions.TypeAlias = ValueType
-
-    class _StageTypeEnumTypeWrapper(
-        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[MlStage._StageType.ValueType],
-        builtins.type,
-    ):  # noqa: F821
-        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
-        UNSPECIFIED: MlStage._StageType.ValueType  # 0
-        ESTIMATOR: MlStage._StageType.ValueType  # 1
-        EVALUATOR: MlStage._StageType.ValueType  # 2
-
-    class StageType(_StageType, metaclass=_StageTypeEnumTypeWrapper): ...
-    UNSPECIFIED: MlStage.StageType.ValueType  # 0
-    ESTIMATOR: MlStage.StageType.ValueType  # 1
-    EVALUATOR: MlStage.StageType.ValueType  # 2
-
-    NAME_FIELD_NUMBER: builtins.int
-    PARAMS_FIELD_NUMBER: builtins.int
-    UID_FIELD_NUMBER: builtins.int
-    TYPE_FIELD_NUMBER: builtins.int
-    name: builtins.str
-    """The name of the stage in the registry"""
-    @property
-    def params(self) -> global___MlParams:
-        """param settings for the stage"""
-    uid: builtins.str
-    """unique id of the stage"""
-    type: global___MlStage.StageType.ValueType
-    def __init__(
-        self,
-        *,
-        name: builtins.str = ...,
-        params: global___MlParams | None = ...,
-        uid: builtins.str = ...,
-        type: global___MlStage.StageType.ValueType = ...,
-    ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["params", b"params"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "name", b"name", "params", b"params", "type", b"type", "uid", b"uid"
-        ],
-    ) -> None: ...
-
-global___MlStage = MlStage
 
 class MlCommand(google.protobuf.message.Message):
     """a MlCommand is a type container that has exactly one ML command set"""
@@ -165,13 +61,13 @@ class MlCommand(google.protobuf.message.Message):
         ESTIMATOR_FIELD_NUMBER: builtins.int
         DATASET_FIELD_NUMBER: builtins.int
         @property
-        def estimator(self) -> global___MlStage: ...
+        def estimator(self) -> pyspark.sql.connect.proto.ml_common_pb2.MlStage: ...
         @property
         def dataset(self) -> pyspark.sql.connect.proto.relations_pb2.Relation: ...
         def __init__(
             self,
             *,
-            estimator: global___MlStage | None = ...,
+            estimator: pyspark.sql.connect.proto.ml_common_pb2.MlStage | None = ...,
             dataset: pyspark.sql.connect.proto.relations_pb2.Relation | None = ...,
         ) -> None: ...
         def HasField(
@@ -189,12 +85,12 @@ class MlCommand(google.protobuf.message.Message):
         MODEL_REF_FIELD_NUMBER: builtins.int
         NAME_FIELD_NUMBER: builtins.int
         @property
-        def model_ref(self) -> global___ModelRef: ...
+        def model_ref(self) -> pyspark.sql.connect.proto.ml_common_pb2.ModelRef: ...
         name: builtins.str
         def __init__(
             self,
             *,
-            model_ref: global___ModelRef | None = ...,
+            model_ref: pyspark.sql.connect.proto.ml_common_pb2.ModelRef | None = ...,
             name: builtins.str = ...,
         ) -> None: ...
         def HasField(
@@ -255,16 +151,16 @@ class MlCommandResponse(google.protobuf.message.Message):
         MODEL_UID_FIELD_NUMBER: builtins.int
         PARAMS_FIELD_NUMBER: builtins.int
         @property
-        def model_ref(self) -> global___ModelRef: ...
+        def model_ref(self) -> pyspark.sql.connect.proto.ml_common_pb2.ModelRef: ...
         model_uid: builtins.str
         @property
-        def params(self) -> global___MlParams: ...
+        def params(self) -> pyspark.sql.connect.proto.ml_common_pb2.MlParams: ...
         def __init__(
             self,
             *,
-            model_ref: global___ModelRef | None = ...,
+            model_ref: pyspark.sql.connect.proto.ml_common_pb2.ModelRef | None = ...,
             model_uid: builtins.str = ...,
-            params: global___MlParams | None = ...,
+            params: pyspark.sql.connect.proto.ml_common_pb2.MlParams | None = ...,
         ) -> None: ...
         def HasField(
             self,
@@ -292,9 +188,9 @@ class MlCommandResponse(google.protobuf.message.Message):
     @property
     def matrix(self) -> global___Matrix: ...
     @property
-    def stage(self) -> global___MlStage: ...
+    def stage(self) -> pyspark.sql.connect.proto.ml_common_pb2.MlStage: ...
     @property
-    def model_ref(self) -> global___ModelRef: ...
+    def model_ref(self) -> pyspark.sql.connect.proto.ml_common_pb2.ModelRef: ...
     def __init__(
         self,
         *,
@@ -302,8 +198,8 @@ class MlCommandResponse(google.protobuf.message.Message):
         model_info: global___MlCommandResponse.ModelInfo | None = ...,
         vector: global___Vector | None = ...,
         matrix: global___Matrix | None = ...,
-        stage: global___MlStage | None = ...,
-        model_ref: global___ModelRef | None = ...,
+        stage: pyspark.sql.connect.proto.ml_common_pb2.MlStage | None = ...,
+        model_ref: pyspark.sql.connect.proto.ml_common_pb2.ModelRef | None = ...,
     ) -> None: ...
     def HasField(
         self,
@@ -354,23 +250,6 @@ class MlCommandResponse(google.protobuf.message.Message):
     ): ...
 
 global___MlCommandResponse = MlCommandResponse
-
-class ModelRef(google.protobuf.message.Message):
-    """ModelRef represents a reference to server side `Model` instance"""
-
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
-
-    ID_FIELD_NUMBER: builtins.int
-    id: builtins.str
-    """The ID is used to lookup the model instance in server side."""
-    def __init__(
-        self,
-        *,
-        id: builtins.str = ...,
-    ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["id", b"id"]) -> None: ...
-
-global___ModelRef = ModelRef
 
 class Vector(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor

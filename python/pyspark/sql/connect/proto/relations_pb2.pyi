@@ -43,6 +43,7 @@ import google.protobuf.message
 import pyspark.sql.connect.proto.catalog_pb2
 import pyspark.sql.connect.proto.common_pb2
 import pyspark.sql.connect.proto.expressions_pb2
+import pyspark.sql.connect.proto.ml_common_pb2
 import pyspark.sql.connect.proto.types_pb2
 import sys
 import typing
@@ -116,6 +117,7 @@ class Relation(google.protobuf.message.Message):
     FREQ_ITEMS_FIELD_NUMBER: builtins.int
     SAMPLE_BY_FIELD_NUMBER: builtins.int
     CATALOG_FIELD_NUMBER: builtins.int
+    ML_RELATION_FIELD_NUMBER: builtins.int
     EXTENSION_FIELD_NUMBER: builtins.int
     UNKNOWN_FIELD_NUMBER: builtins.int
     @property
@@ -232,6 +234,9 @@ class Relation(google.protobuf.message.Message):
     def catalog(self) -> pyspark.sql.connect.proto.catalog_pb2.Catalog:
         """Catalog API (experimental / unstable)"""
     @property
+    def ml_relation(self) -> global___MlRelation:
+        """ML relation"""
+    @property
     def extension(self) -> google.protobuf.any_pb2.Any:
         """This field is used to mark extensions to the protocol. When plugins generate arbitrary
         relations they can add them here. During the planning the correct resolution is done.
@@ -296,6 +301,7 @@ class Relation(google.protobuf.message.Message):
         freq_items: global___StatFreqItems | None = ...,
         sample_by: global___StatSampleBy | None = ...,
         catalog: pyspark.sql.connect.proto.catalog_pb2.Catalog | None = ...,
+        ml_relation: global___MlRelation | None = ...,
         extension: google.protobuf.any_pb2.Any | None = ...,
         unknown: global___Unknown | None = ...,
     ) -> None: ...
@@ -362,6 +368,8 @@ class Relation(google.protobuf.message.Message):
             b"local_relation",
             "map_partitions",
             b"map_partitions",
+            "ml_relation",
+            b"ml_relation",
             "offset",
             b"offset",
             "parse",
@@ -479,6 +487,8 @@ class Relation(google.protobuf.message.Message):
             b"local_relation",
             "map_partitions",
             b"map_partitions",
+            "ml_relation",
+            b"ml_relation",
             "offset",
             b"offset",
             "parse",
@@ -589,6 +599,7 @@ class Relation(google.protobuf.message.Message):
             "freq_items",
             "sample_by",
             "catalog",
+            "ml_relation",
             "extension",
             "unknown",
         ]
@@ -596,6 +607,207 @@ class Relation(google.protobuf.message.Message):
     ): ...
 
 global___Relation = Relation
+
+class MlRelation(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    class ModelTransform(google.protobuf.message.Message):
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        INPUT_FIELD_NUMBER: builtins.int
+        MODEL_REF_FIELD_NUMBER: builtins.int
+        PARAMS_FIELD_NUMBER: builtins.int
+        @property
+        def input(self) -> global___Relation: ...
+        @property
+        def model_ref(self) -> pyspark.sql.connect.proto.ml_common_pb2.ModelRef: ...
+        @property
+        def params(self) -> pyspark.sql.connect.proto.ml_common_pb2.MlParams: ...
+        def __init__(
+            self,
+            *,
+            input: global___Relation | None = ...,
+            model_ref: pyspark.sql.connect.proto.ml_common_pb2.ModelRef | None = ...,
+            params: pyspark.sql.connect.proto.ml_common_pb2.MlParams | None = ...,
+        ) -> None: ...
+        def HasField(
+            self,
+            field_name: typing_extensions.Literal[
+                "input", b"input", "model_ref", b"model_ref", "params", b"params"
+            ],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "input", b"input", "model_ref", b"model_ref", "params", b"params"
+            ],
+        ) -> None: ...
+
+    class FeatureTransform(google.protobuf.message.Message):
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        INPUT_FIELD_NUMBER: builtins.int
+        TRANSFORMER_FIELD_NUMBER: builtins.int
+        @property
+        def input(self) -> global___Relation: ...
+        @property
+        def transformer(self) -> pyspark.sql.connect.proto.ml_common_pb2.MlStage: ...
+        def __init__(
+            self,
+            *,
+            input: global___Relation | None = ...,
+            transformer: pyspark.sql.connect.proto.ml_common_pb2.MlStage | None = ...,
+        ) -> None: ...
+        def HasField(
+            self,
+            field_name: typing_extensions.Literal["input", b"input", "transformer", b"transformer"],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal["input", b"input", "transformer", b"transformer"],
+        ) -> None: ...
+
+    class ModelAttr(google.protobuf.message.Message):
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        MODEL_REF_FIELD_NUMBER: builtins.int
+        NAME_FIELD_NUMBER: builtins.int
+        @property
+        def model_ref(self) -> pyspark.sql.connect.proto.ml_common_pb2.ModelRef: ...
+        name: builtins.str
+        def __init__(
+            self,
+            *,
+            model_ref: pyspark.sql.connect.proto.ml_common_pb2.ModelRef | None = ...,
+            name: builtins.str = ...,
+        ) -> None: ...
+        def HasField(
+            self, field_name: typing_extensions.Literal["model_ref", b"model_ref"]
+        ) -> builtins.bool: ...
+        def ClearField(
+            self, field_name: typing_extensions.Literal["model_ref", b"model_ref", "name", b"name"]
+        ) -> None: ...
+
+    class ModelSummaryAttr(google.protobuf.message.Message):
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        MODEL_REF_FIELD_NUMBER: builtins.int
+        NAME_FIELD_NUMBER: builtins.int
+        PARAMS_FIELD_NUMBER: builtins.int
+        EVALUATION_DATASET_FIELD_NUMBER: builtins.int
+        @property
+        def model_ref(self) -> pyspark.sql.connect.proto.ml_common_pb2.ModelRef: ...
+        name: builtins.str
+        @property
+        def params(self) -> pyspark.sql.connect.proto.ml_common_pb2.MlParams: ...
+        @property
+        def evaluation_dataset(self) -> global___Relation:
+            """Evaluation dataset that it uses to computes
+            the summary attribute
+            If not set, get attributes from
+            model.summary (i.e. the summary on training dataset)
+            """
+        def __init__(
+            self,
+            *,
+            model_ref: pyspark.sql.connect.proto.ml_common_pb2.ModelRef | None = ...,
+            name: builtins.str = ...,
+            params: pyspark.sql.connect.proto.ml_common_pb2.MlParams | None = ...,
+            evaluation_dataset: global___Relation | None = ...,
+        ) -> None: ...
+        def HasField(
+            self,
+            field_name: typing_extensions.Literal[
+                "_evaluation_dataset",
+                b"_evaluation_dataset",
+                "evaluation_dataset",
+                b"evaluation_dataset",
+                "model_ref",
+                b"model_ref",
+                "params",
+                b"params",
+            ],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "_evaluation_dataset",
+                b"_evaluation_dataset",
+                "evaluation_dataset",
+                b"evaluation_dataset",
+                "model_ref",
+                b"model_ref",
+                "name",
+                b"name",
+                "params",
+                b"params",
+            ],
+        ) -> None: ...
+        def WhichOneof(
+            self,
+            oneof_group: typing_extensions.Literal["_evaluation_dataset", b"_evaluation_dataset"],
+        ) -> typing_extensions.Literal["evaluation_dataset"] | None: ...
+
+    MODEL_TRANSFORM_FIELD_NUMBER: builtins.int
+    FEATURE_TRANSFORM_FIELD_NUMBER: builtins.int
+    MODEL_ATTR_FIELD_NUMBER: builtins.int
+    MODEL_SUMMARY_ATTR_FIELD_NUMBER: builtins.int
+    @property
+    def model_transform(self) -> global___MlRelation.ModelTransform: ...
+    @property
+    def feature_transform(self) -> global___MlRelation.FeatureTransform: ...
+    @property
+    def model_attr(self) -> global___MlRelation.ModelAttr: ...
+    @property
+    def model_summary_attr(self) -> global___MlRelation.ModelSummaryAttr: ...
+    def __init__(
+        self,
+        *,
+        model_transform: global___MlRelation.ModelTransform | None = ...,
+        feature_transform: global___MlRelation.FeatureTransform | None = ...,
+        model_attr: global___MlRelation.ModelAttr | None = ...,
+        model_summary_attr: global___MlRelation.ModelSummaryAttr | None = ...,
+    ) -> None: ...
+    def HasField(
+        self,
+        field_name: typing_extensions.Literal[
+            "feature_transform",
+            b"feature_transform",
+            "ml_relation_type",
+            b"ml_relation_type",
+            "model_attr",
+            b"model_attr",
+            "model_summary_attr",
+            b"model_summary_attr",
+            "model_transform",
+            b"model_transform",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing_extensions.Literal[
+            "feature_transform",
+            b"feature_transform",
+            "ml_relation_type",
+            b"ml_relation_type",
+            "model_attr",
+            b"model_attr",
+            "model_summary_attr",
+            b"model_summary_attr",
+            "model_transform",
+            b"model_transform",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing_extensions.Literal["ml_relation_type", b"ml_relation_type"]
+    ) -> (
+        typing_extensions.Literal[
+            "model_transform", "feature_transform", "model_attr", "model_summary_attr"
+        ]
+        | None
+    ): ...
+
+global___MlRelation = MlRelation
 
 class Unknown(google.protobuf.message.Message):
     """Used for testing purposes only."""
