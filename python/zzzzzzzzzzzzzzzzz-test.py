@@ -34,4 +34,6 @@ print(model.summary.truePositiveRateByLabel)
 print(model.coefficients)
 print(model.intercept)
 
-df.show()
+model.transform(df).show()
+
+# df.show()

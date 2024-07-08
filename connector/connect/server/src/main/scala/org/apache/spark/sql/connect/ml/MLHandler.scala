@@ -21,6 +21,8 @@ import org.apache.commons.lang3.reflect.MethodUtils.invokeMethod
 
 import org.apache.spark.connect.proto
 import org.apache.spark.connect.proto.MlCommand.MlCommandTypeCase
+import org.apache.spark.ml.param.ParamMap
+import org.apache.spark.ml.Model
 import org.apache.spark.sql.{DataFrame, Dataset}
 import org.apache.spark.sql.connect.planner.SparkConnectPlanner
 import org.apache.spark.sql.connect.service.SessionHolder
@@ -75,4 +77,52 @@ object MLHandler {
     val plan = relationalPlanner.transformRelation(relationProto)
     Dataset.ofRows(sessionHolder.session, plan)
   }
+
+
+  def transformMLRelation(
+      mlRelationProto: proto.MlRelation,
+      sessionHolder: SessionHolder): DataFrame = {
+
+    val mlCache = sessionHolder.mlCache
+
+    mlRelationProto.getMlRelationTypeCase match {
+      case proto.MlRelation.MlRelationTypeCase.MODEL_TRANSFORM =>
+        val modelTransformRelationProto = mlRelationProto.getModelTransform
+        val model = mlCache.get(modelTransformRelationProto.getModelRef.getId)
+        // TODO this case should be refined.
+        // Create a copied model to avoid concurrently modify model params.
+        val copiedModel = model.copy(ParamMap.empty).asInstanceOf[Model[_]]
+        MLUtils.setInstanceParams(copiedModel, modelTransformRelationProto.getParams)
+        val inputDF = parseRelationProto(modelTransformRelationProto.getInput, sessionHolder)
+        copiedModel.transform(inputDF)
+
+//      case proto.MlRelation.MlRelationTypeCase.MODEL_ATTR =>
+//        val modelAttrProto = mlRelationProto.getModelAttr
+//        val (model, algo) =
+//          sessionHolder.mlCache.modelCache.get(modelAttrProto.getModelRef.getId)
+//        algo.getModelAttr(model, modelAttrProto.getName).right.get
+//
+//      case proto.MlRelation.MlRelationTypeCase.MODEL_SUMMARY_ATTR =>
+//        val modelSummaryAttr = mlRelationProto.getModelSummaryAttr
+//        val (model, algo) =
+//          sessionHolder.mlCache.modelCache.get(modelSummaryAttr.getModelRef.getId)
+//        // Create a copied model to avoid concurrently modify model params.
+//        val copiedModel = model.copy(ParamMap.empty).asInstanceOf[Model[_]]
+//        MLUtils.setInstanceParams(copiedModel, modelSummaryAttr.getParams)
+//
+//        val datasetOpt = if (modelSummaryAttr.hasEvaluationDataset) {
+//          val evalDF =
+//            MLUtils.parseRelationProto(modelSummaryAttr.getEvaluationDataset, sessionHolder)
+//          Some(evalDF)
+//        } else {
+//          None
+//        }
+//        algo.getModelSummaryAttr(copiedModel, modelSummaryAttr.getName, datasetOpt).right.get
+
+      case _ =>
+        throw new IllegalArgumentException("Unsupported ml relation")
+    }
+  }
+
+
 }

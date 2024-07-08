@@ -457,6 +457,14 @@ class JavaTransformer(JavaParams, Transformer, metaclass=ABCMeta):
     def _transform(self, dataset: DataFrame) -> DataFrame:
         assert self._java_obj is not None
 
+        if is_remote():
+            session = dataset.sparkSession
+            params = serialize_ml_params(self, session)
+            from pyspark.ml.remote.proto import _ModelTransformRelationPlan
+            plan = _ModelTransformRelationPlan(dataset._plan, self._java_obj, params)
+            from pyspark.sql.connect.dataframe import DataFrame as RemoteDataFrame
+            return RemoteDataFrame(plan, session)
+
         self._transfer_params_to_java()
         return DataFrame(self._java_obj.transform(dataset._jdf), dataset.sparkSession)
 
