@@ -16,14 +16,13 @@
 #
 
 import pyspark.sql.connect.proto as pb2
-import pyspark.sql.connect.proto.ml_pb2 as ml_pb2
 
 from pyspark.sql.connect.expressions import LiteralExpression
 
 from pyspark.ml.linalg import Vectors, Matrices
 
 
-def deserialize(ml_command_result: ml_pb2.MlCommandResponse, client, **kwargs):
+def deserialize(ml_command_result: pb2.ml_pb2.MlCommandResponse, client, **kwargs):
 
     if ml_command_result.HasField("literal"):
         return LiteralExpression._to_value(ml_command_result.literal)
@@ -88,7 +87,7 @@ def serialize_ml_params(instance, client):
             for k, v in param_value_dict.items()
         }
 
-    result = ml_pb2.MlParams(
+    result = pb2.ml_common_pb2.MlParams(
         params=gen_pb2_map(instance._paramMap),
     )
     return result

@@ -26,7 +26,7 @@ from pyspark.ml.base import _PredictorParams
 from pyspark.ml.param import Param, Params
 from pyspark.ml.util import _jvm
 from pyspark.ml.common import inherit_doc, _java2py, _py2java
-from pyspark.sql.connect.proto import ml_pb2
+import pyspark.sql.connect.proto as pb2
 
 if TYPE_CHECKING:
     from pyspark.ml._typing import ParamMap
@@ -69,8 +69,8 @@ class JavaWrapper:
         # TODO support args
 
         client = SparkSession.getActiveSession().client
-        model_attr_command_proto = ml_pb2.MlCommand.FetchModelAttr(
-            model_ref=ml_pb2.ModelRef(id=key),
+        model_attr_command_proto = pb2.ml_pb2.MlCommand.FetchModelAttr(
+            model_ref=pb2.ml_common_pb2.ModelRef(id=key),
             name=name
         )
         req = client._execute_plan_request_with_metadata()
@@ -420,16 +420,15 @@ class JavaEstimator(JavaParams, Estimator[JM], metaclass=ABCMeta):
         return self._java_obj.fit(dataset._jdf)
 
     def _fit_remote(self, dataset: DataFrame) -> str:
-        import pyspark.sql.connect.proto.ml_pb2 as ml_pb2
         client = dataset.sparkSession.client
         dataset_relation = dataset._plan.plan(client)
-        estimator_proto = ml_pb2.MlStage(
+        estimator_proto = pb2.ml_common_pb2.MlStage(
             name=self.__class__.__name__,
             params=serialize_ml_params(self, client),
             uid=self.uid,
-            type=ml_pb2.MlStage.ESTIMATOR,
+            type=pb2.ml_common_pb2.MlStage.ESTIMATOR,
         )
-        fit_command_proto = ml_pb2.MlCommand.Fit(
+        fit_command_proto = pb2.ml_pb2.MlCommand.Fit(
             estimator=estimator_proto,
             dataset=dataset_relation,
         )
