@@ -17,10 +17,13 @@
 
 package org.apache.spark.sql.connect.ml
 
+import scala.jdk.CollectionConverters.CollectionHasAsScala
+
 import org.apache.spark.connect.proto
-import org.apache.spark.ml.linalg.{Matrix, Vector}
+import org.apache.spark.ml.linalg.{DenseVector, Matrix, SparseVector, Vector, Vectors}
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.connect.common.LiteralValueProtoConverter
+import org.apache.spark.sql.connect.service.SessionHolder
 
 object Serializer {
 
@@ -76,5 +79,43 @@ object Serializer {
       .newBuilder()
       .setMatrix(proto.Matrix.newBuilder().setDense(denseBuilder))
       .build()
+  }
+
+  def deserializeMethodArguments(
+      args: Array[proto.FetchModelAttr.Args],
+      sessionHolder: SessionHolder): Array[(Object, Class[_])] = {
+    args.map { arg =>
+      if (arg.hasLiteral) {
+        arg.getLiteral.getLiteralTypeCase match {
+          case proto.Expression.Literal.LiteralTypeCase.INTEGER =>
+            (arg.getLiteral.getInteger.asInstanceOf[Object], classOf[Int])
+          case proto.Expression.Literal.LiteralTypeCase.FLOAT =>
+            (arg.getLiteral.getFloat.toDouble.asInstanceOf[Object], classOf[Double])
+          case proto.Expression.Literal.LiteralTypeCase.STRING =>
+            (arg.getLiteral.getString, classOf[String])
+          case proto.Expression.Literal.LiteralTypeCase.DOUBLE =>
+            (arg.getLiteral.getDouble.asInstanceOf[Object], classOf[Double])
+          case proto.Expression.Literal.LiteralTypeCase.BOOLEAN =>
+            (arg.getLiteral.getBoolean.asInstanceOf[Object], classOf[Boolean])
+          case _ => throw new UnsupportedOperationException(
+            arg.getLiteral.getLiteralTypeCase.name())
+
+        }
+      } else if (arg.hasVector) {
+        if (arg.getVector.hasDense) {
+          val values = arg.getVector.getDense.getValueList.asScala.map(_.toDouble).toArray
+          (Vectors.dense(values), classOf[DenseVector])
+        } else {
+          val size = arg.getVector.getSparse.getSize
+          val indices = arg.getVector.getSparse.getIndexList.asScala.map(_.toInt).toArray
+          val values = arg.getVector.getSparse.getValueList.asScala.map(_.toDouble).toArray
+          (Vectors.sparse(size, indices, values), classOf[SparseVector])
+        }
+      } else if (arg.hasInput) {
+        (MLUtils.parseRelationProto(arg.getInput, sessionHolder), classOf[Dataset[_]])
+      } else {
+        throw new UnsupportedOperationException("deserializeMethodArguments")
+      }
+    }
   }
 }
