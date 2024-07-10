@@ -655,12 +655,12 @@ class MlRelation(google.protobuf.message.Message):
     @property
     def model_transform(self) -> global___MlRelation.ModelTransform: ...
     @property
-    def model_attr(self) -> pyspark.sql.connect.proto.ml_common_pb2.FetchModelAttr: ...
+    def model_attr(self) -> global___FetchModelAttr: ...
     def __init__(
         self,
         *,
         model_transform: global___MlRelation.ModelTransform | None = ...,
-        model_attr: pyspark.sql.connect.proto.ml_common_pb2.FetchModelAttr | None = ...,
+        model_attr: global___FetchModelAttr | None = ...,
     ) -> None: ...
     def HasField(
         self,
@@ -689,6 +689,84 @@ class MlRelation(google.protobuf.message.Message):
     ) -> typing_extensions.Literal["model_transform", "model_attr"] | None: ...
 
 global___MlRelation = MlRelation
+
+class FetchModelAttr(google.protobuf.message.Message):
+    """Message for fetching model attribute. It can be representing to a Relation or a ML command
+    Eg, model.coefficients, model.summary.weightedPrecision
+    or model.summary.roc which returns a DataFrame
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    class Args(google.protobuf.message.Message):
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        LITERAL_FIELD_NUMBER: builtins.int
+        VECTOR_FIELD_NUMBER: builtins.int
+        INPUT_FIELD_NUMBER: builtins.int
+        @property
+        def literal(self) -> pyspark.sql.connect.proto.expressions_pb2.Expression.Literal:
+            """Should we support all the Literals?"""
+        @property
+        def vector(self) -> pyspark.sql.connect.proto.ml_common_pb2.Vector: ...
+        @property
+        def input(self) -> global___Relation: ...
+        def __init__(
+            self,
+            *,
+            literal: pyspark.sql.connect.proto.expressions_pb2.Expression.Literal | None = ...,
+            vector: pyspark.sql.connect.proto.ml_common_pb2.Vector | None = ...,
+            input: global___Relation | None = ...,
+        ) -> None: ...
+        def HasField(
+            self,
+            field_name: typing_extensions.Literal[
+                "input", b"input", "literal", b"literal", "type", b"type", "vector", b"vector"
+            ],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "input", b"input", "literal", b"literal", "type", b"type", "vector", b"vector"
+            ],
+        ) -> None: ...
+        def WhichOneof(
+            self, oneof_group: typing_extensions.Literal["type", b"type"]
+        ) -> typing_extensions.Literal["literal", "vector", "input"] | None: ...
+
+    MODEL_REF_FIELD_NUMBER: builtins.int
+    METHOD_FIELD_NUMBER: builtins.int
+    ARGS_FIELD_NUMBER: builtins.int
+    @property
+    def model_ref(self) -> pyspark.sql.connect.proto.ml_common_pb2.ModelRef:
+        """(Required) reference to the server model object"""
+    method: builtins.str
+    """(Required) the method name. Eg, "coefficients" or "summary.weightedPrecision" """
+    @property
+    def args(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        global___FetchModelAttr.Args
+    ]:
+        """(Optional) the parameters of the method"""
+    def __init__(
+        self,
+        *,
+        model_ref: pyspark.sql.connect.proto.ml_common_pb2.ModelRef | None = ...,
+        method: builtins.str = ...,
+        args: collections.abc.Iterable[global___FetchModelAttr.Args] | None = ...,
+    ) -> None: ...
+    def HasField(
+        self, field_name: typing_extensions.Literal["model_ref", b"model_ref"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing_extensions.Literal[
+            "args", b"args", "method", b"method", "model_ref", b"model_ref"
+        ],
+    ) -> None: ...
+
+global___FetchModelAttr = FetchModelAttr
 
 class Unknown(google.protobuf.message.Message):
     """Used for testing purposes only."""

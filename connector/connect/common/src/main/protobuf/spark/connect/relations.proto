@@ -123,6 +123,27 @@ message MlRelation {
   }
 }
 
+// Message for fetching model attribute. It can be representing to a Relation or a ML command
+// Eg, model.coefficients, model.summary.weightedPrecision
+// or model.summary.roc which returns a DataFrame
+message FetchModelAttr {
+  // (Required) reference to the server model object
+  ModelRef model_ref = 1;
+  // (Required) the method name. Eg, "coefficients" or "summary.weightedPrecision"
+  string method = 2;
+  // (Optional) the parameters of the method
+  repeated Args args = 3;
+
+  message Args {
+    oneof type {
+      // Should we support all the Literals?
+      Expression.Literal literal = 1;
+      Vector vector = 2;
+      Relation input = 3;
+    }
+  }
+}
+
 // Used for testing purposes only.
 message Unknown {}
 

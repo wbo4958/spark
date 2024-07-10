@@ -32,7 +32,7 @@ class _ModelTransformRelationPlan(LogicalPlan):
         plan = self._create_proto_relation()
         plan.ml_relation.model_transform.input.CopyFrom(self._child.plan(session))
         plan.ml_relation.model_transform.model_ref.CopyFrom(
-            pb2.ml_common_pb2.ModelRef(id=self._model_id))
+            pb2.ModelRef(id=self._model_id))
         if self._ml_params is not None:
             plan.ml_relation.model_transform.params.CopyFrom(self._ml_params)
 

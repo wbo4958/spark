@@ -17,30 +17,50 @@
 
 package org.apache.spark.sql.connect.ml
 
+import scala.jdk.CollectionConverters.CollectionHasAsScala
+
 import org.apache.commons.lang3.reflect.MethodUtils.invokeMethod
 
 import org.apache.spark.connect.proto
 import org.apache.spark.connect.proto.MlCommand.MlCommandTypeCase
+import org.apache.spark.internal.Logging
 import org.apache.spark.ml.{Model, Transformer}
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.connect.common.LiteralValueProtoConverter
+import org.apache.spark.sql.connect.ml.Serializer.deserializeMethodArguments
 import org.apache.spark.sql.connect.service.SessionHolder
 
 private class ModelAttributeHelper(val sessionHolder: SessionHolder,
                                    val objIdentifier: String,
-                                   val method: Option[String]) {
+                                   val method: Option[String],
+                                   val argValues: Array[Object] = Array.empty,
+                                   val argClasses: Array[Class[_]] = Array.empty) {
 
   val methodChain = method.map(n => s"$objIdentifier.$n").getOrElse(objIdentifier)
   private val methodChains = methodChain.split("\\.")
   private val modelId = methodChains.head
 
-  private val model = sessionHolder.mlCache.get(modelId)
-  private val methods = methodChains.slice(1, methodChains.length)
+  private lazy val model = sessionHolder.mlCache.get(modelId)
+  private lazy val methods = methodChains.slice(1, methodChains.length)
 
   def getAttribute: Any = {
     assert(methods.length >= 1)
-    methods.foldLeft(model.asInstanceOf[Object]) { (obj, attribute) =>
-      invokeMethod(obj, attribute)
+    if (argValues.length == 0) {
+      methods.foldLeft(model.asInstanceOf[Object]) { (obj, attribute) =>
+        invokeMethod(obj, attribute)
+      }
+    } else {
+      val lastMethod = methods.last
+      if (methods.length == 1) {
+        invokeMethod(model.asInstanceOf[Object], lastMethod, argValues, argClasses)
+      } else {
+        val prevMethods = methods.slice(0, methods.length - 1)
+        val finalObj = prevMethods.foldLeft(model.asInstanceOf[Object]) { (obj, attribute) =>
+          invokeMethod(obj, attribute)
+        }
+        invokeMethod(finalObj, lastMethod, argValues, argValues)
+      }
     }
   }
 
@@ -51,17 +71,21 @@ private class ModelAttributeHelper(val sessionHolder: SessionHolder,
     val inputDF = MLUtils.parseRelationProto(modelRelation.getInput, sessionHolder)
     copiedModel.transform(inputDF)
   }
-
 }
 
 private object ModelAttributeHelper {
   def apply(sessionHolder: SessionHolder,
             modelId: String,
-            methodChain: Option[String]): ModelAttributeHelper =
-    new ModelAttributeHelper(sessionHolder, modelId, methodChain)
+            methodChain: Option[String] = None,
+            args: Array[proto.FetchModelAttr.Args] = Array.empty): ModelAttributeHelper = {
+    val tmp = deserializeMethodArguments(args, sessionHolder)
+    val argValues = tmp.map(_._1)
+    val argClasses = tmp.map(_._2)
+    new ModelAttributeHelper(sessionHolder, modelId, methodChain, argValues, argClasses)
+  }
 }
 
-object MLHandler {
+object MLHandler extends Logging {
   def handleMlCommand(
       sessionHolder: SessionHolder,
       mlCommand: proto.MlCommand): proto.MlCommandResponse = {
@@ -89,10 +113,26 @@ object MLHandler {
           .build()
 
       case MlCommandTypeCase.FETCH_MODEL_ATTR =>
+        val args = mlCommand.getFetchModelAttr.getArgsList.asScala.toArray
         val helper = ModelAttributeHelper(sessionHolder,
           mlCommand.getFetchModelAttr.getModelRef.getId,
-          Option(mlCommand.getFetchModelAttr.getMethod))
+          Option(mlCommand.getFetchModelAttr.getMethod),
+          args
+        )
         Serializer.serialize(helper.getAttribute, helper.methodChain)
+
+      case MlCommandTypeCase.DELETE_MODEL =>
+        val modelId = mlCommand.getDeleteModel.getModelRef.getId
+        var result = false
+        logInfo(s"Deleting cache ${modelId}")
+        if (!modelId.contains(".")) {
+          sessionHolder.mlCache.remove(modelId)
+          result = true
+        }
+        proto.MlCommandResponse
+          .newBuilder()
+          .setLiteral(LiteralValueProtoConverter.toLiteralProto(result))
+          .build()
 
       case _ => throw new UnsupportedOperationException("Unsupported ML command")
     }
@@ -117,8 +157,5 @@ object MLHandler {
         throw new IllegalArgumentException("Unsupported ml relation")
     }
   }
-
-
-
 
 }

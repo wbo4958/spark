@@ -1,8 +1,9 @@
 import os
+import time
 
 from pyspark.ml.linalg import Vector, Vectors
 
-from pyspark.ml.classification import LogisticRegression
+from pyspark.ml.classification import LogisticRegression, LogisticRegressionModel
 from pyspark.sql import SparkSession
 
 os.environ["PYSPARK_PYTHON"] = "/home/bobwang/anaconda3/envs/pyspark-connect-ml/bin/python"
@@ -23,8 +24,14 @@ df = spark.createDataFrame([
 lr = LogisticRegression()
 lr.setMaxIter(30)
 
-
-model = lr.fit(df)
+model: LogisticRegressionModel = lr.fit(df)
+del model
+time.sleep(10)
+x = model.predictRaw(Vectors.dense([1.0, 2.0]))
+print(f"predictRaw {x}")
+# TODO make model.evaluate work
+# s = model.evaluate(df)
+# print(s.weightCol)
 assert model.getMaxIter() == 30
 print(model.summary.weightedRecall)
 print(model.summary.weightedPrecision)

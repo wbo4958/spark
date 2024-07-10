@@ -31,12 +31,18 @@ message MlCommand {
   oneof ml_command_type {
     Fit fit = 1;
     FetchModelAttr fetch_model_attr = 2;
+    DeleteModel delete_model = 3;
   }
 
   // Command for estimator.fit(dataset)
   message Fit {
     MlStage estimator = 1;
     Relation dataset = 2;
+  }
+
+  // Command to delete a cached model
+  message DeleteModel {
+    ModelRef model_ref = 1;
   }
 }
 
@@ -67,44 +73,4 @@ message MlCommandResponse {
   }
 }
 
-// See pyspark.ml.linalg.Vector
-message Vector {
-  oneof one_of {
-    Dense dense = 1;
-    Sparse sparse = 2;
-  }
-  // See pyspark.ml.linalg.DenseVector
-  message Dense {
-    repeated double value = 1;
-  }
-  // See pyspark.ml.linalg.SparseVector
-  message Sparse {
-    int32 size = 1;
-    repeated double index = 2;
-    repeated double value = 3;
-  }
-}
 
-// See pyspark.ml.linalg.Matrix
-message Matrix {
-  oneof one_of {
-    Dense dense = 1;
-    Sparse sparse = 2;
-  }
-  // See pyspark.ml.linalg.DenseMatrix
-  message Dense {
-    int32 num_rows = 1;
-    int32 num_cols = 2;
-    repeated double value = 3;
-    bool is_transposed = 4;
-  }
-  // See pyspark.ml.linalg.SparseMatrix
-  message Sparse {
-    int32 num_rows = 1;
-    int32 num_cols = 2;
-    repeated double colptr = 3;
-    repeated double row_index = 4;
-    repeated double value = 5;
-    bool is_transposed = 6;
-  }
-}

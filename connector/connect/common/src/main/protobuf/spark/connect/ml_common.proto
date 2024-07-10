@@ -37,12 +37,44 @@ message ModelRef {
   string id = 1;
 }
 
-// Message for fetching model attribute. It can be representing to a Relation or a ML command
-// Eg, model.coefficients, model.summary.weightedPrecision
-// or model.summary.roc which returns a DataFrame
-message FetchModelAttr {
-  // (Required) reference to the server model object
-  ModelRef model_ref = 1;
-  // (Required) the method name. Eg, "coefficients" or "summary.weightedPrecision"
-  string method = 2;
+// See pyspark.ml.linalg.Vector
+message Vector {
+  oneof one_of {
+    Dense dense = 1;
+    Sparse sparse = 2;
+  }
+  // See pyspark.ml.linalg.DenseVector
+  message Dense {
+    repeated double value = 1;
+  }
+  // See pyspark.ml.linalg.SparseVector
+  message Sparse {
+    int32 size = 1;
+    repeated int32 index = 2;
+    repeated double value = 3;
+  }
+}
+
+// See pyspark.ml.linalg.Matrix
+message Matrix {
+  oneof one_of {
+    Dense dense = 1;
+    Sparse sparse = 2;
+  }
+  // See pyspark.ml.linalg.DenseMatrix
+  message Dense {
+    int32 num_rows = 1;
+    int32 num_cols = 2;
+    repeated double value = 3;
+    bool is_transposed = 4;
+  }
+  // See pyspark.ml.linalg.SparseMatrix
+  message Sparse {
+    int32 num_rows = 1;
+    int32 num_cols = 2;
+    repeated int32 colptr = 3;
+    repeated int32 row_index = 4;
+    repeated double value = 5;
+    bool is_transposed = 6;
+  }
 }

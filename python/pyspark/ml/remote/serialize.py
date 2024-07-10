@@ -14,16 +14,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from typing import Any, List
 
 import pyspark.sql.connect.proto as pb2
+from pyspark.sql import DataFrame
+from pyspark.sql.connect.client import SparkConnectClient
 
 from pyspark.sql.connect.expressions import LiteralExpression
 
-from pyspark.ml.linalg import Vectors, Matrices
+from pyspark.ml.linalg import Vectors, Matrices, DenseVector, SparseVector
+
+
+def serialize(client: SparkConnectClient, *args: Any) -> List[Any]:
+    result = []
+    for arg in args:
+        if isinstance(arg, DenseVector):
+            vec = pb2.Vector(dense=pb2.Vector.Dense(value=arg.values.tolist()))
+            result.append(pb2.FetchModelAttr.Args(vector=vec))
+        elif isinstance(arg, SparseVector):
+            v = pb2.Vector.Sparse(size=arg.size,
+                                  index=arg.indices.tolist(),
+                                  value=arg.values.tolist())
+            result.append(pb2.FetchModelAttr.Args(vector=v))
+        elif isinstance(arg, (int, float, str, bool)):
+            result.append(pb2.FetchModelAttr.Args(literal=arg))
+        elif isinstance(arg, DataFrame):
+            result.append(pb2.FetchModelAttr.Args(input=arg._plan.plan(client)))
+        else:
+            raise RuntimeError(f"Unsupported {arg}")
+    return result
 
 
 def deserialize(ml_command_result: pb2.ml_pb2.MlCommandResponse, **kwargs):
-
     if ml_command_result.HasField("is_dataframe"):
         return ml_command_result.is_dataframe
 
