@@ -44,15 +44,21 @@ private class ModelAttributeHelper(val sessionHolder: SessionHolder,
 
   def getAttribute: Any = {
     assert(methods.length >= 1)
-    val lastMethod = methods.last
-    if (methods.length == 1) {
-      invokeMethod(model.asInstanceOf[Object], lastMethod, argValues, argClasses)
-    } else {
-      val prevMethods = methods.slice(0, methods.length - 1)
-      val finalObj = prevMethods.foldLeft(model.asInstanceOf[Object]) { (obj, attribute) =>
+    if (argValues.length == 0) {
+      methods.foldLeft(model.asInstanceOf[Object]) { (obj, attribute) =>
         invokeMethod(obj, attribute)
       }
-      invokeMethod(finalObj, lastMethod, argValues, argValues)
+    } else {
+      val lastMethod = methods.last
+      if (methods.length == 1) {
+        invokeMethod(model.asInstanceOf[Object], lastMethod, argValues, argClasses)
+      } else {
+        val prevMethods = methods.slice(0, methods.length - 1)
+        val finalObj = prevMethods.foldLeft(model.asInstanceOf[Object]) { (obj, attribute) =>
+          invokeMethod(obj, attribute)
+        }
+        invokeMethod(finalObj, lastMethod, argValues, argValues)
+      }
     }
   }
 
