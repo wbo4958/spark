@@ -18,7 +18,10 @@
 from abc import ABCMeta, abstractmethod
 from typing import Any, Generic, Optional, List, Type, TypeVar, TYPE_CHECKING
 
+from docker.errors import InvalidArgument
+
 from pyspark import since
+from pyspark.ml.linalg import DenseVector, SparseVector
 from pyspark.ml.remote.serialize import serialize_ml_params, deserialize
 from pyspark.sql import DataFrame, is_remote, SparkSession
 from pyspark.ml import Estimator, Predictor, PredictionModel, Transformer, Model
@@ -64,13 +67,36 @@ class JavaWrapper:
         java_obj = JavaWrapper._new_java_obj(java_class, *args)
         return cls(java_obj)
 
+    def serialize(self, *args: Any) -> List[Any]:
+        result = []
+        for arg in args:
+            if isinstance(arg, DenseVector):
+                vec = pb2.Vector(dense=pb2.Vector.Dense(value=arg.values.tolist()))
+                result.append(pb2.FetchModelAttr.Args(vector=vec))
+            elif isinstance(arg, SparseVector):
+                v = pb2.Vector.Sparse(size=arg.size,
+                                      index=arg.indices.tolist(),
+                                      value=arg.values.tolist())
+                result.append(pb2.FetchModelAttr.Args(vector=v))
+            elif isinstance(arg, (int, float, str, bool)):
+                result.append(pb2.FetchModelAttr.Args(literal=arg))
+            elif isinstance(arg, DataFrame):
+                result.append(pb2.FetchModelAttr.Args(input=arg._plan))
+            else:
+                raise InvalidArgument(f"Unsupported {arg}")
+        return result
+
     def _call_remote(self, name: str, *args: Any) -> Any:
         # TODO support args
         session = SparkSession.getActiveSession()
         client = SparkSession.getActiveSession().client
-        get_attribute = pb2.ml_common_pb2.FetchModelAttr(
-            model_ref=pb2.ml_common_pb2.ModelRef(id=self._java_obj),
-            method=name
+
+        args = self.serialize(*args)
+
+        get_attribute = pb2.FetchModelAttr(
+            model_ref=pb2.ModelRef(id=self._java_obj),
+            method=name,
+            args=args
         )
         req = client._execute_plan_request_with_metadata()
         req.plan.ml_command.fetch_model_attr.CopyFrom(get_attribute)
@@ -90,7 +116,7 @@ class JavaWrapper:
 
     def _call_java(self, name: str, *args: Any) -> Any:
         if is_remote():
-            return self._call_remote(name, args)
+            return self._call_remote(name, *args)
 
         from pyspark.core.context import SparkContext
 
@@ -438,13 +464,13 @@ class JavaEstimator(JavaParams, Estimator[JM], metaclass=ABCMeta):
         """
         client = dataset.sparkSession.client
         input = dataset._plan.plan(client)
-        estimator = pb2.ml_pb2.MlStage(
+        estimator = pb2.MlStage(
             name=self.__class__.__name__,
             params=serialize_ml_params(self, client),
             uid=self.uid,
-            type=pb2.ml_pb2.MlStage.ESTIMATOR,
+            type=pb2.MlStage.ESTIMATOR,
         )
-        fit_cmd = pb2.ml_pb2.MlCommand.Fit(
+        fit_cmd = pb2.MlCommand.Fit(
             estimator=estimator,
             dataset=input,
         )
