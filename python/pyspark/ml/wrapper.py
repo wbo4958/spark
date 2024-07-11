@@ -22,7 +22,7 @@ from docker.errors import InvalidArgument
 
 from pyspark import since
 from pyspark.ml.linalg import DenseVector, SparseVector
-from pyspark.ml.remote.serialize import serialize_ml_params, deserialize
+from pyspark.ml.remote.serialize import serialize_ml_params, deserialize, serialize
 from pyspark.sql import DataFrame, is_remote, SparkSession
 from pyspark.ml import Estimator, Predictor, PredictionModel, Transformer, Model
 from pyspark.ml.base import _PredictorParams
@@ -67,31 +67,14 @@ class JavaWrapper:
         java_obj = JavaWrapper._new_java_obj(java_class, *args)
         return cls(java_obj)
 
-    def serialize(self, *args: Any) -> List[Any]:
-        result = []
-        for arg in args:
-            if isinstance(arg, DenseVector):
-                vec = pb2.Vector(dense=pb2.Vector.Dense(value=arg.values.tolist()))
-                result.append(pb2.FetchModelAttr.Args(vector=vec))
-            elif isinstance(arg, SparseVector):
-                v = pb2.Vector.Sparse(size=arg.size,
-                                      index=arg.indices.tolist(),
-                                      value=arg.values.tolist())
-                result.append(pb2.FetchModelAttr.Args(vector=v))
-            elif isinstance(arg, (int, float, str, bool)):
-                result.append(pb2.FetchModelAttr.Args(literal=arg))
-            elif isinstance(arg, DataFrame):
-                result.append(pb2.FetchModelAttr.Args(input=arg._plan))
-            else:
-                raise InvalidArgument(f"Unsupported {arg}")
-        return result
+
 
     def _call_remote(self, name: str, *args: Any) -> Any:
         # TODO support args
         session = SparkSession.getActiveSession()
         client = SparkSession.getActiveSession().client
 
-        args = self.serialize(*args)
+        args = serialize(client, *args)
 
         get_attribute = pb2.FetchModelAttr(
             model_ref=pb2.ModelRef(id=self._java_obj),

@@ -26,6 +26,9 @@ lr.setMaxIter(30)
 model: LogisticRegressionModel = lr.fit(df)
 x = model.predictRaw(Vectors.dense([1.0, 2.0]))
 print(f"predictRaw {x}")
+# TODO make model.evaluate work
+# s = model.evaluate(df)
+# print(s.weightCol)
 assert model.getMaxIter() == 30
 print(model.summary.weightedRecall)
 print(model.summary.weightedPrecision)
