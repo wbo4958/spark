@@ -23,6 +23,7 @@ import org.apache.commons.lang3.reflect.MethodUtils.invokeMethod
 
 import org.apache.spark.connect.proto
 import org.apache.spark.connect.proto.MlCommand.MlCommandTypeCase
+import org.apache.spark.internal.Logging
 import org.apache.spark.ml.{Model, Transformer}
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.sql.DataFrame
@@ -84,7 +85,7 @@ private object ModelAttributeHelper {
   }
 }
 
-object MLHandler {
+object MLHandler extends Logging {
   def handleMlCommand(
       sessionHolder: SessionHolder,
       mlCommand: proto.MlCommand): proto.MlCommandResponse = {
@@ -123,6 +124,7 @@ object MLHandler {
       case MlCommandTypeCase.DELETE_MODEL =>
         val modelId = mlCommand.getDeleteModel.getModelRef.getId
         var result = false
+        logInfo(s"Deleting cache ${modelId}")
         if (!modelId.contains(".")) {
           sessionHolder.mlCache.remove(modelId)
           result = true

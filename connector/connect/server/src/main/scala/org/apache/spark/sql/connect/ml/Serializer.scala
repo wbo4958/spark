@@ -50,7 +50,7 @@ object Serializer {
     }
   }
 
-  def serializeVector(data: Vector): proto.MlCommandResponse = {
+  private def serializeVector(data: Vector): proto.MlCommandResponse = {
     // TODO: Support sparse
     val values = data.toArray
     val denseBuilder = proto.Vector.Dense.newBuilder()
@@ -64,7 +64,7 @@ object Serializer {
       .build()
   }
 
-  def serializeMatrix(data: Matrix): proto.MlCommandResponse = {
+  private def serializeMatrix(data: Matrix): proto.MlCommandResponse = {
     // TODO: Support sparse
     // TODO: optimize transposed case
     val denseBuilder = proto.Matrix.Dense.newBuilder()

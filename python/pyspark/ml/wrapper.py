@@ -51,8 +51,14 @@ class JavaWrapper:
         self._java_obj = java_obj
 
     def __del__(self) -> None:
-        # TODO remove the object on the server side
-        if self._java_obj is not None and not is_remote():
+        if is_remote() and self._java_obj is not None and "." not in self._java_obj:
+            client = SparkSession.getActiveSession().client
+            req = client._execute_plan_request_with_metadata()
+            req.plan.ml_command.delete_model.model_ref.CopyFrom(pb2.ModelRef(id=self._java_obj))
+            client.execute_ml(req)
+            return
+
+        if self._java_obj is not None:
             from pyspark.core.context import SparkContext
             if SparkContext._active_spark_context:
                 SparkContext._active_spark_context._gateway.detach(  # type: ignore[union-attr]
