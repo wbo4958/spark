@@ -21,34 +21,18 @@ import java.util.concurrent.ConcurrentHashMap
 
 import org.apache.spark.ml.Transformer
 
-/**
- * This class is for managing server side object that is used by spark connect client side code.
- * The object can be model, estimator, and evaluator.
- */
-class ObjectCache[T](
-    private val objectMap: ConcurrentHashMap[String, T] = new ConcurrentHashMap[String, T]()
-) {
-  def register(obj: T): String = {
-    val objectId = UUID.randomUUID().toString.takeRight(12)
-    objectMap.put(objectId, obj)
-    objectId
-  }
-
-  def get(id: String): T = objectMap.get(id)
-
-  def remove(id: String): T = objectMap.remove(id)
-
-  def clear(): Unit = objectMap.clear()
-}
 
 // TODO need to support persistence for model if memory is tight
 // TODO do we need to support cache estimator or evaluator?
 class MLCache(
-    private val cachedModel: ObjectCache[Transformer] = new ObjectCache[Transformer]()
+    private val cachedModel: ConcurrentHashMap[String, Transformer] =
+    new ConcurrentHashMap[String, Transformer]()
 ) {
 
   def register(model: Transformer): String = {
-    cachedModel.register(model)
+    val objectId = UUID.randomUUID().toString.takeRight(12)
+    cachedModel.put(objectId, model)
+    objectId
   }
 
   def get(refId: String): Transformer = {

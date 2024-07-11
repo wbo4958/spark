@@ -51,14 +51,22 @@ class JavaWrapper:
         self._java_obj = java_obj
 
     def __del__(self) -> None:
-        if is_remote() and self._java_obj is not None and "." not in self._java_obj:
-            client = SparkSession.getActiveSession().client
-            req = client._execute_plan_request_with_metadata()
-            req.plan.ml_command.delete_model.model_ref.CopyFrom(pb2.ModelRef(id=self._java_obj))
-            client.execute_ml(req)
-            return
+        if is_remote():
+            if self._java_obj is not None and "." not in self._java_obj:
+                try:
+                    session = SparkSession.getActiveSession()
+                    if session is not None:
+                        client = session.client
+                        req = client._execute_plan_request_with_metadata()
+                        req.plan.ml_command.delete_model.model_ref.CopyFrom(
+                            pb2.ModelRef(id=self._java_obj))
+                        client.execute_ml(req)
+                        return
+                except ImportError as e:
+                    # SparkSession down.
+                    return
 
-        if self._java_obj is not None:
+        elif self._java_obj is not None:
             from pyspark.core.context import SparkContext
             if SparkContext._active_spark_context:
                 SparkContext._active_spark_context._gateway.detach(  # type: ignore[union-attr]
@@ -451,10 +459,20 @@ class JavaEstimator(JavaParams, Estimator[JM], metaclass=ABCMeta):
         str
             the id of the fitted remote model
         """
+
+        def get_estimator_name(obj):
+            module = obj.__class__.__module__
+            if module is None or module == str.__class__.__module__:
+                return obj.__class__.__name__
+            else:
+                return module + '.' + obj.__class__.__name__
+
+        estimator_name = get_estimator_name(self).replace("pyspark", "org.apache.spark")
+
         client = dataset.sparkSession.client
         input = dataset._plan.plan(client)
         estimator = pb2.MlStage(
-            name=self.__class__.__name__,
+            name=estimator_name,
             params=serialize_ml_params(self, client),
             uid=self.uid,
             type=pb2.MlStage.ESTIMATOR,

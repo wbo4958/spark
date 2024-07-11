@@ -22,10 +22,12 @@ import scala.jdk.CollectionConverters.MapHasAsScala
 import org.apache.spark.connect.proto.{Expression, MlParams}
 import org.apache.spark.connect.proto
 import org.apache.spark.ml.param.Params
+import org.apache.spark.ml.Estimator
 import org.apache.spark.sql.{DataFrame, Dataset}
 import org.apache.spark.sql.connect.common.LiteralValueProtoConverter
 import org.apache.spark.sql.connect.planner.SparkConnectPlanner
 import org.apache.spark.sql.connect.service.SessionHolder
+import org.apache.spark.util.Utils
 
 object MLUtils {
   def setInstanceParams(instance: Params, params: MlParams): Unit = {
@@ -80,5 +82,10 @@ object MLUtils {
     val planner = new SparkConnectPlanner(sessionHolder)
     val plan = planner.transformRelation(relation)
     Dataset.ofRows(sessionHolder.session, plan)
+  }
+
+  def getEstimator(name: String): Estimator[_] = {
+    val estClass = Utils.classForName(name)
+    estClass.getConstructor().newInstance().asInstanceOf[Estimator[_]]
   }
 }

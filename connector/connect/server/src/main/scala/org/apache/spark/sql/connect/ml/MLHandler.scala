@@ -102,7 +102,7 @@ object MLHandler extends Logging {
         val params = fitCmd.getEstimator.getParams
         val dataset = MLUtils.parseRelationProto(fitCmd.getDataset, sessionHolder)
 
-        val estimator = MLRegistries.stages(name)()
+        val estimator = MLUtils.getEstimator(name)
         MLUtils.setInstanceParams(estimator, params)
 
         val model = estimator.fit(dataset).asInstanceOf[Transformer]
@@ -126,7 +126,7 @@ object MLHandler extends Logging {
         var result = false
         logInfo(s"Deleting cache ${modelId}")
         if (!modelId.contains(".")) {
-          sessionHolder.mlCache.remove(modelId)
+          mlCache.remove(modelId)
           result = true
         }
         proto.MlCommandResponse
