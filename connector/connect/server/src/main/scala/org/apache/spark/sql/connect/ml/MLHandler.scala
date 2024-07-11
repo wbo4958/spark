@@ -26,6 +26,7 @@ import org.apache.spark.connect.proto.MlCommand.MlCommandTypeCase
 import org.apache.spark.ml.{Model, Transformer}
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.connect.common.LiteralValueProtoConverter
 import org.apache.spark.sql.connect.ml.Serializer.deserializeMethodArguments
 import org.apache.spark.sql.connect.service.SessionHolder
 
@@ -115,8 +116,21 @@ object MLHandler {
         val helper = ModelAttributeHelper(sessionHolder,
           mlCommand.getFetchModelAttr.getModelRef.getId,
           Option(mlCommand.getFetchModelAttr.getMethod),
-          args)
+          args
+        )
         Serializer.serialize(helper.getAttribute, helper.methodChain)
+
+      case MlCommandTypeCase.DELETE_MODEL =>
+        val modelId = mlCommand.getDeleteModel.getModelRef.getId
+        var result = false
+        if (!modelId.contains(".")) {
+          sessionHolder.mlCache.remove(modelId)
+          result = true
+        }
+        proto.MlCommandResponse
+          .newBuilder()
+          .setLiteral(LiteralValueProtoConverter.toLiteralProto(result))
+          .build()
 
       case _ => throw new UnsupportedOperationException("Unsupported ML command")
     }

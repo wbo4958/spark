@@ -31,12 +31,18 @@ message MlCommand {
   oneof ml_command_type {
     Fit fit = 1;
     FetchModelAttr fetch_model_attr = 2;
+    DeleteModel delete_model = 3;
   }
 
   // Command for estimator.fit(dataset)
   message Fit {
     MlStage estimator = 1;
     Relation dataset = 2;
+  }
+
+  // Command to delete a cached model
+  message DeleteModel {
+    ModelRef model_ref = 1;
   }
 }
 

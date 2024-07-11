@@ -81,21 +81,47 @@ class MlCommand(google.protobuf.message.Message):
             field_name: typing_extensions.Literal["dataset", b"dataset", "estimator", b"estimator"],
         ) -> None: ...
 
+    class DeleteModel(google.protobuf.message.Message):
+        """Command to delete a cached model"""
+
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        MODEL_REF_FIELD_NUMBER: builtins.int
+        @property
+        def model_ref(self) -> pyspark.sql.connect.proto.ml_common_pb2.ModelRef: ...
+        def __init__(
+            self,
+            *,
+            model_ref: pyspark.sql.connect.proto.ml_common_pb2.ModelRef | None = ...,
+        ) -> None: ...
+        def HasField(
+            self, field_name: typing_extensions.Literal["model_ref", b"model_ref"]
+        ) -> builtins.bool: ...
+        def ClearField(
+            self, field_name: typing_extensions.Literal["model_ref", b"model_ref"]
+        ) -> None: ...
+
     FIT_FIELD_NUMBER: builtins.int
     FETCH_MODEL_ATTR_FIELD_NUMBER: builtins.int
+    DELETE_MODEL_FIELD_NUMBER: builtins.int
     @property
     def fit(self) -> global___MlCommand.Fit: ...
     @property
     def fetch_model_attr(self) -> pyspark.sql.connect.proto.relations_pb2.FetchModelAttr: ...
+    @property
+    def delete_model(self) -> global___MlCommand.DeleteModel: ...
     def __init__(
         self,
         *,
         fit: global___MlCommand.Fit | None = ...,
         fetch_model_attr: pyspark.sql.connect.proto.relations_pb2.FetchModelAttr | None = ...,
+        delete_model: global___MlCommand.DeleteModel | None = ...,
     ) -> None: ...
     def HasField(
         self,
         field_name: typing_extensions.Literal[
+            "delete_model",
+            b"delete_model",
             "fetch_model_attr",
             b"fetch_model_attr",
             "fit",
@@ -107,6 +133,8 @@ class MlCommand(google.protobuf.message.Message):
     def ClearField(
         self,
         field_name: typing_extensions.Literal[
+            "delete_model",
+            b"delete_model",
             "fetch_model_attr",
             b"fetch_model_attr",
             "fit",
@@ -117,7 +145,7 @@ class MlCommand(google.protobuf.message.Message):
     ) -> None: ...
     def WhichOneof(
         self, oneof_group: typing_extensions.Literal["ml_command_type", b"ml_command_type"]
-    ) -> typing_extensions.Literal["fit", "fetch_model_attr"] | None: ...
+    ) -> typing_extensions.Literal["fit", "fetch_model_attr", "delete_model"] | None: ...
 
 global___MlCommand = MlCommand
 
