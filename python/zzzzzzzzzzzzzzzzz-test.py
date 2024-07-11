@@ -25,8 +25,6 @@ lr = LogisticRegression()
 lr.setMaxIter(30)
 
 model: LogisticRegressionModel = lr.fit(df)
-del model
-time.sleep(10)
 x = model.predictRaw(Vectors.dense([1.0, 2.0]))
 print(f"predictRaw {x}")
 # TODO make model.evaluate work
