@@ -1070,8 +1070,8 @@ class SparkConnectClient(object):
             for attempt in self._retrying():
                 with attempt:
                     for b in self._stub.ExecutePlan(req, metadata=self._builder.metadata()):
-                        assert b.HasField("ml_command_result")
-                        return b.ml_command_result
+                        if b.HasField("ml_command_result"):
+                            return b.ml_command_result
         except grpc.RpcError as rpc_error:
             self._handle_error(rpc_error)
 
