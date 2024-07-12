@@ -16,7 +16,7 @@
 #
 
 from abc import ABCMeta, abstractmethod
-from typing import Any, Generic, Optional, List, Type, TypeVar, TYPE_CHECKING
+from typing import Any, Generic, Optional, List, Type, TypeVar, TYPE_CHECKING, get_type_hints
 
 from docker.errors import InvalidArgument
 
@@ -52,6 +52,7 @@ class JavaWrapper:
 
     def __del__(self) -> None:
         if is_remote():
+            # Delete the model if possible
             if self._java_obj is not None and "." not in self._java_obj:
                 try:
                     session = SparkSession.getActiveSession()
@@ -63,7 +64,7 @@ class JavaWrapper:
                         client.execute_ml(req)
                         return
                 except ImportError as e:
-                    # SparkSession down.
+                    # SparkSession's down.
                     return
 
         elif self._java_obj is not None:
@@ -81,35 +82,48 @@ class JavaWrapper:
         java_obj = JavaWrapper._new_java_obj(java_class, *args)
         return cls(java_obj)
 
+    def _infer_return_type(self, name: str):
+        """Infer the return type of method or property,
+        This function should not be called at anywhere except in _call_remote"""
+        return_type = None
+        try:
+            return_type = get_type_hints(getattr(type(self), name))
+        except TypeError:
+            # name should be property
+            try:
+                return_type = get_type_hints(getattr(getattr(type(self), name), "fget"))
+            except Exception:
+                ...
 
+        if return_type is not None and "return" in return_type:
+            return return_type["return"]
+        else:
+            return None
 
     def _call_remote(self, name: str, *args: Any) -> Any:
-        # TODO support args
+        """Launch a remote call if possible. But if the return type of a property or method
+        is DataFrame, we just wrap the necessary information into _ModelAttributeRelationPlan
+        without launching any remote call."""
+        return_type = self._infer_return_type(name)
+
         session = SparkSession.getActiveSession()
-        client = SparkSession.getActiveSession().client
-
-        args = serialize(client, *args)
-
-        get_attribute = pb2.FetchModelAttr(
-            model_ref=pb2.ModelRef(id=self._java_obj),
-            method=name,
-            args=args
-        )
-        req = client._execute_plan_request_with_metadata()
-        req.plan.ml_command.fetch_model_attr.CopyFrom(get_attribute)
-
-        resp = client.execute_ml(req)
-
-        ret = deserialize(resp)
-        if resp.HasField("is_dataframe"):
+        if return_type is DataFrame:
             # The attribute returns a dataframe, we need to wrap it
             # in the _ModelAttributeRelationPlan
             from pyspark.ml.remote.proto import _ModelAttributeRelationPlan
             plan = _ModelAttributeRelationPlan(self._java_obj, name)
             from pyspark.sql.connect.dataframe import DataFrame as RemoteDataFrame
             return RemoteDataFrame(plan, session)
-        else:
-            return ret
+
+        get_attribute = pb2.FetchModelAttr(
+            model_ref=pb2.ModelRef(id=self._java_obj),
+            method=name,
+            args=serialize(session.client, *args)
+        )
+        req = session.client._execute_plan_request_with_metadata()
+        req.plan.ml_command.fetch_model_attr.CopyFrom(get_attribute)
+
+        return deserialize(session.client.execute_ml(req))
 
     def _call_java(self, name: str, *args: Any) -> Any:
         if is_remote():
