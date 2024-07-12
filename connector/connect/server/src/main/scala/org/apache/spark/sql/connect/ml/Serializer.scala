@@ -37,12 +37,6 @@ object Serializer {
           .newBuilder()
           .setLiteral(LiteralValueProtoConverter.toLiteralProto(data))
           .build()
-
-      case _: Dataset[_] =>
-        proto.MlCommandResponse.newBuilder()
-          .setIsDataframe(true)
-          .build()
-
       case _ => // if didn't match, we just return the method chain to client
         proto.MlCommandResponse
           .newBuilder().setModelRef(proto.ModelRef.newBuilder().setId(objIdentifier))
@@ -57,7 +51,6 @@ object Serializer {
     for (i <- 0 until values.length) {
       denseBuilder.addValue(values(i))
     }
-
     proto.MlCommandResponse
       .newBuilder()
       .setVector(proto.Vector.newBuilder().setDense(denseBuilder))

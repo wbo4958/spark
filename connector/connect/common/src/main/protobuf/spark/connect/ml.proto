@@ -69,7 +69,6 @@ message MlCommandResponse {
     Vector vector = 2;
     Matrix matrix = 3;
     ModelRef model_ref = 4;
-    bool is_dataframe = 5;
   }
 }
 

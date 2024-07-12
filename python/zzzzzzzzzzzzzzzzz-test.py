@@ -31,16 +31,14 @@ print(f"predictRaw {x}")
 # s = model.evaluate(df)
 # print(s.weightCol)
 assert model.getMaxIter() == 30
+model.summary.roc.show()
+
 print(model.summary.weightedRecall)
-print(model.summary.weightedPrecision)
-print(model.summary.weightedFalsePositiveRate)
 print(model.summary.recallByLabel)
-print(model.summary.truePositiveRateByLabel)
 print(model.coefficients)
 print(model.intercept)
 
 model.transform(df).show()
 
-model.summary.roc.show()
 
 # df.show()
