@@ -26,6 +26,7 @@ lr.setMaxIter(30)
 
 model: LogisticRegressionModel = lr.fit(df)
 x = model.predictRaw(Vectors.dense([1.0, 2.0]))
+z = model.summary
 print(f"predictRaw {x}")
 # TODO make model.evaluate work
 # s = model.evaluate(df)

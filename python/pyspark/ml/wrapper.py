@@ -21,7 +21,7 @@ from typing import Any, Generic, Optional, List, Type, TypeVar, TYPE_CHECKING, g
 from docker.errors import InvalidArgument
 
 from pyspark import since
-from pyspark.ml.linalg import DenseVector, SparseVector
+from pyspark.ml.linalg import DenseVector, SparseVector, DenseMatrix, SparseMatrix
 from pyspark.ml.remote.serialize import serialize_ml_params, deserialize, serialize
 from pyspark.sql import DataFrame, is_remote, SparkSession
 from pyspark.ml import Estimator, Predictor, PredictionModel, Transformer, Model
@@ -104,8 +104,12 @@ class JavaWrapper:
         """Launch a remote call if possible. But if the return type of a property or method
         is DataFrame, we just wrap the necessary information into _ModelAttributeRelationPlan
         without launching any remote call."""
-        return_type = self._infer_return_type(name)
 
+        if name == "summary":
+            # TODO, use annotation to tag in the HasTrainingSummary.
+            return f"{self._java_obj}.{name}"
+
+        return_type = self._infer_return_type(name)
         session = SparkSession.getActiveSession()
         if return_type is DataFrame:
             # The attribute returns a dataframe, we need to wrap it
