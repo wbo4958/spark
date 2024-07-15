@@ -16,24 +16,23 @@
 #
 
 from abc import ABCMeta, abstractmethod
-from typing import Any, Generic, Optional, List, Type, TypeVar, TYPE_CHECKING, get_type_hints
-
-from docker.errors import InvalidArgument
+from typing import Any, Generic, Optional, List, Type, TypeVar, TYPE_CHECKING
 
 from pyspark import since
-from pyspark.ml.linalg import DenseVector, SparseVector, DenseMatrix, SparseMatrix
-from pyspark.ml.remote.serialize import serialize_ml_params, deserialize, serialize
-from pyspark.sql import DataFrame, is_remote, SparkSession
+from pyspark.ml.remote.util import try_remote_transform_relation, try_remote_call, try_remote_fit, try_remote_del, \
+    try_remote_return_none
+from pyspark.sql import DataFrame, is_remote
 from pyspark.ml import Estimator, Predictor, PredictionModel, Transformer, Model
 from pyspark.ml.base import _PredictorParams
 from pyspark.ml.param import Param, Params
 from pyspark.ml.util import _jvm
 from pyspark.ml.common import inherit_doc, _java2py, _py2java
-import pyspark.sql.connect.proto as pb2
+
 
 if TYPE_CHECKING:
     from pyspark.ml._typing import ParamMap
     from py4j.java_gateway import JavaObject, JavaClass
+
 
 T = TypeVar("T")
 JW = TypeVar("JW", bound="JavaWrapper")
@@ -50,29 +49,14 @@ class JavaWrapper:
         super(JavaWrapper, self).__init__()
         self._java_obj = java_obj
 
+    @try_remote_del
     def __del__(self) -> None:
-        if is_remote():
-            # Delete the model if possible
-            if self._java_obj is not None and "." not in self._java_obj:
-                try:
-                    session = SparkSession.getActiveSession()
-                    if session is not None:
-                        client = session.client
-                        req = client._execute_plan_request_with_metadata()
-                        req.plan.ml_command.delete_model.model_ref.CopyFrom(
-                            pb2.ModelRef(id=self._java_obj))
-                        client.execute_ml(req)
-                        return
-                except ImportError as e:
-                    # SparkSession's down.
-                    return
+        from pyspark.core.context import SparkContext
 
-        elif self._java_obj is not None:
-            from pyspark.core.context import SparkContext
-            if SparkContext._active_spark_context:
-                SparkContext._active_spark_context._gateway.detach(  # type: ignore[union-attr]
-                    self._java_obj
-                )
+        if SparkContext._active_spark_context and self._java_obj is not None:
+            SparkContext._active_spark_context._gateway.detach(  # type: ignore[union-attr]
+                self._java_obj
+            )
 
     @classmethod
     def _create_from_java_class(cls: Type[JW], java_class: str, *args: Any) -> JW:
@@ -82,57 +66,8 @@ class JavaWrapper:
         java_obj = JavaWrapper._new_java_obj(java_class, *args)
         return cls(java_obj)
 
-    def _infer_return_type(self, name: str):
-        """Infer the return type of method or property,
-        This function should not be called at anywhere except in _call_remote"""
-        return_type = None
-        try:
-            return_type = get_type_hints(getattr(type(self), name))
-        except TypeError:
-            # name should be property
-            try:
-                return_type = get_type_hints(getattr(getattr(type(self), name), "fget"))
-            except Exception:
-                ...
-
-        if return_type is not None and "return" in return_type:
-            return return_type["return"]
-        else:
-            return None
-
-    def _call_remote(self, name: str, *args: Any) -> Any:
-        """Launch a remote call if possible. But if the return type of a property or method
-        is DataFrame, we just wrap the necessary information into _ModelAttributeRelationPlan
-        without launching any remote call."""
-
-        if name == "summary":
-            # TODO, use annotation to tag in the HasTrainingSummary.
-            return f"{self._java_obj}.{name}"
-
-        return_type = self._infer_return_type(name)
-        session = SparkSession.getActiveSession()
-        if return_type is DataFrame:
-            # The attribute returns a dataframe, we need to wrap it
-            # in the _ModelAttributeRelationPlan
-            from pyspark.ml.remote.proto import _ModelAttributeRelationPlan
-            plan = _ModelAttributeRelationPlan(self._java_obj, name)
-            from pyspark.sql.connect.dataframe import DataFrame as RemoteDataFrame
-            return RemoteDataFrame(plan, session)
-
-        get_attribute = pb2.FetchModelAttr(
-            model_ref=pb2.ModelRef(id=self._java_obj),
-            method=name,
-            args=serialize(session.client, *args)
-        )
-        req = session.client._execute_plan_request_with_metadata()
-        req.plan.ml_command.fetch_model_attr.CopyFrom(get_attribute)
-
-        return deserialize(session.client.execute_ml(req))
-
+    @try_remote_call
     def _call_java(self, name: str, *args: Any) -> Any:
-        if is_remote():
-            return self._call_remote(name, *args)
-
         from pyspark.core.context import SparkContext
 
         m = getattr(self._java_obj, name)
@@ -143,13 +78,11 @@ class JavaWrapper:
         return _java2py(sc, m(*java_args))
 
     @staticmethod
+    @try_remote_return_none
     def _new_java_obj(java_class: str, *args: Any) -> "JavaObject":
         """
         Returns a new Java object.
         """
-        if is_remote():
-            return None
-
         from pyspark.core.context import SparkContext
 
         sc = SparkContext._active_spark_context
@@ -444,6 +377,7 @@ class JavaEstimator(JavaParams, Estimator[JM], metaclass=ABCMeta):
         """
         raise NotImplementedError()
 
+    @try_remote_fit
     def _fit_java(self, dataset: DataFrame) -> "JavaObject":
         """
         Fits a Java model to the input dataset.
@@ -463,52 +397,8 @@ class JavaEstimator(JavaParams, Estimator[JM], metaclass=ABCMeta):
         self._transfer_params_to_java()
         return self._java_obj.fit(dataset._jdf)
 
-    def _fit_remote(self, dataset: DataFrame) -> str:
-        """
-        Fits a remote model to the input dataset.
-
-        Examples
-        --------
-        dataset : :py:class:`pyspark.sql.DataFrame`
-            input dataset
-
-        Returns
-        -------
-        str
-            the id of the fitted remote model
-        """
-
-        def get_estimator_name(obj):
-            module = obj.__class__.__module__
-            if module is None or module == str.__class__.__module__:
-                return obj.__class__.__name__
-            else:
-                return module + '.' + obj.__class__.__name__
-
-        estimator_name = get_estimator_name(self).replace("pyspark", "org.apache.spark")
-
-        client = dataset.sparkSession.client
-        input = dataset._plan.plan(client)
-        estimator = pb2.MlStage(
-            name=estimator_name,
-            params=serialize_ml_params(self, client),
-            uid=self.uid,
-            type=pb2.MlStage.ESTIMATOR,
-        )
-        fit_cmd = pb2.MlCommand.Fit(
-            estimator=estimator,
-            dataset=input,
-        )
-        req = client._execute_plan_request_with_metadata()
-        req.plan.ml_command.fit.CopyFrom(fit_cmd)
-        model_id = deserialize(client.execute_ml(req))
-        return model_id
-
     def _fit(self, dataset: DataFrame) -> JM:
-        if is_remote():
-            java_model = self._fit_remote(dataset)
-        else:
-            java_model = self._fit_java(dataset)
+        java_model = self._fit_java(dataset)
         model = self._create_model(java_model)
         return self._copyValues(model)
 
@@ -521,16 +411,9 @@ class JavaTransformer(JavaParams, Transformer, metaclass=ABCMeta):
     available as _java_obj.
     """
 
+    @try_remote_transform_relation
     def _transform(self, dataset: DataFrame) -> DataFrame:
         assert self._java_obj is not None
-
-        if is_remote():
-            session = dataset.sparkSession
-            params = serialize_ml_params(self, session)
-            from pyspark.ml.remote.proto import _ModelTransformRelationPlan
-            plan = _ModelTransformRelationPlan(dataset._plan, self._java_obj, params)
-            from pyspark.sql.connect.dataframe import DataFrame as RemoteDataFrame
-            return RemoteDataFrame(plan, session)
 
         self._transfer_params_to_java()
         return DataFrame(self._java_obj.transform(dataset._jdf), dataset.sparkSession)

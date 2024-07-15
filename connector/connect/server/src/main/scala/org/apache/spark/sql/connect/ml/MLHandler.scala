@@ -102,7 +102,8 @@ object MLHandler extends Logging {
         val params = fitCmd.getEstimator.getParams
         val dataset = MLUtils.parseRelationProto(fitCmd.getDataset, sessionHolder)
 
-        val estimator = MLUtils.getEstimator(name)
+        val estimatorName = name.replace("pyspark", "org.apache.spark")
+        val estimator = MLUtils.getEstimator(estimatorName)
         MLUtils.setInstanceParams(estimator, params)
 
         val model = estimator.fit(dataset).asInstanceOf[Transformer]

@@ -14,18 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Any, List
+from typing import Any, List, TYPE_CHECKING
 
 import pyspark.sql.connect.proto as pb2
+from pyspark.ml.linalg import Vectors, Matrices, DenseVector, SparseVector
 from pyspark.sql import DataFrame
-from pyspark.sql.connect.client import SparkConnectClient
-
 from pyspark.sql.connect.expressions import LiteralExpression
 
-from pyspark.ml.linalg import Vectors, Matrices, DenseVector, SparseVector
+if TYPE_CHECKING:
+    from pyspark.sql.connect.client import SparkConnectClient
+    from pyspark.ml.param import Params
 
 
-def serialize(client: SparkConnectClient, *args: Any) -> List[Any]:
+def serialize(client: "SparkConnectClient", *args: Any) -> List[Any]:
     result = []
     for arg in args:
         if isinstance(arg, DenseVector):
@@ -45,7 +46,7 @@ def serialize(client: SparkConnectClient, *args: Any) -> List[Any]:
     return result
 
 
-def deserialize(ml_command_result: pb2.ml_pb2.MlCommandResponse, **kwargs):
+def deserialize(ml_command_result: pb2.MlCommandResponse) -> Any:
     if ml_command_result.HasField("literal"):
         return LiteralExpression._to_value(ml_command_result.literal)
 
@@ -53,43 +54,28 @@ def deserialize(ml_command_result: pb2.ml_pb2.MlCommandResponse, **kwargs):
         return ml_command_result.model_ref.id
 
     if ml_command_result.HasField("vector"):
-        vector_pb = ml_command_result.vector
-        if vector_pb.HasField("dense"):
-            return Vectors.dense(vector_pb.dense.value)
+        vector = ml_command_result.vector
+        if vector.HasField("dense"):
+            return Vectors.dense(vector.dense.value)
         raise ValueError()
 
     if ml_command_result.HasField("matrix"):
-        matrix_pb = ml_command_result.matrix
-        if matrix_pb.HasField("dense") and not matrix_pb.dense.is_transposed:
+        matrix = ml_command_result.matrix
+        if matrix.HasField("dense") and not matrix.dense.is_transposed:
             return Matrices.dense(
-                matrix_pb.dense.num_rows,
-                matrix_pb.dense.num_cols,
-                matrix_pb.dense.value,
+                matrix.dense.num_rows,
+                matrix.dense.num_cols,
+                matrix.dense.value,
             )
         raise ValueError()
 
     raise ValueError()
 
 
-def _set_instance_params(instance, params_proto):
-    instance._set(**{
-        k: LiteralExpression._to_value(v_pb)
-        for k, v_pb in params_proto.params.items()
-    })
-    instance._setDefault(**{
-        k: LiteralExpression._to_value(v_pb)
-        for k, v_pb in params_proto.params.items()
-    })
+def serialize_ml_params(instance: "Params", client: "SparkConnectClient") -> pb2.MlParams:
+    params = {
+        k.name: LiteralExpression._from_value(v).to_plan(client).literal
+        for k, v in instance._paramMap
+    }
 
-
-def serialize_ml_params(instance, client):
-    def gen_pb2_map(param_value_dict):
-        return {
-            k.name: LiteralExpression._from_value(v).to_plan(client).literal
-            for k, v in param_value_dict.items()
-        }
-
-    result = pb2.ml_common_pb2.MlParams(
-        params=gen_pb2_map(instance._paramMap),
-    )
-    return result
+    return pb2.MlParams(params=params)
