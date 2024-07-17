@@ -36,6 +36,7 @@ from typing import (
 
 from pyspark import since
 from pyspark.ml.common import inherit_doc
+from pyspark.ml.remote.util import try_remote_intermediate_result
 from pyspark.sql import SparkSession
 from pyspark.sql.utils import is_remote
 from pyspark.util import VersionUtils
@@ -671,6 +672,7 @@ class HasTrainingSummary(Generic[T]):
 
     @property
     @since("2.1.0")
+    @try_remote_intermediate_result
     def summary(self) -> T:
         """
         Gets summary of the model trained on the training set. An exception is thrown if

@@ -1,0 +1,75 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = 'proto3';
+
+package spark.connect;
+
+import "spark/connect/expressions.proto";
+import "spark/connect/relations.proto";
+import "spark/connect/ml_common.proto";
+
+option java_multiple_files = true;
+option java_package = "org.apache.spark.connect.proto";
+
+// Command for ML
+message MlCommand {
+  oneof ml_command_type {
+    Fit fit = 1;
+    FetchModelAttr fetch_model_attr = 2;
+    DeleteModel delete_model = 3;
+  }
+
+  // Command for estimator.fit(dataset)
+  message Fit {
+    MlStage estimator = 1;
+    Relation dataset = 2;
+  }
+
+  // Command to delete a cached model
+  message DeleteModel {
+    ModelRef model_ref = 1;
+  }
+}
+
+// MlStage stores ML stage data (Estimator or Evaluator)
+message MlStage {
+  // The name of the stage in the registry
+  string name = 1;
+  // param settings for the stage
+  MlParams params = 2;
+  // unique id of the stage
+  string uid = 3;
+  StageType type = 4;
+  enum StageType {
+    UNSPECIFIED = 0;
+    ESTIMATOR = 1;
+    EVALUATOR = 2;
+  }
+}
+
+// The response of MlCommand
+message MlCommandResponse {
+  oneof ml_command_response_type {
+    Expression.Literal literal = 1;
+    Vector vector = 2;
+    Matrix matrix = 3;
+    ModelRef model_ref = 4;
+  }
+}
+
+
