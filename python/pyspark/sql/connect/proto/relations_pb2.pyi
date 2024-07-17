@@ -739,9 +739,13 @@ class FetchModelAttr(google.protobuf.message.Message):
     ARGS_FIELD_NUMBER: builtins.int
     @property
     def model_ref(self) -> pyspark.sql.connect.proto.ml_common_pb2.ModelRef:
-        """(Required) reference to the server model object"""
+        """(Required) reference to the server model object or
+        the intermediate attribute of the model eg, "model.summary"
+        """
     method: builtins.str
-    """(Required) the method name. Eg, "coefficients" or "summary.weightedPrecision" """
+    """(Required) the method name. Eg, "coefficients" of the model
+    and "weightedPrecision" of "model.summary"
+    """
     @property
     def args(
         self,

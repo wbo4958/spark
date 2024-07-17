@@ -76,12 +76,12 @@ private class ModelAttributeHelper(val sessionHolder: SessionHolder,
 private object ModelAttributeHelper {
   def apply(sessionHolder: SessionHolder,
             modelId: String,
-            methodChain: Option[String] = None,
+            method: Option[String] = None,
             args: Array[proto.FetchModelAttr.Args] = Array.empty): ModelAttributeHelper = {
     val tmp = deserializeMethodArguments(args, sessionHolder)
     val argValues = tmp.map(_._1)
     val argClasses = tmp.map(_._2)
-    new ModelAttributeHelper(sessionHolder, modelId, methodChain, argValues, argClasses)
+    new ModelAttributeHelper(sessionHolder, modelId, method, argValues, argClasses)
   }
 }
 
@@ -98,17 +98,10 @@ object MLHandler extends Logging {
         val estimatorProto = fitCmd.getEstimator
         assert(estimatorProto.getType == proto.MlStage.StageType.ESTIMATOR)
 
-        val name = fitCmd.getEstimator.getName
-        val params = fitCmd.getEstimator.getParams
         val dataset = MLUtils.parseRelationProto(fitCmd.getDataset, sessionHolder)
-
-        val estimatorName = name.replace("pyspark", "org.apache.spark")
-        val estimator = MLUtils.getEstimator(estimatorName)
-        MLUtils.setInstanceParams(estimator, params)
-
+        val estimator = MLUtils.getEstimator(fitCmd)
         val model = estimator.fit(dataset).asInstanceOf[Transformer]
         val id = mlCache.register(model)
-
         proto.MlCommandResponse.newBuilder()
           .setModelRef(proto.ModelRef.newBuilder().setId(id))
           .build()

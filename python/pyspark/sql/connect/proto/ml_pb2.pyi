@@ -213,7 +213,6 @@ class MlCommandResponse(google.protobuf.message.Message):
     VECTOR_FIELD_NUMBER: builtins.int
     MATRIX_FIELD_NUMBER: builtins.int
     MODEL_REF_FIELD_NUMBER: builtins.int
-    IS_DATAFRAME_FIELD_NUMBER: builtins.int
     @property
     def literal(self) -> pyspark.sql.connect.proto.expressions_pb2.Expression.Literal: ...
     @property
@@ -222,7 +221,6 @@ class MlCommandResponse(google.protobuf.message.Message):
     def matrix(self) -> pyspark.sql.connect.proto.ml_common_pb2.Matrix: ...
     @property
     def model_ref(self) -> pyspark.sql.connect.proto.ml_common_pb2.ModelRef: ...
-    is_dataframe: builtins.bool
     def __init__(
         self,
         *,
@@ -230,13 +228,10 @@ class MlCommandResponse(google.protobuf.message.Message):
         vector: pyspark.sql.connect.proto.ml_common_pb2.Vector | None = ...,
         matrix: pyspark.sql.connect.proto.ml_common_pb2.Matrix | None = ...,
         model_ref: pyspark.sql.connect.proto.ml_common_pb2.ModelRef | None = ...,
-        is_dataframe: builtins.bool = ...,
     ) -> None: ...
     def HasField(
         self,
         field_name: typing_extensions.Literal[
-            "is_dataframe",
-            b"is_dataframe",
             "literal",
             b"literal",
             "matrix",
@@ -252,8 +247,6 @@ class MlCommandResponse(google.protobuf.message.Message):
     def ClearField(
         self,
         field_name: typing_extensions.Literal[
-            "is_dataframe",
-            b"is_dataframe",
             "literal",
             b"literal",
             "matrix",
@@ -271,8 +264,6 @@ class MlCommandResponse(google.protobuf.message.Message):
         oneof_group: typing_extensions.Literal[
             "ml_command_response_type", b"ml_command_response_type"
         ],
-    ) -> (
-        typing_extensions.Literal["literal", "vector", "matrix", "model_ref", "is_dataframe"] | None
-    ): ...
+    ) -> typing_extensions.Literal["literal", "vector", "matrix", "model_ref"] | None: ...
 
 global___MlCommandResponse = MlCommandResponse

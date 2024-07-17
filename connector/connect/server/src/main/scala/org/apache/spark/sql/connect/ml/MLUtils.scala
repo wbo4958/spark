@@ -21,8 +21,8 @@ import scala.jdk.CollectionConverters.MapHasAsScala
 
 import org.apache.spark.connect.proto.{Expression, MlParams}
 import org.apache.spark.connect.proto
-import org.apache.spark.ml.param.Params
 import org.apache.spark.ml.Estimator
+import org.apache.spark.ml.param.Params
 import org.apache.spark.sql.{DataFrame, Dataset}
 import org.apache.spark.sql.connect.common.LiteralValueProtoConverter
 import org.apache.spark.sql.connect.planner.SparkConnectPlanner
@@ -84,8 +84,23 @@ object MLUtils {
     Dataset.ofRows(sessionHolder.session, plan)
   }
 
-  def getEstimator(name: String): Estimator[_] = {
+  /**
+   * Get the Estimator instance according to the fit command
+   *
+   * @param fit command
+   * @return and Estimator
+   */
+  def getEstimator(fit: proto.MlCommand.Fit): Estimator[_] = {
+    // TODO support plugin
+    // Get the estimator according to the fit command
+    val name = fit.getEstimator.getName.replace("pyspark", "org.apache.spark")
+    val params = fit.getEstimator.getParams
+
     val estClass = Utils.classForName(name)
-    estClass.getConstructor().newInstance().asInstanceOf[Estimator[_]]
+    // Use reflection to create the estimator
+    val estimator = estClass.getConstructor().newInstance().asInstanceOf[Estimator[_]]
+    // Set parameters for the estimator
+    MLUtils.setInstanceParams(estimator, params)
+    estimator
   }
 }

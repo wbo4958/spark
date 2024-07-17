@@ -127,9 +127,11 @@ message MlRelation {
 // Eg, model.coefficients, model.summary.weightedPrecision
 // or model.summary.roc which returns a DataFrame
 message FetchModelAttr {
-  // (Required) reference to the server model object
+  // (Required) reference to the server model object or
+  // the intermediate attribute of the model eg, "model.summary"
   ModelRef model_ref = 1;
-  // (Required) the method name. Eg, "coefficients" or "summary.weightedPrecision"
+  // (Required) the method name. Eg, "coefficients" of the model
+  // and "weightedPrecision" of "model.summary"
   string method = 2;
   // (Optional) the parameters of the method
   repeated Args args = 3;
