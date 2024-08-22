@@ -46,20 +46,12 @@ message MlCommand {
   }
 }
 
-// MlStage stores ML stage data (Estimator or Evaluator)
+// MlStage stores ml operators with the parameters
 message MlStage {
-  // The name of the stage in the registry
-  string name = 1;
+  // Ml operator
+  MlOperator operator = 1;
   // param settings for the stage
   MlParams params = 2;
-  // unique id of the stage
-  string uid = 3;
-  StageType type = 4;
-  enum StageType {
-    UNSPECIFIED = 0;
-    ESTIMATOR = 1;
-    EVALUATOR = 2;
-  }
 }
 
 // The response of MlCommand
@@ -71,5 +63,3 @@ message MlCommandResponse {
     ModelRef model_ref = 4;
   }
 }
-
-

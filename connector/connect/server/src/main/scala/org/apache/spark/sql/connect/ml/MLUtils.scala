@@ -21,7 +21,7 @@ import scala.jdk.CollectionConverters.MapHasAsScala
 
 import org.apache.spark.connect.proto.{Expression, MlParams}
 import org.apache.spark.connect.proto
-import org.apache.spark.ml.Estimator
+import org.apache.spark.ml.{Estimator, Transformer}
 import org.apache.spark.ml.param.Params
 import org.apache.spark.sql.{DataFrame, Dataset}
 import org.apache.spark.sql.connect.common.LiteralValueProtoConverter
@@ -84,23 +84,43 @@ object MLUtils {
     Dataset.ofRows(sessionHolder.session, plan)
   }
 
+  def getInstance[T](name: String)(implicit m: Manifest[T]): T = {
+    val clazz = Utils.classForName(name)
+    clazz.getConstructor().newInstance().asInstanceOf[T]
+  }
+
   /**
    * Get the Estimator instance according to the fit command
    *
    * @param fit command
-   * @return and Estimator
+   * @return an Estimator
    */
   def getEstimator(fit: proto.MlCommand.Fit): Estimator[_] = {
     // TODO support plugin
     // Get the estimator according to the fit command
-    val name = fit.getEstimator.getName.replace("pyspark", "org.apache.spark")
-    val params = fit.getEstimator.getParams
-
-    val estClass = Utils.classForName(name)
+    val name = fit.getEstimator.getOperator.getName.replace("pyspark", "org.apache.spark")
     // Use reflection to create the estimator
-    val estimator = estClass.getConstructor().newInstance().asInstanceOf[Estimator[_]]
+    val estimator: Estimator[_] = getInstance(name)
+
     // Set parameters for the estimator
+    val params = fit.getEstimator.getParams
     MLUtils.setInstanceParams(estimator, params)
     estimator
+  }
+
+  /**
+   * Get the transformer instance according to the transform proto
+   *
+   * @param transformProto transform proto
+   * @return a Transformer
+   */
+  def getTransformer(transformProto: proto.MlRelation.Transform): Transformer = {
+    // Get the transformer name
+    val name = transformProto.getTransformer.getName
+    val transformerName = name.replace("pyspark", "org.apache.spark")
+    val transformer: Transformer = getInstance(transformerName)
+    val params = transformProto.getParams
+    MLUtils.setInstanceParams(transformer, params)
+    transformer
   }
 }

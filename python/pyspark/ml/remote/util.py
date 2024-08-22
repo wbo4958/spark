@@ -23,7 +23,6 @@ from pyspark.ml.remote.serialize import serialize_ml_params, serialize, deserial
 from pyspark.sql import is_remote, SparkSession
 from pyspark.sql.connect.dataframe import DataFrame as RemoteDataFrame
 
-
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 
 
@@ -83,11 +82,13 @@ def try_remote_fit(f: FuncT) -> FuncT:
 
             client = dataset.sparkSession.client
             input = dataset._plan.plan(client)
+
+            operator = pb2.MlOperator(name=estimator_name,
+                                      uid=instance.uid,
+                                      type=pb2.MlOperator.ESTIMATOR)
             estimator = pb2.MlStage(
-                name=estimator_name,
+                operator=operator,
                 params=serialize_ml_params(instance, client),
-                uid=instance.uid,
-                type=pb2.MlStage.ESTIMATOR,
             )
             fit_cmd = pb2.MlCommand.Fit(
                 estimator=estimator,

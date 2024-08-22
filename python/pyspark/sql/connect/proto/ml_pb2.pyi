@@ -35,15 +35,13 @@ limitations under the License.
 """
 import builtins
 import google.protobuf.descriptor
-import google.protobuf.internal.enum_type_wrapper
 import google.protobuf.message
 import pyspark.sql.connect.proto.expressions_pb2
 import pyspark.sql.connect.proto.ml_common_pb2
 import pyspark.sql.connect.proto.relations_pb2
 import sys
-import typing
 
-if sys.version_info >= (3, 10):
+if sys.version_info >= (3, 8):
     import typing as typing_extensions
 else:
     import typing_extensions
@@ -150,56 +148,29 @@ class MlCommand(google.protobuf.message.Message):
 global___MlCommand = MlCommand
 
 class MlStage(google.protobuf.message.Message):
-    """MlStage stores ML stage data (Estimator or Evaluator)"""
+    """MlStage stores ml operators with the parameters"""
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    class _StageType:
-        ValueType = typing.NewType("ValueType", builtins.int)
-        V: typing_extensions.TypeAlias = ValueType
-
-    class _StageTypeEnumTypeWrapper(
-        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[MlStage._StageType.ValueType],
-        builtins.type,
-    ):  # noqa: F821
-        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
-        UNSPECIFIED: MlStage._StageType.ValueType  # 0
-        ESTIMATOR: MlStage._StageType.ValueType  # 1
-        EVALUATOR: MlStage._StageType.ValueType  # 2
-
-    class StageType(_StageType, metaclass=_StageTypeEnumTypeWrapper): ...
-    UNSPECIFIED: MlStage.StageType.ValueType  # 0
-    ESTIMATOR: MlStage.StageType.ValueType  # 1
-    EVALUATOR: MlStage.StageType.ValueType  # 2
-
-    NAME_FIELD_NUMBER: builtins.int
+    OPERATOR_FIELD_NUMBER: builtins.int
     PARAMS_FIELD_NUMBER: builtins.int
-    UID_FIELD_NUMBER: builtins.int
-    TYPE_FIELD_NUMBER: builtins.int
-    name: builtins.str
-    """The name of the stage in the registry"""
+    @property
+    def operator(self) -> pyspark.sql.connect.proto.ml_common_pb2.MlOperator:
+        """Ml operator"""
     @property
     def params(self) -> pyspark.sql.connect.proto.ml_common_pb2.MlParams:
         """param settings for the stage"""
-    uid: builtins.str
-    """unique id of the stage"""
-    type: global___MlStage.StageType.ValueType
     def __init__(
         self,
         *,
-        name: builtins.str = ...,
+        operator: pyspark.sql.connect.proto.ml_common_pb2.MlOperator | None = ...,
         params: pyspark.sql.connect.proto.ml_common_pb2.MlParams | None = ...,
-        uid: builtins.str = ...,
-        type: global___MlStage.StageType.ValueType = ...,
     ) -> None: ...
     def HasField(
-        self, field_name: typing_extensions.Literal["params", b"params"]
+        self, field_name: typing_extensions.Literal["operator", b"operator", "params", b"params"]
     ) -> builtins.bool: ...
     def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "name", b"name", "params", b"params", "type", b"type", "uid", b"uid"
-        ],
+        self, field_name: typing_extensions.Literal["operator", b"operator", "params", b"params"]
     ) -> None: ...
 
 global___MlStage = MlStage

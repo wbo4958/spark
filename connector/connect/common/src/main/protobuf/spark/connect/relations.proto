@@ -109,17 +109,22 @@ message Relation {
 // Relation to represent ML world
 message MlRelation {
   oneof ml_relation_type {
-    ModelTransform model_transform = 1;
+    Transform ml_transform = 1;
     FetchModelAttr model_attr = 2;
   }
-  // Relation to represent model.transform(input)
-  message ModelTransform {
-    // model reference
-    ModelRef model_ref = 1;
+  // Relation to represent transform(input) of the operator
+  // which could be a cached model or a new transformer
+  message Transform {
+    oneof operator {
+      // Could be a model reference
+      ModelRef model_ref = 1;
+      // Could be an ML transformer like VectorAssembler
+      MlOperator transformer = 2;
+    }
     // the input dataframe
-    Relation input = 2;
-    // Model specific parameters
-    MlParams params = 3;
+    Relation input = 3;
+    // the operator specific parameters
+    MlParams params = 4;
   }
 }
 
