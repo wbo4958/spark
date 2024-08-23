@@ -613,53 +613,81 @@ class MlRelation(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    class ModelTransform(google.protobuf.message.Message):
-        """Relation to represent model.transform(input)"""
+    class Transform(google.protobuf.message.Message):
+        """Relation to represent transform(input) of the operator
+        which could be a cached model or a new transformer
+        """
 
         DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
         MODEL_REF_FIELD_NUMBER: builtins.int
+        TRANSFORMER_FIELD_NUMBER: builtins.int
         INPUT_FIELD_NUMBER: builtins.int
         PARAMS_FIELD_NUMBER: builtins.int
         @property
         def model_ref(self) -> pyspark.sql.connect.proto.ml_common_pb2.ModelRef:
-            """model reference"""
+            """Could be a model reference"""
+        @property
+        def transformer(self) -> pyspark.sql.connect.proto.ml_common_pb2.MlOperator:
+            """Could be an ML transformer like VectorAssembler"""
         @property
         def input(self) -> global___Relation:
             """the input dataframe"""
         @property
         def params(self) -> pyspark.sql.connect.proto.ml_common_pb2.MlParams:
-            """Model specific parameters"""
+            """the operator specific parameters"""
         def __init__(
             self,
             *,
             model_ref: pyspark.sql.connect.proto.ml_common_pb2.ModelRef | None = ...,
+            transformer: pyspark.sql.connect.proto.ml_common_pb2.MlOperator | None = ...,
             input: global___Relation | None = ...,
             params: pyspark.sql.connect.proto.ml_common_pb2.MlParams | None = ...,
         ) -> None: ...
         def HasField(
             self,
             field_name: typing_extensions.Literal[
-                "input", b"input", "model_ref", b"model_ref", "params", b"params"
+                "input",
+                b"input",
+                "model_ref",
+                b"model_ref",
+                "operator",
+                b"operator",
+                "params",
+                b"params",
+                "transformer",
+                b"transformer",
             ],
         ) -> builtins.bool: ...
         def ClearField(
             self,
             field_name: typing_extensions.Literal[
-                "input", b"input", "model_ref", b"model_ref", "params", b"params"
+                "input",
+                b"input",
+                "model_ref",
+                b"model_ref",
+                "operator",
+                b"operator",
+                "params",
+                b"params",
+                "transformer",
+                b"transformer",
             ],
         ) -> None: ...
+        def WhichOneof(
+            self, oneof_group: typing_extensions.Literal["operator", b"operator"]
+        ) -> typing_extensions.Literal["model_ref", "transformer"] | None: ...
 
-    MODEL_TRANSFORM_FIELD_NUMBER: builtins.int
+    ML_TRANSFORM_FIELD_NUMBER: builtins.int
     MODEL_ATTR_FIELD_NUMBER: builtins.int
     @property
-    def model_transform(self) -> global___MlRelation.ModelTransform: ...
+    def ml_transform(self) -> global___MlRelation.Transform: ...
     @property
     def model_attr(self) -> global___FetchModelAttr: ...
     def __init__(
         self,
         *,
-        model_transform: global___MlRelation.ModelTransform | None = ...,
+        ml_transform: global___MlRelation.Transform | None = ...,
         model_attr: global___FetchModelAttr | None = ...,
     ) -> None: ...
     def HasField(
@@ -667,10 +695,10 @@ class MlRelation(google.protobuf.message.Message):
         field_name: typing_extensions.Literal[
             "ml_relation_type",
             b"ml_relation_type",
+            "ml_transform",
+            b"ml_transform",
             "model_attr",
             b"model_attr",
-            "model_transform",
-            b"model_transform",
         ],
     ) -> builtins.bool: ...
     def ClearField(
@@ -678,15 +706,15 @@ class MlRelation(google.protobuf.message.Message):
         field_name: typing_extensions.Literal[
             "ml_relation_type",
             b"ml_relation_type",
+            "ml_transform",
+            b"ml_transform",
             "model_attr",
             b"model_attr",
-            "model_transform",
-            b"model_transform",
         ],
     ) -> None: ...
     def WhichOneof(
         self, oneof_group: typing_extensions.Literal["ml_relation_type", b"ml_relation_type"]
-    ) -> typing_extensions.Literal["model_transform", "model_attr"] | None: ...
+    ) -> typing_extensions.Literal["ml_transform", "model_attr"] | None: ...
 
 global___MlRelation = MlRelation
 

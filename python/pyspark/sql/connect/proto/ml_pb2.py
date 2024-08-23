@@ -34,7 +34,7 @@ from pyspark.sql.connect.proto import ml_common_pb2 as spark_dot_connect_dot_ml_
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
-    b'\n\x16spark/connect/ml.proto\x12\rspark.connect\x1a\x1fspark/connect/expressions.proto\x1a\x1dspark/connect/relations.proto\x1a\x1dspark/connect/ml_common.proto"\x9b\x03\n\tMlCommand\x12\x30\n\x03\x66it\x18\x01 \x01(\x0b\x32\x1c.spark.connect.MlCommand.FitH\x00R\x03\x66it\x12I\n\x10\x66\x65tch_model_attr\x18\x02 \x01(\x0b\x32\x1d.spark.connect.FetchModelAttrH\x00R\x0e\x66\x65tchModelAttr\x12I\n\x0c\x64\x65lete_model\x18\x03 \x01(\x0b\x32$.spark.connect.MlCommand.DeleteModelH\x00R\x0b\x64\x65leteModel\x1an\n\x03\x46it\x12\x34\n\testimator\x18\x01 \x01(\x0b\x32\x16.spark.connect.MlStageR\testimator\x12\x31\n\x07\x64\x61taset\x18\x02 \x01(\x0b\x32\x17.spark.connect.RelationR\x07\x64\x61taset\x1a\x43\n\x0b\x44\x65leteModel\x12\x34\n\tmodel_ref\x18\x01 \x01(\x0b\x32\x17.spark.connect.ModelRefR\x08modelRefB\x11\n\x0fml_command_type"\xd2\x01\n\x07MlStage\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12/\n\x06params\x18\x02 \x01(\x0b\x32\x17.spark.connect.MlParamsR\x06params\x12\x10\n\x03uid\x18\x03 \x01(\tR\x03uid\x12\x34\n\x04type\x18\x04 \x01(\x0e\x32 .spark.connect.MlStage.StageTypeR\x04type":\n\tStageType\x12\x0f\n\x0bUNSPECIFIED\x10\x00\x12\r\n\tESTIMATOR\x10\x01\x12\r\n\tEVALUATOR\x10\x02"\x88\x02\n\x11MlCommandResponse\x12=\n\x07literal\x18\x01 \x01(\x0b\x32!.spark.connect.Expression.LiteralH\x00R\x07literal\x12/\n\x06vector\x18\x02 \x01(\x0b\x32\x15.spark.connect.VectorH\x00R\x06vector\x12/\n\x06matrix\x18\x03 \x01(\x0b\x32\x15.spark.connect.MatrixH\x00R\x06matrix\x12\x36\n\tmodel_ref\x18\x04 \x01(\x0b\x32\x17.spark.connect.ModelRefH\x00R\x08modelRefB\x1a\n\x18ml_command_response_typeB"\n\x1eorg.apache.spark.connect.protoP\x01\x62\x06proto3'
+    b'\n\x16spark/connect/ml.proto\x12\rspark.connect\x1a\x1fspark/connect/expressions.proto\x1a\x1dspark/connect/relations.proto\x1a\x1dspark/connect/ml_common.proto"\x9b\x03\n\tMlCommand\x12\x30\n\x03\x66it\x18\x01 \x01(\x0b\x32\x1c.spark.connect.MlCommand.FitH\x00R\x03\x66it\x12I\n\x10\x66\x65tch_model_attr\x18\x02 \x01(\x0b\x32\x1d.spark.connect.FetchModelAttrH\x00R\x0e\x66\x65tchModelAttr\x12I\n\x0c\x64\x65lete_model\x18\x03 \x01(\x0b\x32$.spark.connect.MlCommand.DeleteModelH\x00R\x0b\x64\x65leteModel\x1an\n\x03\x46it\x12\x34\n\testimator\x18\x01 \x01(\x0b\x32\x16.spark.connect.MlStageR\testimator\x12\x31\n\x07\x64\x61taset\x18\x02 \x01(\x0b\x32\x17.spark.connect.RelationR\x07\x64\x61taset\x1a\x43\n\x0b\x44\x65leteModel\x12\x34\n\tmodel_ref\x18\x01 \x01(\x0b\x32\x17.spark.connect.ModelRefR\x08modelRefB\x11\n\x0fml_command_type"q\n\x07MlStage\x12\x35\n\x08operator\x18\x01 \x01(\x0b\x32\x19.spark.connect.MlOperatorR\x08operator\x12/\n\x06params\x18\x02 \x01(\x0b\x32\x17.spark.connect.MlParamsR\x06params"\x88\x02\n\x11MlCommandResponse\x12=\n\x07literal\x18\x01 \x01(\x0b\x32!.spark.connect.Expression.LiteralH\x00R\x07literal\x12/\n\x06vector\x18\x02 \x01(\x0b\x32\x15.spark.connect.VectorH\x00R\x06vector\x12/\n\x06matrix\x18\x03 \x01(\x0b\x32\x15.spark.connect.MatrixH\x00R\x06matrix\x12\x36\n\tmodel_ref\x18\x04 \x01(\x0b\x32\x17.spark.connect.ModelRefH\x00R\x08modelRefB\x1a\n\x18ml_command_response_typeB"\n\x1eorg.apache.spark.connect.protoP\x01\x62\x06proto3'
 )
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
@@ -48,10 +48,8 @@ if _descriptor._USE_C_DESCRIPTORS == False:
     _MLCOMMAND_FIT._serialized_end = 460
     _MLCOMMAND_DELETEMODEL._serialized_start = 462
     _MLCOMMAND_DELETEMODEL._serialized_end = 529
-    _MLSTAGE._serialized_start = 551
-    _MLSTAGE._serialized_end = 761
-    _MLSTAGE_STAGETYPE._serialized_start = 703
-    _MLSTAGE_STAGETYPE._serialized_end = 761
-    _MLCOMMANDRESPONSE._serialized_start = 764
-    _MLCOMMANDRESPONSE._serialized_end = 1028
+    _MLSTAGE._serialized_start = 550
+    _MLSTAGE._serialized_end = 663
+    _MLCOMMANDRESPONSE._serialized_start = 666
+    _MLCOMMANDRESPONSE._serialized_end = 930
 # @@protoc_insertion_point(module_scope)

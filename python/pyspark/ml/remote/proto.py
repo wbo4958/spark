@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from typing import Optional
 
 from pyspark.sql.connect.plan import LogicalPlan
 import pyspark.sql.connect.proto as pb2
@@ -30,12 +31,32 @@ class _ModelTransformRelationPlan(LogicalPlan):
 
     def plan(self, session: "SparkConnectClient") -> pb2.Relation:
         plan = self._create_proto_relation()
-        plan.ml_relation.model_transform.input.CopyFrom(self._child.plan(session))
-        plan.ml_relation.model_transform.model_ref.CopyFrom(
+        plan.ml_relation.ml_transform.input.CopyFrom(self._child.plan(session))
+        plan.ml_relation.ml_transform.model_ref.CopyFrom(
             pb2.ModelRef(id=self._model_id))
         if self._ml_params is not None:
-            plan.ml_relation.model_transform.params.CopyFrom(self._ml_params)
+            plan.ml_relation.ml_transform.params.CopyFrom(self._ml_params)
 
+        return plan
+
+
+class _TransformerRelationPlan(LogicalPlan):
+    """_TransformerRelationPlan represents the transform for non-model transformers
+    """
+
+    def __init__(self, child: Optional["LogicalPlan"], name: str, uid: str, ml_params):
+        super().__init__(child)
+        self._name = name
+        self._uid = uid
+        self._ml_params = ml_params
+
+    def plan(self, session: "SparkConnectClient") -> pb2.Relation:
+        plan = self._create_proto_relation()
+        plan.ml_relation.ml_transform.input.CopyFrom(self._child.plan(session))
+        plan.ml_relation.ml_transform.transformer.CopyFrom(
+            pb2.MlOperator(name=self._name, uid=self._uid, type=pb2.MlOperator.TRANSFORMER))
+        if self._ml_params is not None:
+            plan.ml_relation.ml_transform.params.CopyFrom(self._ml_params)
         return plan
 
 

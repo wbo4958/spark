@@ -37,11 +37,13 @@ import builtins
 import collections.abc
 import google.protobuf.descriptor
 import google.protobuf.internal.containers
+import google.protobuf.internal.enum_type_wrapper
 import google.protobuf.message
 import pyspark.sql.connect.proto.expressions_pb2
 import sys
+import typing
 
-if sys.version_info >= (3, 8):
+if sys.version_info >= (3, 10):
     import typing as typing_extensions
 else:
     import typing_extensions
@@ -50,7 +52,7 @@ DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
 
 class MlParams(google.protobuf.message.Message):
     """MlParams stores param settings for
-    ML Estimator / Transformer / Model / Evaluator
+    ML Estimator / Transformer / Evaluator
     """
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
@@ -96,14 +98,63 @@ class MlParams(google.protobuf.message.Message):
 
 global___MlParams = MlParams
 
+class MlOperator(google.protobuf.message.Message):
+    """MLOperator represents the ML operators like (Estimator, Transformer or Evaluator)"""
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    class _StageType:
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
+
+    class _StageTypeEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[
+            MlOperator._StageType.ValueType
+        ],
+        builtins.type,
+    ):  # noqa: F821
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        UNSPECIFIED: MlOperator._StageType.ValueType  # 0
+        ESTIMATOR: MlOperator._StageType.ValueType  # 1
+        TRANSFORMER: MlOperator._StageType.ValueType  # 2
+        EVALUATOR: MlOperator._StageType.ValueType  # 3
+
+    class StageType(_StageType, metaclass=_StageTypeEnumTypeWrapper): ...
+    UNSPECIFIED: MlOperator.StageType.ValueType  # 0
+    ESTIMATOR: MlOperator.StageType.ValueType  # 1
+    TRANSFORMER: MlOperator.StageType.ValueType  # 2
+    EVALUATOR: MlOperator.StageType.ValueType  # 3
+
+    NAME_FIELD_NUMBER: builtins.int
+    UID_FIELD_NUMBER: builtins.int
+    TYPE_FIELD_NUMBER: builtins.int
+    name: builtins.str
+    """The name of the stage in the registry"""
+    uid: builtins.str
+    """unique id of the stage"""
+    type: global___MlOperator.StageType.ValueType
+    """represent what the ml operator is"""
+    def __init__(
+        self,
+        *,
+        name: builtins.str = ...,
+        uid: builtins.str = ...,
+        type: global___MlOperator.StageType.ValueType = ...,
+    ) -> None: ...
+    def ClearField(
+        self, field_name: typing_extensions.Literal["name", b"name", "type", b"type", "uid", b"uid"]
+    ) -> None: ...
+
+global___MlOperator = MlOperator
+
 class ModelRef(google.protobuf.message.Message):
-    """represents a reference to server side `Model` instance"""
+    """represents a reference to the `Model` instance on the server side."""
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     ID_FIELD_NUMBER: builtins.int
     id: builtins.str
-    """The ID is used to lookup the model instance in server side."""
+    """The ID is used to lookup the model instance on the server side."""
     def __init__(
         self,
         *,

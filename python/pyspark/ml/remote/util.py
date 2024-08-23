@@ -23,7 +23,6 @@ from pyspark.ml.remote.serialize import serialize_ml_params, serialize, deserial
 from pyspark.sql import is_remote, SparkSession
 from pyspark.sql.connect.dataframe import DataFrame as RemoteDataFrame
 
-
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 
 
@@ -83,11 +82,13 @@ def try_remote_fit(f: FuncT) -> FuncT:
 
             client = dataset.sparkSession.client
             input = dataset._plan.plan(client)
+
+            operator = pb2.MlOperator(name=estimator_name,
+                                      uid=instance.uid,
+                                      type=pb2.MlOperator.ESTIMATOR)
             estimator = pb2.MlStage(
-                name=estimator_name,
+                operator=operator,
                 params=serialize_ml_params(instance, client),
-                uid=instance.uid,
-                type=pb2.MlStage.ESTIMATOR,
             )
             fit_cmd = pb2.MlCommand.Fit(
                 estimator=estimator,
@@ -109,13 +110,22 @@ def try_remote_transform_relation(f: FuncT) -> FuncT:
     @functools.wraps(f)
     def wrapped(self, dataset: RemoteDataFrame) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
-            id = cast("JavaWrapper", self)._java_obj
-            session = SparkSession.getActiveSession()
+            from pyspark.ml import Model
+            if isinstance(self, Model):
+                id = cast("JavaWrapper", self)._java_obj
+                session = SparkSession.getActiveSession()
 
-            params = serialize_ml_params(self, session)
-            from pyspark.ml.remote.proto import _ModelTransformRelationPlan
-            plan = _ModelTransformRelationPlan(dataset._plan, id, params)
-            return RemoteDataFrame(plan, session)
+                params = serialize_ml_params(self, session)
+                from pyspark.ml.remote.proto import _ModelTransformRelationPlan
+                plan = _ModelTransformRelationPlan(dataset._plan, id, params)
+                return RemoteDataFrame(plan, session)
+            else:
+                name = cast("JavaWrapper", self)._java_obj
+                session = SparkSession.getActiveSession()
+                params = serialize_ml_params(self, session)
+                from pyspark.ml.remote.proto import _TransformerRelationPlan
+                plan = _TransformerRelationPlan(dataset._plan, name, self.uid, params)
+                return RemoteDataFrame(plan, session)
         else:
             return f(self, dataset)
 
@@ -181,7 +191,7 @@ def try_remote_return_none(f: FuncT) -> FuncT:
     @functools.wraps(f)
     def wrapped(java_class: str, *args: Any) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
-            return None
+            return java_class
         else:
             return f(java_class, *args)
 

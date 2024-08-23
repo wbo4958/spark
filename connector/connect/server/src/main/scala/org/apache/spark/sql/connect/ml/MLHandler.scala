@@ -64,11 +64,11 @@ private class ModelAttributeHelper(val sessionHolder: SessionHolder,
     }
   }
 
-  def transform(modelRelation: proto.MlRelation.ModelTransform): DataFrame = {
+  def transform(relation: proto.MlRelation.Transform): DataFrame = {
     // Create a copied model to avoid concurrently modify model params.
     val copiedModel = model.copy(ParamMap.empty).asInstanceOf[Model[_]]
-    MLUtils.setInstanceParams(copiedModel, modelRelation.getParams)
-    val inputDF = MLUtils.parseRelationProto(modelRelation.getInput, sessionHolder)
+    MLUtils.setInstanceParams(copiedModel, relation.getParams)
+    val inputDF = MLUtils.parseRelationProto(relation.getInput, sessionHolder)
     copiedModel.transform(inputDF)
   }
 }
@@ -96,7 +96,7 @@ object MLHandler extends Logging {
       case MlCommandTypeCase.FIT =>
         val fitCmd = mlCommand.getFit
         val estimatorProto = fitCmd.getEstimator
-        assert(estimatorProto.getType == proto.MlStage.StageType.ESTIMATOR)
+        assert(estimatorProto.getOperator.getType == proto.MlOperator.StageType.ESTIMATOR)
 
         val dataset = MLUtils.parseRelationProto(fitCmd.getDataset, sessionHolder)
         val estimator = MLUtils.getEstimator(fitCmd)
@@ -136,11 +136,27 @@ object MLHandler extends Logging {
       relation: proto.MlRelation,
       sessionHolder: SessionHolder): DataFrame = {
     relation.getMlRelationTypeCase match {
-      case proto.MlRelation.MlRelationTypeCase.MODEL_TRANSFORM =>
-        val helper = ModelAttributeHelper(sessionHolder,
-          relation.getModelTransform.getModelRef.getId, None)
-        helper.transform(relation.getModelTransform)
+      // Ml transform
+      case proto.MlRelation.MlRelationTypeCase.ML_TRANSFORM =>
+        relation.getMlTransform.getOperatorCase match {
+          // transform for a new ML transformer
+          case proto.MlRelation.Transform.OperatorCase.TRANSFORMER =>
+            val transformProto = relation.getMlTransform
+            assert(transformProto.getTransformer.getType == proto.MlOperator.StageType.TRANSFORMER)
+            val dataset = MLUtils.parseRelationProto(transformProto.getInput, sessionHolder)
+            val transformer: Transformer = MLUtils.getTransformer(transformProto)
+            transformer.transform(dataset)
 
+          // transform on a cached model
+          case proto.MlRelation.Transform.OperatorCase.MODEL_REF =>
+            val helper = ModelAttributeHelper(sessionHolder,
+              relation.getMlTransform.getModelRef.getId, None)
+            helper.transform(relation.getMlTransform)
+
+          case _ => throw new IllegalArgumentException("Unsupported ml operator")
+        }
+
+      // Get the model attribute
       case proto.MlRelation.MlRelationTypeCase.MODEL_ATTR =>
         val helper = ModelAttributeHelper(sessionHolder,
           relation.getModelAttr.getModelRef.getId,

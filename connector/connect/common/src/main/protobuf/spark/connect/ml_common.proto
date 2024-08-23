@@ -25,15 +25,31 @@ option java_multiple_files = true;
 option java_package = "org.apache.spark.connect.proto";
 
 // MlParams stores param settings for
-// ML Estimator / Transformer / Model / Evaluator
+// ML Estimator / Transformer / Evaluator
 message MlParams {
   // user-supplied params
   map<string, Expression.Literal> params = 1;
 }
 
-// represents a reference to server side `Model` instance
+// MLOperator represents the ML operators like (Estimator, Transformer or Evaluator)
+message MlOperator {
+  // The name of the stage in the registry
+  string name = 1;
+  // unique id of the stage
+  string uid = 2;
+  // represent what the ml operator is
+  StageType type = 3;
+  enum StageType {
+    UNSPECIFIED = 0;
+    ESTIMATOR = 1;
+    TRANSFORMER = 2;
+    EVALUATOR = 3;
+  }
+}
+
+// represents a reference to the `Model` instance on the server side.
 message ModelRef {
-  // The ID is used to lookup the model instance in server side.
+  // The ID is used to lookup the model instance on the server side.
   string id = 1;
 }
 
