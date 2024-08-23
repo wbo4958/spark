@@ -43,6 +43,26 @@ object MLUtils {
     convertParamValue(paramType, value)
   }
 
+  private def convertArray(paramType: Class[_], array: Array[_]): Array[_] = {
+    if (paramType == classOf[Byte]) {
+      array.map(_.asInstanceOf[Byte])
+    } else if (paramType == classOf[Short]) {
+      array.map(_.asInstanceOf[Short])
+    } else if (paramType == classOf[Int]) {
+      array.map(_.asInstanceOf[Int])
+    } else if (paramType == classOf[Long]) {
+      array.map(_.asInstanceOf[Long])
+    } else if (paramType == classOf[Float]) {
+      array.map(_.asInstanceOf[Float])
+    } else if (paramType == classOf[Double]) {
+      array.map(_.asInstanceOf[Double])
+    } else if (paramType == classOf[String]) {
+      array.map(_.asInstanceOf[String])
+    } else {
+      array
+    }
+  }
+
   private def convertParamValue(paramType: Class[_], value: Any): Any = {
     // Some cases the param type might be mismatched with the value type.
     // Because in python side we only have int / float type for numeric params.
@@ -68,9 +88,10 @@ object MLUtils {
       value.asInstanceOf[java.lang.Number].doubleValue()
     } else if (paramType.isArray) {
       val compType = paramType.getComponentType
-      value.asInstanceOf[Array[_]].map { e =>
+      val array = value.asInstanceOf[Array[_]].map { e =>
         convertParamValue(compType, e)
       }
+      convertArray(compType, array)
     } else {
       value
     }
