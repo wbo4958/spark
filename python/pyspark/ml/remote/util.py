@@ -70,15 +70,7 @@ def try_remote_fit(f: FuncT) -> FuncT:
     def wrapped(self, dataset: RemoteDataFrame) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             instance = cast("JavaEstimator", self)
-
-            def get_estimator_name(obj: Any):
-                module = obj.__class__.__module__
-                if module is None or module == str.__class__.__module__:
-                    return obj.__class__.__name__
-                else:
-                    return module + '.' + obj.__class__.__name__
-
-            estimator_name = get_estimator_name(instance)
+            estimator_name = instance._java_obj
 
             client = dataset.sparkSession.client
             input = dataset._plan.plan(client)
@@ -185,7 +177,7 @@ def try_remote_del(f: FuncT) -> FuncT:
     return cast(FuncT, wrapped)
 
 
-def try_remote_return_none(f: FuncT) -> FuncT:
+def try_remote_return_java_class(f: FuncT) -> FuncT:
     """Mark the function/property than returns none."""
 
     @functools.wraps(f)

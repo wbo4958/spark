@@ -20,7 +20,7 @@ from typing import Any, Generic, Optional, List, Type, TypeVar, TYPE_CHECKING
 
 from pyspark import since
 from pyspark.ml.remote.util import try_remote_transform_relation, try_remote_call, try_remote_fit, try_remote_del, \
-    try_remote_return_none
+    try_remote_return_java_class
 from pyspark.sql import DataFrame, is_remote
 from pyspark.ml import Estimator, Predictor, PredictionModel, Transformer, Model
 from pyspark.ml.base import _PredictorParams
@@ -78,7 +78,7 @@ class JavaWrapper:
         return _java2py(sc, m(*java_args))
 
     @staticmethod
-    @try_remote_return_none
+    @try_remote_return_java_class
     def _new_java_obj(java_class: str, *args: Any) -> "JavaObject":
         """
         Returns a new Java object.
