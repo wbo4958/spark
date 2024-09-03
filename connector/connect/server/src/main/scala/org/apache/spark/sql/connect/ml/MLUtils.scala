@@ -17,7 +17,9 @@
 
 package org.apache.spark.sql.connect.ml
 
-import scala.jdk.CollectionConverters.MapHasAsScala
+import java.util.ServiceLoader
+
+import scala.jdk.CollectionConverters.{IterableHasAsScala, MapHasAsScala}
 
 import org.apache.spark.connect.proto.{Expression, MlParams}
 import org.apache.spark.connect.proto
@@ -30,6 +32,21 @@ import org.apache.spark.sql.connect.service.SessionHolder
 import org.apache.spark.util.Utils
 
 object MLUtils {
+
+  private lazy val estimators: Map[String, Class[_]] = {
+    val loader = Utils.getContextOrSparkClassLoader
+    val serviceLoader = ServiceLoader.load(classOf[Estimator[_]], loader)
+    val providers = serviceLoader.asScala.toList
+    providers.map(est => est.getClass.getName -> est.getClass).toMap
+  }
+
+  private lazy val transformers: Map[String, Class[_]] = {
+    val loader = Utils.getContextOrSparkClassLoader
+    val serviceLoader = ServiceLoader.load(classOf[Transformer], loader)
+    val providers = serviceLoader.asScala.toList
+    providers.map(est => est.getClass.getName -> est.getClass).toMap
+  }
+
   def setInstanceParams(instance: Params, params: MlParams): Unit = {
     params.getParamsMap.asScala.foreach { case (name, valueProto) =>
       val p = instance.getParam(name)
@@ -105,11 +122,6 @@ object MLUtils {
     Dataset.ofRows(sessionHolder.session, plan)
   }
 
-  def getInstance[T](name: String)(implicit m: Manifest[T]): T = {
-    val clazz = Utils.classForName(name)
-    clazz.getConstructor().newInstance().asInstanceOf[T]
-  }
-
   /**
    * Get the Estimator instance according to the fit command
    *
@@ -119,9 +131,13 @@ object MLUtils {
   def getEstimator(fit: proto.MlCommand.Fit): Estimator[_] = {
     // TODO support plugin
     // Get the estimator according to the fit command
-    val name = fit.getEstimator.getOperator.getName.replace("pyspark", "org.apache.spark")
-    // Use reflection to create the estimator
-    val estimator: Estimator[_] = getInstance(name)
+    val name = fit.getEstimator.getOperator.getName
+    if (estimators.isEmpty || !estimators.contains(name)) {
+      throw new RuntimeException(s"Failed to find estimator: $name")
+    }
+    val uid = fit.getEstimator.getOperator.getUid
+    val estimator: Estimator[_] = estimators(name).getConstructor(classOf[String])
+      .newInstance(uid).asInstanceOf[Estimator[_]]
 
     // Set parameters for the estimator
     val params = fit.getEstimator.getParams
@@ -138,8 +154,13 @@ object MLUtils {
   def getTransformer(transformProto: proto.MlRelation.Transform): Transformer = {
     // Get the transformer name
     val name = transformProto.getTransformer.getName
-    val transformerName = name.replace("pyspark", "org.apache.spark")
-    val transformer: Transformer = getInstance(transformerName)
+    if (transformers.isEmpty || !transformers.contains(name)) {
+      throw new RuntimeException(s"Failed to find transformer: $name")
+    }
+    val uid = transformProto.getTransformer.getUid
+    val transformer = transformers(name).getConstructor(classOf[String])
+      .newInstance(uid).asInstanceOf[Transformer]
+
     val params = transformProto.getParams
     MLUtils.setInstanceParams(transformer, params)
     transformer

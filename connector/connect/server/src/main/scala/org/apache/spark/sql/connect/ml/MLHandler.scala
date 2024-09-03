@@ -24,7 +24,7 @@ import org.apache.commons.lang3.reflect.MethodUtils.invokeMethod
 import org.apache.spark.connect.proto
 import org.apache.spark.connect.proto.MlCommand.MlCommandTypeCase
 import org.apache.spark.internal.Logging
-import org.apache.spark.ml.{Model, Transformer}
+import org.apache.spark.ml.Model
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.connect.common.LiteralValueProtoConverter
@@ -100,7 +100,7 @@ object MLHandler extends Logging {
 
         val dataset = MLUtils.parseRelationProto(fitCmd.getDataset, sessionHolder)
         val estimator = MLUtils.getEstimator(fitCmd)
-        val model = estimator.fit(dataset).asInstanceOf[Transformer]
+        val model = estimator.fit(dataset).asInstanceOf[Model[_]]
         val id = mlCache.register(model)
         proto.MlCommandResponse.newBuilder()
           .setModelRef(proto.ModelRef.newBuilder().setId(id))
@@ -144,7 +144,7 @@ object MLHandler extends Logging {
             val transformProto = relation.getMlTransform
             assert(transformProto.getTransformer.getType == proto.MlOperator.StageType.TRANSFORMER)
             val dataset = MLUtils.parseRelationProto(transformProto.getInput, sessionHolder)
-            val transformer: Transformer = MLUtils.getTransformer(transformProto)
+            val transformer = MLUtils.getTransformer(transformProto)
             transformer.transform(dataset)
 
           // transform on a cached model
