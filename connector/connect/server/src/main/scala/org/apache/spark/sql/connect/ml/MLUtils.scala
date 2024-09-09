@@ -19,7 +19,10 @@ package org.apache.spark.sql.connect.ml
 
 import java.util.ServiceLoader
 
+import scala.collection.immutable.HashSet
 import scala.jdk.CollectionConverters.{IterableHasAsScala, MapHasAsScala}
+
+import org.apache.commons.lang3.reflect.MethodUtils.invokeMethod
 
 import org.apache.spark.connect.proto.{Expression, MlParams}
 import org.apache.spark.connect.proto
@@ -164,5 +167,35 @@ object MLUtils {
     val params = transformProto.getParams
     MLUtils.setInstanceParams(transformer, params)
     transformer
+  }
+
+  private lazy val ALLOWED_ATTRIBUTES = HashSet(
+    "numFeatures", "predict", // PredictionModel
+    "numClasses", "predictRaw", // ClassificationModel
+    "predictProbability", // ProbabilisticClassificationModel
+    "coefficients", "intercept", "coefficientMatrix", "interceptVector", // LogisticRegressionModel
+    "summary", "hasSummary", "evaluate", // LogisticRegressionModel
+    "predictions", "predictionCol", "labelCol", "weightCol", "labels", // _ClassificationSummary
+    "truePositiveRateByLabel", "falsePositiveRateByLabel", // _ClassificationSummary
+    "precisionByLabel", "recallByLabel", "fMeasureByLabel", "accuracy", // _ClassificationSummary
+    "weightedTruePositiveRate", "weightedFalsePositiveRate", // _ClassificationSummary
+    "weightedRecall", "weightedPrecision", "weightedFMeasure", // _ClassificationSummary
+    "scoreCol", "roc", "areaUnderROC", "pr", "fMeasureByThreshold", // _BinaryClassificationSummary
+    "precisionByThreshold", "recallByThreshold", // _BinaryClassificationSummary
+    "probabilityCol", "featuresCol", // LogisticRegressionSummary
+    "objectiveHistory", "totalIterations" // _TrainingSummary
+  )
+
+  def invokeMethodAllowed(obj: Object, methodName: String): Object = {
+    require(ALLOWED_ATTRIBUTES.contains(methodName),
+          s"$methodName is not allowed to be accessed.")
+    invokeMethod(obj, methodName)
+  }
+
+  def invokeMethodAllowed(obj: Object, methodName: String, args: Array[Object],
+                          parameterTypes: Array[Class[_]]): Object = {
+    require(ALLOWED_ATTRIBUTES.contains(methodName),
+      s"$methodName is not allowed to be accessed.")
+    invokeMethod(obj, methodName, args, parameterTypes)
   }
 }

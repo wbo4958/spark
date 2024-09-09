@@ -19,8 +19,6 @@ package org.apache.spark.sql.connect.ml
 
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
-import org.apache.commons.lang3.reflect.MethodUtils.invokeMethod
-
 import org.apache.spark.connect.proto
 import org.apache.spark.connect.proto.MlCommand.MlCommandTypeCase
 import org.apache.spark.internal.Logging
@@ -48,18 +46,18 @@ private class ModelAttributeHelper(val sessionHolder: SessionHolder,
     assert(methods.length >= 1)
     if (argValues.length == 0) {
       methods.foldLeft(model.asInstanceOf[Object]) { (obj, attribute) =>
-        invokeMethod(obj, attribute)
+        MLUtils.invokeMethodAllowed(obj, attribute)
       }
     } else {
       val lastMethod = methods.last
       if (methods.length == 1) {
-        invokeMethod(model.asInstanceOf[Object], lastMethod, argValues, argClasses)
+        MLUtils.invokeMethodAllowed(model.asInstanceOf[Object], lastMethod, argValues, argClasses)
       } else {
         val prevMethods = methods.slice(0, methods.length - 1)
         val finalObj = prevMethods.foldLeft(model.asInstanceOf[Object]) { (obj, attribute) =>
-          invokeMethod(obj, attribute)
+          MLUtils.invokeMethodAllowed(obj, attribute)
         }
-        invokeMethod(finalObj, lastMethod, argValues, argValues)
+        MLUtils.invokeMethodAllowed(finalObj, lastMethod, argValues, argClasses)
       }
     }
   }
