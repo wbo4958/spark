@@ -108,7 +108,7 @@ message Relation {
 
 // Relation to represent ML world
 message MlRelation {
-  oneof ml_relation_type {
+  oneof type {
     Transform ml_transform = 1;
     FetchModelAttr model_attr = 2;
   }

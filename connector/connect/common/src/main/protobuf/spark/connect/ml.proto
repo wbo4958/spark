@@ -28,7 +28,7 @@ option java_package = "org.apache.spark.connect.proto";
 
 // Command for ML
 message MlCommand {
-  oneof ml_command_type {
+  oneof type {
     Fit fit = 1;
     FetchModelAttr fetch_model_attr = 2;
     DeleteModel delete_model = 3;
@@ -40,13 +40,13 @@ message MlCommand {
     Relation dataset = 2;
   }
 
-  // Command to delete a cached model
+  // Command to delete a cached model.
   message DeleteModel {
     ModelRef model_ref = 1;
   }
 }
 
-// MlStage stores ml operators with the parameters
+// MlStage stores ml operators with the parameters.
 message MlStage {
   // Ml operator
   MlOperator operator = 1;
