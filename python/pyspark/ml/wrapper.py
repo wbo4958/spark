@@ -19,7 +19,9 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Generic, Optional, List, Type, TypeVar, TYPE_CHECKING
 
 from pyspark import since
-from pyspark.sql import DataFrame
+from pyspark.ml.remote.util import try_remote_transform_relation, try_remote_call, try_remote_fit, try_remote_del, \
+    try_remote_return_java_class
+from pyspark.sql import DataFrame, is_remote
 from pyspark.ml import Estimator, Predictor, PredictionModel, Transformer, Model
 from pyspark.ml.base import _PredictorParams
 from pyspark.ml.param import Param, Params
@@ -47,6 +49,7 @@ class JavaWrapper:
         super(JavaWrapper, self).__init__()
         self._java_obj = java_obj
 
+    @try_remote_del
     def __del__(self) -> None:
         from pyspark.core.context import SparkContext
 
@@ -63,6 +66,7 @@ class JavaWrapper:
         java_obj = JavaWrapper._new_java_obj(java_class, *args)
         return cls(java_obj)
 
+    @try_remote_call
     def _call_java(self, name: str, *args: Any) -> Any:
         from pyspark.core.context import SparkContext
 
@@ -74,6 +78,7 @@ class JavaWrapper:
         return _java2py(sc, m(*java_args))
 
     @staticmethod
+    @try_remote_return_java_class
     def _new_java_obj(java_class: str, *args: Any) -> "JavaObject":
         """
         Returns a new Java object.
@@ -372,6 +377,7 @@ class JavaEstimator(JavaParams, Estimator[JM], metaclass=ABCMeta):
         """
         raise NotImplementedError()
 
+    @try_remote_fit
     def _fit_java(self, dataset: DataFrame) -> "JavaObject":
         """
         Fits a Java model to the input dataset.
@@ -405,6 +411,7 @@ class JavaTransformer(JavaParams, Transformer, metaclass=ABCMeta):
     available as _java_obj.
     """
 
+    @try_remote_transform_relation
     def _transform(self, dataset: DataFrame) -> DataFrame:
         assert self._java_obj is not None
 
@@ -435,7 +442,7 @@ class JavaModel(JavaTransformer, Model, metaclass=ABCMeta):
         other ML classes).
         """
         super(JavaModel, self).__init__(java_model)
-        if java_model is not None:
+        if java_model is not None and not is_remote():
             # SPARK-10931: This is a temporary fix to allow models to own params
             # from estimators. Eventually, these params should be in models through
             # using common base classes between estimators and models.
