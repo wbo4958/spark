@@ -155,7 +155,12 @@ def try_remote_del(f: FuncT) -> FuncT:
 
     @functools.wraps(f)
     def wrapped(self) -> Any:
-        if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
+        try:
+            in_remote = is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ
+        except Exception:
+            return
+
+        if in_remote:
             # Delete the model if possible
             id = cast("JavaWrapper", self)._java_obj
             if id is not None and "." not in id:
@@ -168,7 +173,7 @@ def try_remote_del(f: FuncT) -> FuncT:
                             pb2.ModelRef(id=id))
                         client.execute_ml(req)
                         return
-                except ImportError as e:
+                except Exception:
                     # SparkSession's down.
                     return
         else:
