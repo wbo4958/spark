@@ -32,7 +32,7 @@ message MlCommand {
     Fit fit = 1;
     FetchModelAttr fetch_model_attr = 2;
     DeleteModel delete_model = 3;
-    Write write = 4;
+    Writer write = 4;
   }
 
   // Command for estimator.fit(dataset)
@@ -47,7 +47,7 @@ message MlCommand {
   }
 
   // Command to write a ML operators
-  message Write {
+  message Writer {
     // It could be a cached model or an estimator or evaluator.
     oneof type {
       MlOperator operator = 1;

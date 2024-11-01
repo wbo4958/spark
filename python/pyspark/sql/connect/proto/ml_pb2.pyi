@@ -34,7 +34,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import builtins
+import collections.abc
 import google.protobuf.descriptor
+import google.protobuf.internal.containers
 import google.protobuf.message
 import pyspark.sql.connect.proto.expressions_pb2
 import pyspark.sql.connect.proto.ml_common_pb2
@@ -99,21 +101,111 @@ class MlCommand(google.protobuf.message.Message):
             self, field_name: typing_extensions.Literal["model_ref", b"model_ref"]
         ) -> None: ...
 
+    class Writer(google.protobuf.message.Message):
+        """Command to write a ML operators"""
+
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        class OptionsEntry(google.protobuf.message.Message):
+            DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+            KEY_FIELD_NUMBER: builtins.int
+            VALUE_FIELD_NUMBER: builtins.int
+            key: builtins.str
+            value: builtins.str
+            def __init__(
+                self,
+                *,
+                key: builtins.str = ...,
+                value: builtins.str = ...,
+            ) -> None: ...
+            def ClearField(
+                self, field_name: typing_extensions.Literal["key", b"key", "value", b"value"]
+            ) -> None: ...
+
+        OPERATOR_FIELD_NUMBER: builtins.int
+        MODEL_REF_FIELD_NUMBER: builtins.int
+        PARAMS_FIELD_NUMBER: builtins.int
+        PATH_FIELD_NUMBER: builtins.int
+        SHOULD_OVERWRITE_FIELD_NUMBER: builtins.int
+        OPTIONS_FIELD_NUMBER: builtins.int
+        @property
+        def operator(self) -> pyspark.sql.connect.proto.ml_common_pb2.MlOperator: ...
+        @property
+        def model_ref(self) -> pyspark.sql.connect.proto.ml_common_pb2.ModelRef: ...
+        @property
+        def params(self) -> pyspark.sql.connect.proto.ml_common_pb2.MlParams: ...
+        path: builtins.str
+        should_overwrite: builtins.bool
+        @property
+        def options(
+            self,
+        ) -> google.protobuf.internal.containers.ScalarMap[builtins.str, builtins.str]: ...
+        def __init__(
+            self,
+            *,
+            operator: pyspark.sql.connect.proto.ml_common_pb2.MlOperator | None = ...,
+            model_ref: pyspark.sql.connect.proto.ml_common_pb2.ModelRef | None = ...,
+            params: pyspark.sql.connect.proto.ml_common_pb2.MlParams | None = ...,
+            path: builtins.str = ...,
+            should_overwrite: builtins.bool = ...,
+            options: collections.abc.Mapping[builtins.str, builtins.str] | None = ...,
+        ) -> None: ...
+        def HasField(
+            self,
+            field_name: typing_extensions.Literal[
+                "model_ref",
+                b"model_ref",
+                "operator",
+                b"operator",
+                "params",
+                b"params",
+                "type",
+                b"type",
+            ],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "model_ref",
+                b"model_ref",
+                "operator",
+                b"operator",
+                "options",
+                b"options",
+                "params",
+                b"params",
+                "path",
+                b"path",
+                "should_overwrite",
+                b"should_overwrite",
+                "type",
+                b"type",
+            ],
+        ) -> None: ...
+        def WhichOneof(
+            self, oneof_group: typing_extensions.Literal["type", b"type"]
+        ) -> typing_extensions.Literal["operator", "model_ref"] | None: ...
+
     FIT_FIELD_NUMBER: builtins.int
     FETCH_MODEL_ATTR_FIELD_NUMBER: builtins.int
     DELETE_MODEL_FIELD_NUMBER: builtins.int
+    WRITE_FIELD_NUMBER: builtins.int
     @property
     def fit(self) -> global___MlCommand.Fit: ...
     @property
     def fetch_model_attr(self) -> pyspark.sql.connect.proto.relations_pb2.FetchModelAttr: ...
     @property
     def delete_model(self) -> global___MlCommand.DeleteModel: ...
+    @property
+    def write(self) -> global___MlCommand.Writer: ...
     def __init__(
         self,
         *,
         fit: global___MlCommand.Fit | None = ...,
         fetch_model_attr: pyspark.sql.connect.proto.relations_pb2.FetchModelAttr | None = ...,
         delete_model: global___MlCommand.DeleteModel | None = ...,
+        write: global___MlCommand.Writer | None = ...,
     ) -> None: ...
     def HasField(
         self,
@@ -126,6 +218,8 @@ class MlCommand(google.protobuf.message.Message):
             b"fetch_model_attr",
             "fit",
             b"fit",
+            "write",
+            b"write",
         ],
     ) -> builtins.bool: ...
     def ClearField(
@@ -139,11 +233,13 @@ class MlCommand(google.protobuf.message.Message):
             b"fetch_model_attr",
             "fit",
             b"fit",
+            "write",
+            b"write",
         ],
     ) -> None: ...
     def WhichOneof(
         self, oneof_group: typing_extensions.Literal["command", b"command"]
-    ) -> typing_extensions.Literal["fit", "fetch_model_attr", "delete_model"] | None: ...
+    ) -> typing_extensions.Literal["fit", "fetch_model_attr", "delete_model", "write"] | None: ...
 
 global___MlCommand = MlCommand
 

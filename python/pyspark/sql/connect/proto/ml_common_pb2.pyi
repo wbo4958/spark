@@ -129,7 +129,7 @@ class MlOperator(google.protobuf.message.Message):
     UID_FIELD_NUMBER: builtins.int
     TYPE_FIELD_NUMBER: builtins.int
     name: builtins.str
-    """The name of the stage in the registry"""
+    """The name of the ML stage."""
     uid: builtins.str
     """unique id of the stage"""
     type: global___MlOperator.StageType.ValueType

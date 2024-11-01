@@ -34,7 +34,7 @@ from pyspark.sql.connect.proto import ml_common_pb2 as spark_dot_connect_dot_ml_
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
-    b'\n\x16spark/connect/ml.proto\x12\rspark.connect\x1a\x1fspark/connect/expressions.proto\x1a\x1dspark/connect/relations.proto\x1a\x1dspark/connect/ml_common.proto"\x93\x03\n\tMlCommand\x12\x30\n\x03\x66it\x18\x01 \x01(\x0b\x32\x1c.spark.connect.MlCommand.FitH\x00R\x03\x66it\x12I\n\x10\x66\x65tch_model_attr\x18\x02 \x01(\x0b\x32\x1d.spark.connect.FetchModelAttrH\x00R\x0e\x66\x65tchModelAttr\x12I\n\x0c\x64\x65lete_model\x18\x03 \x01(\x0b\x32$.spark.connect.MlCommand.DeleteModelH\x00R\x0b\x64\x65leteModel\x1an\n\x03\x46it\x12\x34\n\testimator\x18\x01 \x01(\x0b\x32\x16.spark.connect.MlStageR\testimator\x12\x31\n\x07\x64\x61taset\x18\x02 \x01(\x0b\x32\x17.spark.connect.RelationR\x07\x64\x61taset\x1a\x43\n\x0b\x44\x65leteModel\x12\x34\n\tmodel_ref\x18\x01 \x01(\x0b\x32\x17.spark.connect.ModelRefR\x08modelRefB\t\n\x07\x63ommand"q\n\x07MlStage\x12\x35\n\x08operator\x18\x01 \x01(\x0b\x32\x19.spark.connect.MlOperatorR\x08operator\x12/\n\x06params\x18\x02 \x01(\x0b\x32\x17.spark.connect.MlParamsR\x06params"\xfd\x01\n\x11MlCommandResponse\x12=\n\x07literal\x18\x01 \x01(\x0b\x32!.spark.connect.Expression.LiteralH\x00R\x07literal\x12/\n\x06vector\x18\x02 \x01(\x0b\x32\x15.spark.connect.VectorH\x00R\x06vector\x12/\n\x06matrix\x18\x03 \x01(\x0b\x32\x15.spark.connect.MatrixH\x00R\x06matrix\x12\x36\n\tmodel_ref\x18\x04 \x01(\x0b\x32\x17.spark.connect.ModelRefH\x00R\x08modelRefB\x0f\n\rresponse_typeB"\n\x1eorg.apache.spark.connect.protoP\x01\x62\x06proto3'
+    b'\n\x16spark/connect/ml.proto\x12\rspark.connect\x1a\x1fspark/connect/expressions.proto\x1a\x1dspark/connect/relations.proto\x1a\x1dspark/connect/ml_common.proto"\xc4\x06\n\tMlCommand\x12\x30\n\x03\x66it\x18\x01 \x01(\x0b\x32\x1c.spark.connect.MlCommand.FitH\x00R\x03\x66it\x12I\n\x10\x66\x65tch_model_attr\x18\x02 \x01(\x0b\x32\x1d.spark.connect.FetchModelAttrH\x00R\x0e\x66\x65tchModelAttr\x12I\n\x0c\x64\x65lete_model\x18\x03 \x01(\x0b\x32$.spark.connect.MlCommand.DeleteModelH\x00R\x0b\x64\x65leteModel\x12\x37\n\x05write\x18\x04 \x01(\x0b\x32\x1f.spark.connect.MlCommand.WriterH\x00R\x05write\x1an\n\x03\x46it\x12\x34\n\testimator\x18\x01 \x01(\x0b\x32\x16.spark.connect.MlStageR\testimator\x12\x31\n\x07\x64\x61taset\x18\x02 \x01(\x0b\x32\x17.spark.connect.RelationR\x07\x64\x61taset\x1a\x43\n\x0b\x44\x65leteModel\x12\x34\n\tmodel_ref\x18\x01 \x01(\x0b\x32\x17.spark.connect.ModelRefR\x08modelRef\x1a\xf5\x02\n\x06Writer\x12\x37\n\x08operator\x18\x01 \x01(\x0b\x32\x19.spark.connect.MlOperatorH\x00R\x08operator\x12\x36\n\tmodel_ref\x18\x02 \x01(\x0b\x32\x17.spark.connect.ModelRefH\x00R\x08modelRef\x12/\n\x06params\x18\x03 \x01(\x0b\x32\x17.spark.connect.MlParamsR\x06params\x12\x12\n\x04path\x18\x04 \x01(\tR\x04path\x12)\n\x10should_overwrite\x18\x05 \x01(\x08R\x0fshouldOverwrite\x12\x46\n\x07options\x18\x06 \x03(\x0b\x32,.spark.connect.MlCommand.Writer.OptionsEntryR\x07options\x1a:\n\x0cOptionsEntry\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n\x05value\x18\x02 \x01(\tR\x05value:\x02\x38\x01\x42\x06\n\x04typeB\t\n\x07\x63ommand"q\n\x07MlStage\x12\x35\n\x08operator\x18\x01 \x01(\x0b\x32\x19.spark.connect.MlOperatorR\x08operator\x12/\n\x06params\x18\x02 \x01(\x0b\x32\x17.spark.connect.MlParamsR\x06params"\xfd\x01\n\x11MlCommandResponse\x12=\n\x07literal\x18\x01 \x01(\x0b\x32!.spark.connect.Expression.LiteralH\x00R\x07literal\x12/\n\x06vector\x18\x02 \x01(\x0b\x32\x15.spark.connect.VectorH\x00R\x06vector\x12/\n\x06matrix\x18\x03 \x01(\x0b\x32\x15.spark.connect.MatrixH\x00R\x06matrix\x12\x36\n\tmodel_ref\x18\x04 \x01(\x0b\x32\x17.spark.connect.ModelRefH\x00R\x08modelRefB\x0f\n\rresponse_typeB"\n\x1eorg.apache.spark.connect.protoP\x01\x62\x06proto3'
 )
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
@@ -42,14 +42,20 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, "pyspark.sql.connect.proto.m
 if _descriptor._USE_C_DESCRIPTORS == False:
     DESCRIPTOR._options = None
     DESCRIPTOR._serialized_options = b"\n\036org.apache.spark.connect.protoP\001"
+    _MLCOMMAND_WRITER_OPTIONSENTRY._options = None
+    _MLCOMMAND_WRITER_OPTIONSENTRY._serialized_options = b"8\001"
     _MLCOMMAND._serialized_start = 137
-    _MLCOMMAND._serialized_end = 540
-    _MLCOMMAND_FIT._serialized_start = 350
-    _MLCOMMAND_FIT._serialized_end = 460
-    _MLCOMMAND_DELETEMODEL._serialized_start = 462
-    _MLCOMMAND_DELETEMODEL._serialized_end = 529
-    _MLSTAGE._serialized_start = 542
-    _MLSTAGE._serialized_end = 655
-    _MLCOMMANDRESPONSE._serialized_start = 658
-    _MLCOMMANDRESPONSE._serialized_end = 911
+    _MLCOMMAND._serialized_end = 973
+    _MLCOMMAND_FIT._serialized_start = 407
+    _MLCOMMAND_FIT._serialized_end = 517
+    _MLCOMMAND_DELETEMODEL._serialized_start = 519
+    _MLCOMMAND_DELETEMODEL._serialized_end = 586
+    _MLCOMMAND_WRITER._serialized_start = 589
+    _MLCOMMAND_WRITER._serialized_end = 962
+    _MLCOMMAND_WRITER_OPTIONSENTRY._serialized_start = 896
+    _MLCOMMAND_WRITER_OPTIONSENTRY._serialized_end = 954
+    _MLSTAGE._serialized_start = 975
+    _MLSTAGE._serialized_end = 1088
+    _MLCOMMANDRESPONSE._serialized_start = 1091
+    _MLCOMMANDRESPONSE._serialized_end = 1344
 # @@protoc_insertion_point(module_scope)
