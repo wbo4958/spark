@@ -32,6 +32,7 @@ message MlCommand {
     Fit fit = 1;
     FetchModelAttr fetch_model_attr = 2;
     DeleteModel delete_model = 3;
+    Write write = 4;
   }
 
   // Command for estimator.fit(dataset)
@@ -43,6 +44,19 @@ message MlCommand {
   // Command to delete a cached model.
   message DeleteModel {
     ModelRef model_ref = 1;
+  }
+
+  // Command to write a ML operators
+  message Write {
+    // It could be a cached model or an estimator or evaluator.
+    oneof type {
+      MlOperator operator = 1;
+      ModelRef model_ref = 2;
+    }
+    MlParams params = 3;
+    string path = 4;
+    bool should_overwrite = 5;
+    map<string, string> options = 6;
   }
 }
 

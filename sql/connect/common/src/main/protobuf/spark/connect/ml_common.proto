@@ -33,7 +33,7 @@ message MlParams {
 
 // MLOperator represents the ML operators like (Estimator, Transformer or Evaluator)
 message MlOperator {
-  // The name of the stage in the registry
+  // The name of the ML stage.
   string name = 1;
   // unique id of the stage
   string uid = 2;

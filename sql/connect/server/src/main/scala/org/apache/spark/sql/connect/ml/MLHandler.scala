@@ -23,6 +23,7 @@ import org.apache.spark.connect.proto
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.Model
 import org.apache.spark.ml.param.ParamMap
+import org.apache.spark.ml.util.MLWritable
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.connect.common.LiteralValueProtoConverter
 import org.apache.spark.sql.connect.ml.Serializer.deserializeMethodArguments
@@ -124,6 +125,35 @@ object MLHandler extends Logging {
           .newBuilder()
           .setLiteral(LiteralValueProtoConverter.toLiteralProto(result))
           .build()
+
+      case proto.MlCommand.CommandCase.WRITE =>
+        mlCommand.getWrite.getTypeCase match {
+          case proto.MlCommand.Write.TypeCase.MODEL_REF => // save a model
+            val modelId = mlCommand.getWrite.getModelRef.getId
+            val model = mlCache.get(modelId)
+            val copiedModel = model.copy(ParamMap.empty).asInstanceOf[Model[_]]
+            MLUtils.setInstanceParams(copiedModel, mlCommand.getWrite.getParams)
+
+            copiedModel match {
+              case m: MLWritable =>
+                val writer = if (mlCommand.getWrite.getShouldOverwrite) {
+                  m.write.overwrite()
+                } else {
+                  m.write
+                }
+                val path = mlCommand.getWrite.getPath
+                val options = mlCommand.getWrite.getOptionsMap
+                options.forEach((k, v) => writer.option(k, v))
+                writer.save(path)
+              case _ => throw new RuntimeException("Failed to handle model.save")
+            }
+            proto.MlCommandResponse.newBuilder().build()
+
+          // save an estimator/evaluator/transformer
+          case proto.MlCommand.Write.TypeCase.OPERATOR =>
+            throw new RuntimeException("Support it later")
+          case _ => throw new RuntimeException("Unsupported operator")
+        }
 
       case _ => throw new UnsupportedOperationException("Unsupported ML command")
     }
