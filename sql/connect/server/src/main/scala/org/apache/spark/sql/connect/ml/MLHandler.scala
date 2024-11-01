@@ -128,7 +128,7 @@ object MLHandler extends Logging {
 
       case proto.MlCommand.CommandCase.WRITE =>
         mlCommand.getWrite.getTypeCase match {
-          case proto.MlCommand.Write.TypeCase.MODEL_REF => // save a model
+          case proto.MlCommand.Writer.TypeCase.MODEL_REF => // save a model
             val modelId = mlCommand.getWrite.getModelRef.getId
             val model = mlCache.get(modelId)
             val copiedModel = model.copy(ParamMap.empty).asInstanceOf[Model[_]]
@@ -150,7 +150,7 @@ object MLHandler extends Logging {
             proto.MlCommandResponse.newBuilder().build()
 
           // save an estimator/evaluator/transformer
-          case proto.MlCommand.Write.TypeCase.OPERATOR =>
+          case proto.MlCommand.Writer.TypeCase.OPERATOR =>
             throw new RuntimeException("Support it later")
           case _ => throw new RuntimeException("Unsupported operator")
         }

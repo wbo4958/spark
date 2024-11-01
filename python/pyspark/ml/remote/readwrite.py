@@ -28,6 +28,6 @@ class RemoteMLWriter(MLWriter):
                                           path=path,
                                           should_overwrite=self.shouldOverwrite,
                                           options=self.optionMap)
-            req = session.client.client._execute_plan_request_with_metadata()
+            req = session.client._execute_plan_request_with_metadata()
             req.plan.ml_command.write.CopyFrom(writer)
             session.client.execute_ml(req)

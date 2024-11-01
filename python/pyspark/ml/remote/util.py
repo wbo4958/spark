@@ -190,3 +190,14 @@ def try_remote_return_java_class(f: FuncT) -> FuncT:
             return f(java_class, *args)
 
     return cast(FuncT, wrapped)
+
+def try_remote_write(f: FuncT) -> FuncT:
+    @functools.wraps(f)
+    def wrapped(self) -> Any:
+        if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
+            from pyspark.ml.remote.readwrite import RemoteMLWriter
+            return RemoteMLWriter(self)
+        else:
+            return f(self)
+
+    return cast(FuncT, wrapped)
