@@ -201,3 +201,14 @@ def try_remote_write(f: FuncT) -> FuncT:
             return f(self)
 
     return cast(FuncT, wrapped)
+
+def try_remote_read(f: FuncT) -> FuncT:
+    @functools.wraps(f)
+    def wrapped(self) -> Any:
+        if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
+            from pyspark.ml.remote.readwrite import RemoteMLReader
+            return RemoteMLReader(self)
+        else:
+            return f(self)
+
+    return cast(FuncT, wrapped)

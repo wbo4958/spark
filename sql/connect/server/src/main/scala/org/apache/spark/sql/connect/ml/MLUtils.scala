@@ -22,11 +22,11 @@ import java.util.ServiceLoader
 import scala.collection.immutable.HashSet
 import scala.jdk.CollectionConverters.{IterableHasAsScala, MapHasAsScala}
 
-import org.apache.commons.lang3.reflect.MethodUtils.invokeMethod
+import org.apache.commons.lang3.reflect.MethodUtils.{invokeMethod, invokeStaticMethod}
 
 import org.apache.spark.connect.proto
 import org.apache.spark.connect.proto.Expression
-import org.apache.spark.ml.{Estimator, Transformer}
+import org.apache.spark.ml.{Estimator, Model, Transformer}
 import org.apache.spark.ml.param.Params
 import org.apache.spark.sql.{DataFrame, Dataset}
 import org.apache.spark.sql.connect.common.LiteralValueProtoConverter
@@ -146,6 +146,14 @@ object MLUtils {
     val params = fit.getEstimator.getParams
     MLUtils.setInstanceParams(estimator, params)
     estimator
+  }
+
+  def loadModel(className: String, path: String): Model[_] = {
+    if (transformers.isEmpty || !transformers.contains(className)) {
+      throw new RuntimeException(s"Failed to find transformer: $className")
+    }
+    val model = invokeStaticMethod(transformers(className), "load", path)
+    model.asInstanceOf[Model[_]]
   }
 
   /**

@@ -187,10 +187,30 @@ class MlCommand(google.protobuf.message.Message):
             self, oneof_group: typing_extensions.Literal["type", b"type"]
         ) -> typing_extensions.Literal["operator", "model_ref"] | None: ...
 
+    class Reader(google.protobuf.message.Message):
+        """Command to load a ML model"""
+
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        CLAZZ_FIELD_NUMBER: builtins.int
+        PATH_FIELD_NUMBER: builtins.int
+        clazz: builtins.str
+        path: builtins.str
+        def __init__(
+            self,
+            *,
+            clazz: builtins.str = ...,
+            path: builtins.str = ...,
+        ) -> None: ...
+        def ClearField(
+            self, field_name: typing_extensions.Literal["clazz", b"clazz", "path", b"path"]
+        ) -> None: ...
+
     FIT_FIELD_NUMBER: builtins.int
     FETCH_MODEL_ATTR_FIELD_NUMBER: builtins.int
     DELETE_MODEL_FIELD_NUMBER: builtins.int
     WRITE_FIELD_NUMBER: builtins.int
+    READ_FIELD_NUMBER: builtins.int
     @property
     def fit(self) -> global___MlCommand.Fit: ...
     @property
@@ -199,6 +219,8 @@ class MlCommand(google.protobuf.message.Message):
     def delete_model(self) -> global___MlCommand.DeleteModel: ...
     @property
     def write(self) -> global___MlCommand.Writer: ...
+    @property
+    def read(self) -> global___MlCommand.Reader: ...
     def __init__(
         self,
         *,
@@ -206,6 +228,7 @@ class MlCommand(google.protobuf.message.Message):
         fetch_model_attr: pyspark.sql.connect.proto.relations_pb2.FetchModelAttr | None = ...,
         delete_model: global___MlCommand.DeleteModel | None = ...,
         write: global___MlCommand.Writer | None = ...,
+        read: global___MlCommand.Reader | None = ...,
     ) -> None: ...
     def HasField(
         self,
@@ -218,6 +241,8 @@ class MlCommand(google.protobuf.message.Message):
             b"fetch_model_attr",
             "fit",
             b"fit",
+            "read",
+            b"read",
             "write",
             b"write",
         ],
@@ -233,13 +258,17 @@ class MlCommand(google.protobuf.message.Message):
             b"fetch_model_attr",
             "fit",
             b"fit",
+            "read",
+            b"read",
             "write",
             b"write",
         ],
     ) -> None: ...
     def WhichOneof(
         self, oneof_group: typing_extensions.Literal["command", b"command"]
-    ) -> typing_extensions.Literal["fit", "fetch_model_attr", "delete_model", "write"] | None: ...
+    ) -> (
+        typing_extensions.Literal["fit", "fetch_model_attr", "delete_model", "write", "read"] | None
+    ): ...
 
 global___MlCommand = MlCommand
 

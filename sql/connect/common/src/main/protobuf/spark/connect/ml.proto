@@ -33,6 +33,7 @@ message MlCommand {
     FetchModelAttr fetch_model_attr = 2;
     DeleteModel delete_model = 3;
     Writer write = 4;
+    Reader read = 5;
   }
 
   // Command for estimator.fit(dataset)
@@ -57,6 +58,12 @@ message MlCommand {
     string path = 4;
     bool should_overwrite = 5;
     map<string, string> options = 6;
+  }
+
+  // Command to load a ML model
+  message Reader {
+    string clazz = 1;
+    string path = 2;
   }
 }
 

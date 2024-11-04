@@ -26,6 +26,7 @@ import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.util.MLWritable
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.connect.common.LiteralValueProtoConverter
+import org.apache.spark.sql.connect.ml.MLUtils.loadModel
 import org.apache.spark.sql.connect.ml.Serializer.deserializeMethodArguments
 import org.apache.spark.sql.connect.service.SessionHolder
 
@@ -153,6 +154,22 @@ object MLHandler extends Logging {
           case proto.MlCommand.Writer.TypeCase.OPERATOR =>
             throw new RuntimeException("Support it later")
           case _ => throw new RuntimeException("Unsupported operator")
+        }
+
+      case proto.MlCommand.CommandCase.READ =>
+        val clazz = mlCommand.getRead.getClazz
+        val path = mlCommand.getRead.getPath
+        logInfo(s"bobby loading $clazz at $path")
+        val model = loadModel(clazz, path)
+        model match {
+          case _: Model[_] =>
+            val id = mlCache.register(model)
+            proto.MlCommandResponse.newBuilder()
+              .setModelRef(proto.ModelRef.newBuilder().setId(id))
+              .build()
+
+          case _ =>
+            throw new UnsupportedOperationException(f"Unsupported loading $clazz")
         }
 
       case _ => throw new UnsupportedOperationException("Unsupported ML command")
