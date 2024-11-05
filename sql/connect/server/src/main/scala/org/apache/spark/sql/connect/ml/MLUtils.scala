@@ -149,10 +149,10 @@ object MLUtils {
   }
 
   def loadModel(className: String, path: String): Model[_] = {
-    if (transformers.isEmpty || !transformers.contains(className)) {
-      throw new RuntimeException(s"Failed to find transformer: $className")
-    }
-    val model = invokeStaticMethod(transformers(className), "load", path)
+    // scalastyle:off classforname
+    val clazz = Class.forName(className)
+    // scalastyle:on classforname
+    val model = invokeStaticMethod(clazz, "load", path)
     model.asInstanceOf[Model[_]]
   }
 
