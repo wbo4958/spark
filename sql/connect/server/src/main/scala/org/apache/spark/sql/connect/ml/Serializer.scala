@@ -117,7 +117,7 @@ object Serializer {
     val builder = proto.MlParams.newBuilder()
     instance.params.foreach { param =>
       if (instance.isSet(param)) {
-        val v = LiteralValueProtoConverter.toLiteralProto(instance.get(param))
+        val v = LiteralValueProtoConverter.toLiteralProto(instance.get(param).get)
         builder.putParams(param.name, v)
       }
     }

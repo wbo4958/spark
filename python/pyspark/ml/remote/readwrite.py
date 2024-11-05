@@ -4,6 +4,7 @@ import pyspark.sql.connect.proto as pb2
 from pyspark.ml.remote.serialize import serialize_ml_params, deserialize
 from pyspark.ml.util import MLWriter, MLReader, RL
 from pyspark.sql import SparkSession
+from pyspark.sql.connect.expressions import LiteralExpression
 
 
 class RemoteMLWriter(MLWriter):
@@ -46,5 +47,9 @@ class RemoteMLReader(MLReader):
                                       path=path)
         req = session.client._execute_plan_request_with_metadata()
         req.plan.ml_command.read.CopyFrom(reader)
-        model_id = deserialize(session.client.execute_ml(req))
-        return self._clazz(model_id)
+        model_info = deserialize(session.client.execute_ml(req))
+        instance = self._clazz(model_info.model_ref.id)
+        instance._resetUid(model_info.uid)
+        params = { k: LiteralExpression._to_value(v) for k, v in model_info.params.params.items()}
+        instance._set(**params)
+        return instance

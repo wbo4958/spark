@@ -69,6 +69,10 @@ def deserialize(ml_command_result: pb2.MlCommandResponse) -> Any:
             )
         raise ValueError()
 
+    if ml_command_result.HasField("model_info"):
+        model_info = ml_command_result.model_info
+        return model_info
+
     raise ValueError()
 
 
