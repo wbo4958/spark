@@ -165,8 +165,11 @@ object MLHandler extends Logging {
           case _: Model[_] =>
             val id = mlCache.register(model)
             proto.MlCommandResponse.newBuilder()
-              .setModelRef(proto.ModelRef.newBuilder().setId(id))
-              .build()
+              .setModelInfo(proto.MlCommandResponse.ModelInfo.newBuilder()
+                .setModelRef(proto.ModelRef.newBuilder().setId(id))
+                .setUid(model.uid)
+                .setParams(Serializer.serializeParams(model))
+              ).build()
 
           case _ =>
             throw new UnsupportedOperationException(f"Unsupported loading $clazz")

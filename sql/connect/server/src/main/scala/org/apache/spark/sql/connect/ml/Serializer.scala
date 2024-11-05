@@ -21,6 +21,7 @@ import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 import org.apache.spark.connect.proto
 import org.apache.spark.ml.linalg.{DenseVector, Matrix, SparseVector, Vector, Vectors}
+import org.apache.spark.ml.param.Params
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.connect.common.LiteralValueProtoConverter
 import org.apache.spark.sql.connect.service.SessionHolder
@@ -110,5 +111,16 @@ object Serializer {
         throw new UnsupportedOperationException("deserializeMethodArguments")
       }
     }
+  }
+
+  def serializeParams(instance: Params): proto.MlParams = {
+    val builder = proto.MlParams.newBuilder()
+    instance.params.foreach { param =>
+      if (instance.isSet(param)) {
+        val v = LiteralValueProtoConverter.toLiteralProto(instance.get(param))
+        builder.putParams(param.name, v)
+      }
+    }
+    builder.build()
   }
 }

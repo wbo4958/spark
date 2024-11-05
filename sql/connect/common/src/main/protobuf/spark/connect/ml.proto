@@ -82,5 +82,12 @@ message MlCommandResponse {
     Vector vector = 2;
     Matrix matrix = 3;
     ModelRef model_ref = 4;
+    ModelInfo model_info = 5;
+  }
+
+  message ModelInfo {
+    ModelRef model_ref = 1;
+    string uid = 2;
+    MlParams params = 3;
   }
 }
