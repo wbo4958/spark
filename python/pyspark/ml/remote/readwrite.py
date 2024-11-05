@@ -47,5 +47,4 @@ class RemoteMLReader(MLReader):
         req = session.client._execute_plan_request_with_metadata()
         req.plan.ml_command.read.CopyFrom(reader)
         model_id = deserialize(session.client.execute_ml(req))
-        print(f"got the model id {model_id}")
-        return model_id
+        return self._clazz(model_id)
