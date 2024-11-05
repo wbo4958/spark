@@ -305,10 +305,40 @@ class MlCommandResponse(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
+    class ModelInfo(google.protobuf.message.Message):
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        MODEL_REF_FIELD_NUMBER: builtins.int
+        UID_FIELD_NUMBER: builtins.int
+        PARAMS_FIELD_NUMBER: builtins.int
+        @property
+        def model_ref(self) -> pyspark.sql.connect.proto.ml_common_pb2.ModelRef: ...
+        uid: builtins.str
+        @property
+        def params(self) -> pyspark.sql.connect.proto.ml_common_pb2.MlParams: ...
+        def __init__(
+            self,
+            *,
+            model_ref: pyspark.sql.connect.proto.ml_common_pb2.ModelRef | None = ...,
+            uid: builtins.str = ...,
+            params: pyspark.sql.connect.proto.ml_common_pb2.MlParams | None = ...,
+        ) -> None: ...
+        def HasField(
+            self,
+            field_name: typing_extensions.Literal["model_ref", b"model_ref", "params", b"params"],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing_extensions.Literal[
+                "model_ref", b"model_ref", "params", b"params", "uid", b"uid"
+            ],
+        ) -> None: ...
+
     LITERAL_FIELD_NUMBER: builtins.int
     VECTOR_FIELD_NUMBER: builtins.int
     MATRIX_FIELD_NUMBER: builtins.int
     MODEL_REF_FIELD_NUMBER: builtins.int
+    MODEL_INFO_FIELD_NUMBER: builtins.int
     @property
     def literal(self) -> pyspark.sql.connect.proto.expressions_pb2.Expression.Literal: ...
     @property
@@ -317,6 +347,8 @@ class MlCommandResponse(google.protobuf.message.Message):
     def matrix(self) -> pyspark.sql.connect.proto.ml_common_pb2.Matrix: ...
     @property
     def model_ref(self) -> pyspark.sql.connect.proto.ml_common_pb2.ModelRef: ...
+    @property
+    def model_info(self) -> global___MlCommandResponse.ModelInfo: ...
     def __init__(
         self,
         *,
@@ -324,6 +356,7 @@ class MlCommandResponse(google.protobuf.message.Message):
         vector: pyspark.sql.connect.proto.ml_common_pb2.Vector | None = ...,
         matrix: pyspark.sql.connect.proto.ml_common_pb2.Matrix | None = ...,
         model_ref: pyspark.sql.connect.proto.ml_common_pb2.ModelRef | None = ...,
+        model_info: global___MlCommandResponse.ModelInfo | None = ...,
     ) -> None: ...
     def HasField(
         self,
@@ -332,6 +365,8 @@ class MlCommandResponse(google.protobuf.message.Message):
             b"literal",
             "matrix",
             b"matrix",
+            "model_info",
+            b"model_info",
             "model_ref",
             b"model_ref",
             "response_type",
@@ -347,6 +382,8 @@ class MlCommandResponse(google.protobuf.message.Message):
             b"literal",
             "matrix",
             b"matrix",
+            "model_info",
+            b"model_info",
             "model_ref",
             b"model_ref",
             "response_type",
@@ -357,6 +394,8 @@ class MlCommandResponse(google.protobuf.message.Message):
     ) -> None: ...
     def WhichOneof(
         self, oneof_group: typing_extensions.Literal["response_type", b"response_type"]
-    ) -> typing_extensions.Literal["literal", "vector", "matrix", "model_ref"] | None: ...
+    ) -> (
+        typing_extensions.Literal["literal", "vector", "matrix", "model_ref", "model_info"] | None
+    ): ...
 
 global___MlCommandResponse = MlCommandResponse
