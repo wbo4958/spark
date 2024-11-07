@@ -16,7 +16,7 @@
 #
 import functools
 import os
-from typing import Any, cast, TypeVar, Callable, TYPE_CHECKING
+from typing import Any, cast, TypeVar, Callable, TYPE_CHECKING, Type
 
 import pyspark.sql.connect.proto as pb2
 from pyspark.ml import Transformer
@@ -103,6 +103,7 @@ def try_remote_transform_relation(f: FuncT) -> FuncT:
             from pyspark.ml import Model
 
             session = SparkSession.getActiveSession()
+            assert session is not None
             # Model is also a Transformer, so we much match Model first
             if isinstance(self, Model):
                 params = serialize_ml_params(self, session.client)
@@ -133,6 +134,7 @@ def try_remote_call(f: FuncT) -> FuncT:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             """Launch a remote call if possible"""
             session = SparkSession.getActiveSession()
+            assert session is not None
             get_attribute = pb2.FetchModelAttr(
                 model_ref=pb2.ModelRef(id=self._java_obj),
                 method=name,
@@ -208,7 +210,7 @@ def try_remote_read(f: FuncT) -> FuncT:
     """Mark the function to read an estimator/model or evaluator"""
 
     @functools.wraps(f)
-    def wrapped(self: "JavaMLReadable") -> Any:
+    def wrapped(self: Type["JavaMLReadable"]) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             from pyspark.ml.remote.readwrite import RemoteMLReader
 

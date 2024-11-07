@@ -34,6 +34,7 @@ class _ModelTransformRelationPlan(LogicalPlan):
         self._ml_params = ml_params
 
     def plan(self, session: "SparkConnectClient") -> pb2.Relation:
+        assert self._child is not None
         plan = self._create_proto_relation()
         plan.ml_relation.ml_transform.input.CopyFrom(self._child.plan(session))
         plan.ml_relation.ml_transform.model_ref.CopyFrom(pb2.ModelRef(id=self._model_id))
@@ -55,6 +56,7 @@ class _TransformerRelationPlan(LogicalPlan):
         self._ml_params = ml_params
 
     def plan(self, session: "SparkConnectClient") -> pb2.Relation:
+        assert self._child is not None
         plan = self._create_proto_relation()
         plan.ml_relation.ml_transform.input.CopyFrom(self._child.plan(session))
         plan.ml_relation.ml_transform.transformer.CopyFrom(

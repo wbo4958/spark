@@ -18,7 +18,7 @@ from typing import Any, List, TYPE_CHECKING
 
 import pyspark.sql.connect.proto as pb2
 from pyspark.ml.linalg import Vectors, Matrices, DenseVector, SparseVector
-from pyspark.sql import DataFrame
+from pyspark.sql.connect.dataframe import DataFrame as RemoteDataFrame
 from pyspark.sql.connect.expressions import LiteralExpression
 
 if TYPE_CHECKING:
@@ -41,16 +41,16 @@ def serialize(client: "SparkConnectClient", *args: Any) -> List[Any]:
             result.append(pb2.FetchModelAttr.Args(vector=v))
         elif isinstance(arg, (int, float, str, bool)):
             value = pb2.Expression.Literal()
-            if isinstance(v, bool):
-                value.boolean = v
-            elif isinstance(v, int):
-                value.long = v
-            elif isinstance(v, float):
-                value.double = v
+            if isinstance(arg, bool):
+                value.boolean = arg
+            elif isinstance(arg, int):
+                value.long = arg
+            elif isinstance(arg, float):
+                value.double = arg
             else:
-                value.string = v
+                value.string = arg
             result.append(pb2.FetchModelAttr.Args(literal=value))
-        elif isinstance(arg, DataFrame):
+        elif isinstance(arg, RemoteDataFrame):
             result.append(pb2.FetchModelAttr.Args(input=arg._plan.plan(client)))
         else:
             raise RuntimeError(f"Unsupported {arg}")
