@@ -19,7 +19,6 @@ import os
 from typing import Any, cast, TypeVar, Callable, TYPE_CHECKING, Type
 
 import pyspark.sql.connect.proto as pb2
-from pyspark.ml import Transformer
 from pyspark.ml.remote.serialize import serialize_ml_params, serialize, deserialize
 from pyspark.sql import is_remote
 from pyspark.sql.connect.dataframe import DataFrame as RemoteDataFrame
@@ -100,7 +99,7 @@ def try_remote_transform_relation(f: FuncT) -> FuncT:
     @functools.wraps(f)
     def wrapped(self: "JavaWrapper", dataset: RemoteDataFrame) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
-            from pyspark.ml import Model
+            from pyspark.ml import Model, Transformer
 
             session = SparkSession.getActiveSession()
             assert session is not None
