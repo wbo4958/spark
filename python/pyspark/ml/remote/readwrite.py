@@ -4,7 +4,6 @@ import pyspark.sql.connect.proto as pb2
 from pyspark.ml.remote.serialize import serialize_ml_params, deserialize
 from pyspark.ml.util import MLWriter, MLReader, RL
 from pyspark.sql.connect.expressions import LiteralExpression
-from pyspark.sql.connect.session import SparkSession
 
 if TYPE_CHECKING:
     from pyspark.ml.util import JavaMLReadable, JavaMLWritable
@@ -24,9 +23,11 @@ class RemoteMLWriter(MLWriter):
         from pyspark.ml.wrapper import JavaModel
 
         if isinstance(self._instance, JavaModel):
-            instance = cast("JavaModel", self._instance)
+            from pyspark.sql.connect.session import SparkSession
+
             session = SparkSession.getActiveSession()
             assert session is not None
+            instance = cast("JavaModel", self._instance)
             params = serialize_ml_params(instance, session.client)
 
             writer = pb2.MlCommand.Writer(
@@ -47,13 +48,16 @@ class RemoteMLReader(MLReader[RL]):
         self._clazz = clazz
 
     def load(self, path: str) -> RL:
+        from pyspark.sql.connect.session import SparkSession
+
+        session = SparkSession.getActiveSession()
+        assert session is not None
+
         java_package = (
             self._clazz.__module__.replace("pyspark", "org.apache.spark")
             + "."
             + self._clazz.__name__
         )
-        session = SparkSession.getActiveSession()
-        assert session is not None
         reader = pb2.MlCommand.Reader(clazz=java_package, path=path)
         req = session.client._execute_plan_request_with_metadata()
         req.plan.ml_command.read.CopyFrom(reader)

@@ -22,7 +22,6 @@ import pyspark.sql.connect.proto as pb2
 from pyspark.ml.remote.serialize import serialize_ml_params, serialize, deserialize
 from pyspark.sql import is_remote
 from pyspark.sql.connect.dataframe import DataFrame as RemoteDataFrame
-from pyspark.sql.connect.session import SparkSession
 
 if TYPE_CHECKING:
     from pyspark.ml.wrapper import JavaWrapper, JavaEstimator
@@ -55,6 +54,7 @@ def try_remote_attribute_relation(f: FuncT) -> FuncT:
             # The attribute returns a dataframe, we need to wrap it
             # in the _ModelAttributeRelationPlan
             from pyspark.ml.remote.proto import _ModelAttributeRelationPlan
+            from pyspark.sql.connect.session import SparkSession
 
             plan = _ModelAttributeRelationPlan(self._java_obj, f.__name__)
             session = SparkSession.getActiveSession()
@@ -100,6 +100,7 @@ def try_remote_transform_relation(f: FuncT) -> FuncT:
     def wrapped(self: "JavaWrapper", dataset: RemoteDataFrame) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             from pyspark.ml import Model, Transformer
+            from pyspark.sql.connect.session import SparkSession
 
             session = SparkSession.getActiveSession()
             assert session is not None
@@ -132,6 +133,8 @@ def try_remote_call(f: FuncT) -> FuncT:
     def wrapped(self: "JavaWrapper", name: str, *args: Any) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             """Launch a remote call if possible"""
+            from pyspark.sql.connect.session import SparkSession
+
             session = SparkSession.getActiveSession()
             assert session is not None
             get_attribute = pb2.FetchModelAttr(
@@ -164,6 +167,8 @@ def try_remote_del(f: FuncT) -> FuncT:
             model_id = self._java_obj
             if model_id is not None and "." not in model_id:
                 try:
+                    from pyspark.sql.connect.session import SparkSession
+
                     session = SparkSession.getActiveSession()
                     if session is not None:
                         session.client.remove_ml_model(model_id)
