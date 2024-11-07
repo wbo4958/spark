@@ -19,9 +19,11 @@ import os
 from typing import Any, cast, TypeVar, Callable, TYPE_CHECKING
 
 import pyspark.sql.connect.proto as pb2
+from pyspark.ml import Transformer
 from pyspark.ml.remote.serialize import serialize_ml_params, serialize, deserialize
-from pyspark.sql import is_remote, SparkSession
+from pyspark.sql import is_remote
 from pyspark.sql.connect.dataframe import DataFrame as RemoteDataFrame
+from pyspark.sql.connect.session import SparkSession
 
 if TYPE_CHECKING:
     from pyspark.ml.wrapper import JavaWrapper, JavaEstimator
@@ -51,12 +53,13 @@ def try_remote_attribute_relation(f: FuncT) -> FuncT:
     @functools.wraps(f)
     def wrapped(self: "JavaWrapper", *args: Any, **kwargs: Any) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
-            session = SparkSession.getActiveSession()
             # The attribute returns a dataframe, we need to wrap it
             # in the _ModelAttributeRelationPlan
             from pyspark.ml.remote.proto import _ModelAttributeRelationPlan
 
             plan = _ModelAttributeRelationPlan(self._java_obj, f.__name__)
+            session = SparkSession.getActiveSession()
+            assert session is not None
             return RemoteDataFrame(plan, session)
         else:
             return f(self, *args, **kwargs)
@@ -99,20 +102,22 @@ def try_remote_transform_relation(f: FuncT) -> FuncT:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             from pyspark.ml import Model
 
+            session = SparkSession.getActiveSession()
+            # Model is also a Transformer, so we much match Model first
             if isinstance(self, Model):
-                session = SparkSession.getActiveSession()
-                params = serialize_ml_params(self, session)
+                params = serialize_ml_params(self, session.client)
                 from pyspark.ml.remote.proto import _ModelTransformRelationPlan
 
                 plan = _ModelTransformRelationPlan(dataset._plan, self._java_obj, params)
                 return RemoteDataFrame(plan, session)
-            else:
-                session = SparkSession.getActiveSession()
-                params = serialize_ml_params(self, session)
+            elif isinstance(self, Transformer):
+                params = serialize_ml_params(self, session.client)
                 from pyspark.ml.remote.proto import _TransformerRelationPlan
 
                 plan = _TransformerRelationPlan(dataset._plan, self._java_obj, self.uid, params)
                 return RemoteDataFrame(plan, session)
+            else:
+                raise RuntimeError(f"Unsupported {self}")
         else:
             return f(self, dataset)
 
