@@ -313,8 +313,8 @@ private[connect] class ExecuteThreadRunner(executeHolder: ExecuteHolder) extends
   }
 
   private def handleMLCommand(request: proto.ExecutePlanRequest): Unit = {
-    val mlResultProto = MLHandler.handleMlCommand(executeHolder.sessionHolder,
-      request.getPlan.getMlCommand)
+    val mlResultProto =
+      MLHandler.handleMlCommand(executeHolder.sessionHolder, request.getPlan.getMlCommand)
     executeHolder.responseObserver.onNext(
       proto.ExecutePlanResponse
         .newBuilder()

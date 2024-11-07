@@ -30,11 +30,12 @@ import org.apache.spark.sql.connect.ml.MLUtils.loadModel
 import org.apache.spark.sql.connect.ml.Serializer.deserializeMethodArguments
 import org.apache.spark.sql.connect.service.SessionHolder
 
-private class ModelAttributeHelper(val sessionHolder: SessionHolder,
-                                   val objIdentifier: String,
-                                   val method: Option[String],
-                                   val argValues: Array[Object] = Array.empty,
-                                   val argClasses: Array[Class[_]] = Array.empty) {
+private class ModelAttributeHelper(
+    val sessionHolder: SessionHolder,
+    val objIdentifier: String,
+    val method: Option[String],
+    val argValues: Array[Object] = Array.empty,
+    val argClasses: Array[Class[_]] = Array.empty) {
 
   val methodChain = method.map(n => s"$objIdentifier.$n").getOrElse(objIdentifier)
   private val methodChains = methodChain.split("\\.")
@@ -73,10 +74,11 @@ private class ModelAttributeHelper(val sessionHolder: SessionHolder,
 }
 
 private object ModelAttributeHelper {
-  def apply(sessionHolder: SessionHolder,
-            modelId: String,
-            method: Option[String] = None,
-            args: Array[proto.FetchModelAttr.Args] = Array.empty): ModelAttributeHelper = {
+  def apply(
+      sessionHolder: SessionHolder,
+      modelId: String,
+      method: Option[String] = None,
+      args: Array[proto.FetchModelAttr.Args] = Array.empty): ModelAttributeHelper = {
     val tmp = deserializeMethodArguments(args, sessionHolder)
     val argValues = tmp.map(_._1)
     val argClasses = tmp.map(_._2)
@@ -101,19 +103,21 @@ object MLHandler extends Logging {
         val estimator = MLUtils.getEstimator(fitCmd)
         val model = estimator.fit(dataset).asInstanceOf[Model[_]]
         val id = mlCache.register(model)
-        proto.MlCommandResponse.newBuilder()
+        proto.MlCommandResponse
+          .newBuilder()
           .setOperatorInfo(
-            proto.MlCommandResponse.MlOperatorInfo.newBuilder()
-              .setModelRef(proto.ModelRef.newBuilder().setId(id))
-          ).build()
+            proto.MlCommandResponse.MlOperatorInfo
+              .newBuilder()
+              .setModelRef(proto.ModelRef.newBuilder().setId(id)))
+          .build()
 
       case proto.MlCommand.CommandCase.FETCH_MODEL_ATTR =>
         val args = mlCommand.getFetchModelAttr.getArgsList.asScala.toArray
-        val helper = ModelAttributeHelper(sessionHolder,
+        val helper = ModelAttributeHelper(
+          sessionHolder,
           mlCommand.getFetchModelAttr.getModelRef.getId,
           Option(mlCommand.getFetchModelAttr.getMethod),
-          args
-        )
+          args)
         Serializer.serialize(helper.getAttribute, helper.methodChain)
 
       case proto.MlCommand.CommandCase.DELETE_MODEL =>
@@ -166,12 +170,15 @@ object MLHandler extends Logging {
         model match {
           case _: Model[_] =>
             val id = mlCache.register(model)
-            proto.MlCommandResponse.newBuilder()
-              .setOperatorInfo(proto.MlCommandResponse.MlOperatorInfo.newBuilder()
-                .setModelRef(proto.ModelRef.newBuilder().setId(id))
-                .setUid(model.uid)
-                .setParams(Serializer.serializeParams(model))
-              ).build()
+            proto.MlCommandResponse
+              .newBuilder()
+              .setOperatorInfo(
+                proto.MlCommandResponse.MlOperatorInfo
+                  .newBuilder()
+                  .setModelRef(proto.ModelRef.newBuilder().setId(id))
+                  .setUid(model.uid)
+                  .setParams(Serializer.serializeParams(model)))
+              .build()
 
           case _ =>
             throw new UnsupportedOperationException(f"Unsupported loading $clazz")
@@ -181,9 +188,7 @@ object MLHandler extends Logging {
     }
   }
 
-  def transformMLRelation(
-      relation: proto.MlRelation,
-      sessionHolder: SessionHolder): DataFrame = {
+  def transformMLRelation(relation: proto.MlRelation, sessionHolder: SessionHolder): DataFrame = {
     relation.getMlTypeCase match {
       // Ml transform
       case proto.MlRelation.MlTypeCase.ML_TRANSFORM =>
@@ -191,16 +196,17 @@ object MLHandler extends Logging {
           // transform for a new ML transformer
           case proto.MlRelation.Transform.OperatorCase.TRANSFORMER =>
             val transformProto = relation.getMlTransform
-            assert(transformProto.getTransformer.getType ==
-              proto.MlOperator.OperatorType.TRANSFORMER)
+            assert(
+              transformProto.getTransformer.getType ==
+                proto.MlOperator.OperatorType.TRANSFORMER)
             val dataset = MLUtils.parseRelationProto(transformProto.getInput, sessionHolder)
             val transformer = MLUtils.getTransformer(transformProto)
             transformer.transform(dataset)
 
           // transform on a cached model
           case proto.MlRelation.Transform.OperatorCase.MODEL_REF =>
-            val helper = ModelAttributeHelper(sessionHolder,
-              relation.getMlTransform.getModelRef.getId, None)
+            val helper =
+              ModelAttributeHelper(sessionHolder, relation.getMlTransform.getModelRef.getId, None)
             helper.transform(relation.getMlTransform)
 
           case _ => throw new IllegalArgumentException("Unsupported ml operator")
@@ -208,7 +214,8 @@ object MLHandler extends Logging {
 
       // Get the model attribute
       case proto.MlRelation.MlTypeCase.MODEL_ATTR =>
-        val helper = ModelAttributeHelper(sessionHolder,
+        val helper = ModelAttributeHelper(
+          sessionHolder,
           relation.getModelAttr.getModelRef.getId,
           Option(relation.getModelAttr.getMethod))
         helper.getAttribute.asInstanceOf[DataFrame]

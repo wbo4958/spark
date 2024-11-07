@@ -117,9 +117,7 @@ object MLUtils {
     }
   }
 
-  def parseRelationProto(
-      relation: proto.Relation,
-      sessionHolder: SessionHolder): DataFrame = {
+  def parseRelationProto(relation: proto.Relation, sessionHolder: SessionHolder): DataFrame = {
     val planner = new SparkConnectPlanner(sessionHolder)
     val plan = planner.transformRelation(relation)
     Dataset.ofRows(sessionHolder.session, plan)
@@ -128,8 +126,10 @@ object MLUtils {
   /**
    * Get the Estimator instance according to the fit command
    *
-   * @param fit command
-   * @return an Estimator
+   * @param fit
+   *   command
+   * @return
+   *   an Estimator
    */
   def getEstimator(fit: proto.MlCommand.Fit): Estimator[_] = {
     // TODO support plugin
@@ -139,8 +139,10 @@ object MLUtils {
       throw new RuntimeException(s"Failed to find estimator: $name")
     }
     val uid = fit.getEstimator.getUid
-    val estimator: Estimator[_] = estimators(name).getConstructor(classOf[String])
-      .newInstance(uid).asInstanceOf[Estimator[_]]
+    val estimator: Estimator[_] = estimators(name)
+      .getConstructor(classOf[String])
+      .newInstance(uid)
+      .asInstanceOf[Estimator[_]]
 
     // Set parameters for the estimator
     val params = fit.getParams
@@ -159,8 +161,10 @@ object MLUtils {
   /**
    * Get the transformer instance according to the transform proto
    *
-   * @param transformProto transform proto
-   * @return a Transformer
+   * @param transformProto
+   *   transform proto
+   * @return
+   *   a Transformer
    */
   def getTransformer(transformProto: proto.MlRelation.Transform): Transformer = {
     // Get the transformer name
@@ -169,8 +173,10 @@ object MLUtils {
       throw new RuntimeException(s"Failed to find transformer: $name")
     }
     val uid = transformProto.getTransformer.getUid
-    val transformer = transformers(name).getConstructor(classOf[String])
-      .newInstance(uid).asInstanceOf[Transformer]
+    val transformer = transformers(name)
+      .getConstructor(classOf[String])
+      .newInstance(uid)
+      .asInstanceOf[Transformer]
 
     val params = transformProto.getParams
     MLUtils.setInstanceParams(transformer, params)
@@ -178,31 +184,61 @@ object MLUtils {
   }
 
   private lazy val ALLOWED_ATTRIBUTES = HashSet(
-    "numFeatures", "predict", // PredictionModel
-    "numClasses", "predictRaw", // ClassificationModel
+    "numFeatures",
+    "predict", // PredictionModel
+    "numClasses",
+    "predictRaw", // ClassificationModel
     "predictProbability", // ProbabilisticClassificationModel
-    "coefficients", "intercept", "coefficientMatrix", "interceptVector", // LogisticRegressionModel
-    "summary", "hasSummary", "evaluate", // LogisticRegressionModel
-    "predictions", "predictionCol", "labelCol", "weightCol", "labels", // _ClassificationSummary
-    "truePositiveRateByLabel", "falsePositiveRateByLabel", // _ClassificationSummary
-    "precisionByLabel", "recallByLabel", "fMeasureByLabel", "accuracy", // _ClassificationSummary
-    "weightedTruePositiveRate", "weightedFalsePositiveRate", // _ClassificationSummary
-    "weightedRecall", "weightedPrecision", "weightedFMeasure", // _ClassificationSummary
-    "scoreCol", "roc", "areaUnderROC", "pr", "fMeasureByThreshold", // _BinaryClassificationSummary
-    "precisionByThreshold", "recallByThreshold", // _BinaryClassificationSummary
-    "probabilityCol", "featuresCol", // LogisticRegressionSummary
-    "objectiveHistory", "totalIterations" // _TrainingSummary
+    "coefficients",
+    "intercept",
+    "coefficientMatrix",
+    "interceptVector", // LogisticRegressionModel
+    "summary",
+    "hasSummary",
+    "evaluate", // LogisticRegressionModel
+    "predictions",
+    "predictionCol",
+    "labelCol",
+    "weightCol",
+    "labels", // _ClassificationSummary
+    "truePositiveRateByLabel",
+    "falsePositiveRateByLabel", // _ClassificationSummary
+    "precisionByLabel",
+    "recallByLabel",
+    "fMeasureByLabel",
+    "accuracy", // _ClassificationSummary
+    "weightedTruePositiveRate",
+    "weightedFalsePositiveRate", // _ClassificationSummary
+    "weightedRecall",
+    "weightedPrecision",
+    "weightedFMeasure", // _ClassificationSummary
+    "scoreCol",
+    "roc",
+    "areaUnderROC",
+    "pr",
+    "fMeasureByThreshold", // _BinaryClassificationSummary
+    "precisionByThreshold",
+    "recallByThreshold", // _BinaryClassificationSummary
+    "probabilityCol",
+    "featuresCol", // LogisticRegressionSummary
+    "objectiveHistory",
+    "totalIterations" // _TrainingSummary
   )
 
   def invokeMethodAllowed(obj: Object, methodName: String): Object = {
-    require(ALLOWED_ATTRIBUTES.contains(methodName),
+    require(
+      ALLOWED_ATTRIBUTES.contains(methodName),
       s"$methodName is not allowed to be accessed.")
     invokeMethod(obj, methodName)
   }
 
-  def invokeMethodAllowed(obj: Object, methodName: String, args: Array[Object],
-                          parameterTypes: Array[Class[_]]): Object = {
-    require(ALLOWED_ATTRIBUTES.contains(methodName),
+  def invokeMethodAllowed(
+      obj: Object,
+      methodName: String,
+      args: Array[Object],
+      parameterTypes: Array[Class[_]]): Object = {
+    require(
+      ALLOWED_ATTRIBUTES.contains(methodName),
       s"$methodName is not allowed to be accessed.")
     invokeMethod(obj, methodName, args, parameterTypes)
   }

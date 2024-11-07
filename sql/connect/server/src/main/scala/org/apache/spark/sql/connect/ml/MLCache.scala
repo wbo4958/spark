@@ -22,13 +22,12 @@ import java.util.concurrent.ConcurrentHashMap
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.Model
 
-
 // TODO need to support persistence for model if memory is tight
 // TODO do we need to support cache estimator or evaluator?
 class MLCache(
     private val cachedModel: ConcurrentHashMap[String, Model[_]] =
-    new ConcurrentHashMap[String, Model[_]]()
-) extends Logging {
+      new ConcurrentHashMap[String, Model[_]]())
+    extends Logging {
 
   def register(model: Model[_]): String = {
     val objectId = UUID.randomUUID().toString.takeRight(12)

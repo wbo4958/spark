@@ -33,14 +33,15 @@ object Serializer {
       case v: Vector => serializeVector(v)
       case v: Matrix => serializeMatrix(v)
       case _: Byte | _: Short | _: Int | _: Long | _: Float | _: Double | _: Boolean | _: String |
-           _: Array[_] =>
+          _: Array[_] =>
         proto.MlCommandResponse
           .newBuilder()
           .setLiteral(LiteralValueProtoConverter.toLiteralProto(data))
           .build()
       case _ => // if didn't match, we just return the method chain to client
         proto.MlCommandResponse
-          .newBuilder().setModelAttribute(objIdentifier)
+          .newBuilder()
+          .setModelAttribute(objIdentifier)
           .build()
     }
   }
@@ -91,8 +92,8 @@ object Serializer {
             (arg.getLiteral.getDouble.asInstanceOf[Object], classOf[Double])
           case proto.Expression.Literal.LiteralTypeCase.BOOLEAN =>
             (arg.getLiteral.getBoolean.asInstanceOf[Object], classOf[Boolean])
-          case _ => throw new UnsupportedOperationException(
-            arg.getLiteral.getLiteralTypeCase.name())
+          case _ =>
+            throw new UnsupportedOperationException(arg.getLiteral.getLiteralTypeCase.name())
 
         }
       } else if (arg.hasVector) {
