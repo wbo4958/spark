@@ -21,13 +21,11 @@ from pyspark.sql.connect.plan import LogicalPlan
 
 
 class _ModelTransformRelationPlan(LogicalPlan):
-    """_ModelTransformRelationPlan represents the model transform
-    """
+    """_ModelTransformRelationPlan represents the model transform"""
 
-    def __init__(self,
-                 child: Optional["LogicalPlan"],
-                 model_id: str,
-                 ml_params: pb2.MlParams) -> None:
+    def __init__(
+        self, child: Optional["LogicalPlan"], model_id: str, ml_params: pb2.MlParams
+    ) -> None:
         super().__init__(child)
         self._model_id = model_id
         self._ml_params = ml_params
@@ -35,8 +33,7 @@ class _ModelTransformRelationPlan(LogicalPlan):
     def plan(self, session: "SparkConnectClient") -> pb2.Relation:
         plan = self._create_proto_relation()
         plan.ml_relation.ml_transform.input.CopyFrom(self._child.plan(session))
-        plan.ml_relation.ml_transform.model_ref.CopyFrom(
-            pb2.ModelRef(id=self._model_id))
+        plan.ml_relation.ml_transform.model_ref.CopyFrom(pb2.ModelRef(id=self._model_id))
         if self._ml_params is not None:
             plan.ml_relation.ml_transform.params.CopyFrom(self._ml_params)
 
@@ -44,14 +41,11 @@ class _ModelTransformRelationPlan(LogicalPlan):
 
 
 class _TransformerRelationPlan(LogicalPlan):
-    """_TransformerRelationPlan represents the transform for non-model transformers
-    """
+    """_TransformerRelationPlan represents the transform for non-model transformers"""
 
-    def __init__(self,
-                 child: Optional["LogicalPlan"],
-                 name: str,
-                 uid: str,
-                 ml_params: pb2.MlParams) -> None:
+    def __init__(
+        self, child: Optional["LogicalPlan"], name: str, uid: str, ml_params: pb2.MlParams
+    ) -> None:
         super().__init__(child)
         self._name = name
         self._uid = uid
@@ -61,7 +55,8 @@ class _TransformerRelationPlan(LogicalPlan):
         plan = self._create_proto_relation()
         plan.ml_relation.ml_transform.input.CopyFrom(self._child.plan(session))
         plan.ml_relation.ml_transform.transformer.CopyFrom(
-            pb2.MlOperator(name=self._name, uid=self._uid, type=pb2.MlOperator.TRANSFORMER))
+            pb2.MlOperator(name=self._name, uid=self._uid, type=pb2.MlOperator.TRANSFORMER)
+        )
         if self._ml_params is not None:
             plan.ml_relation.ml_transform.params.CopyFrom(self._ml_params)
         return plan
@@ -79,6 +74,8 @@ class _ModelAttributeRelationPlan(LogicalPlan):
 
     def plan(self, session: "SparkConnectClient") -> pb2.Relation:
         plan = self._create_proto_relation()
-        plan.ml_relation.model_attr.model_ref.CopyFrom(pb2.ml_common_pb2.ModelRef(id=self._model_id))
+        plan.ml_relation.model_attr.model_ref.CopyFrom(
+            pb2.ml_common_pb2.ModelRef(id=self._model_id)
+        )
         plan.ml_relation.model_attr.method = self._method
         return plan

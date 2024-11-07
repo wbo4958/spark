@@ -55,6 +55,7 @@ def try_remote_attribute_relation(f: FuncT) -> FuncT:
             # The attribute returns a dataframe, we need to wrap it
             # in the _ModelAttributeRelationPlan
             from pyspark.ml.remote.proto import _ModelAttributeRelationPlan
+
             plan = _ModelAttributeRelationPlan(id, name)
             return RemoteDataFrame(plan, session)
         else:
@@ -75,9 +76,9 @@ def try_remote_fit(f: FuncT) -> FuncT:
             client = dataset.sparkSession.client
             input = dataset._plan.plan(client)
 
-            estimator = pb2.MlOperator(name=estimator_name,
-                                       uid=instance.uid,
-                                       type=pb2.MlOperator.ESTIMATOR)
+            estimator = pb2.MlOperator(
+                name=estimator_name, uid=instance.uid, type=pb2.MlOperator.ESTIMATOR
+            )
             fit_cmd = pb2.MlCommand.Fit(
                 estimator=estimator,
                 params=serialize_ml_params(instance, client),
@@ -101,12 +102,14 @@ def try_remote_transform_relation(f: FuncT) -> FuncT:
     def wrapped(self, dataset: RemoteDataFrame) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             from pyspark.ml import Model
+
             if isinstance(self, Model):
                 id = cast("JavaWrapper", self)._java_obj
                 session = SparkSession.getActiveSession()
 
                 params = serialize_ml_params(self, session)
                 from pyspark.ml.remote.proto import _ModelTransformRelationPlan
+
                 plan = _ModelTransformRelationPlan(dataset._plan, id, params)
                 return RemoteDataFrame(plan, session)
             else:
@@ -114,6 +117,7 @@ def try_remote_transform_relation(f: FuncT) -> FuncT:
                 session = SparkSession.getActiveSession()
                 params = serialize_ml_params(self, session)
                 from pyspark.ml.remote.proto import _TransformerRelationPlan
+
                 plan = _TransformerRelationPlan(dataset._plan, name, self.uid, params)
                 return RemoteDataFrame(plan, session)
         else:
@@ -134,9 +138,7 @@ def try_remote_call(f: FuncT) -> FuncT:
 
             session = SparkSession.getActiveSession()
             get_attribute = pb2.FetchModelAttr(
-                model_ref=pb2.ModelRef(id=id),
-                method=name,
-                args=serialize(session.client, *args)
+                model_ref=pb2.ModelRef(id=id), method=name, args=serialize(session.client, *args)
             )
             req = session.client._execute_plan_request_with_metadata()
             req.plan.ml_command.fetch_model_attr.CopyFrom(get_attribute)
@@ -191,10 +193,12 @@ def try_remote_return_java_class(f: FuncT) -> FuncT:
 
 def try_remote_write(f: FuncT) -> FuncT:
     """Mark the function that write an estimator/model or evaluator"""
+
     @functools.wraps(f)
     def wrapped(self) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             from pyspark.ml.remote.readwrite import RemoteMLWriter
+
             return RemoteMLWriter(self)
         else:
             return f(self)
@@ -204,10 +208,12 @@ def try_remote_write(f: FuncT) -> FuncT:
 
 def try_remote_read(f: FuncT) -> FuncT:
     """Mark the function to read an estimator/model or evaluator"""
+
     @functools.wraps(f)
     def wrapped(self) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             from pyspark.ml.remote.readwrite import RemoteMLReader
+
             return RemoteMLReader(self)
         else:
             return f(self)

@@ -33,9 +33,9 @@ def serialize(client: "SparkConnectClient", *args: Any) -> List[Any]:
             vec = pb2.Vector(dense=pb2.Vector.Dense(value=arg.values.tolist()))
             result.append(pb2.FetchModelAttr.Args(vector=vec))
         elif isinstance(arg, SparseVector):
-            v = pb2.Vector.Sparse(size=arg.size,
-                                  index=arg.indices.tolist(),
-                                  value=arg.values.tolist())
+            v = pb2.Vector.Sparse(
+                size=arg.size, index=arg.indices.tolist(), value=arg.values.tolist()
+            )
             result.append(pb2.FetchModelAttr.Args(vector=v))
         elif isinstance(arg, (int, float, str, bool)):
             result.append(pb2.FetchModelAttr.Args(literal=arg))

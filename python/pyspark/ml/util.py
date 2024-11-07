@@ -270,6 +270,7 @@ class JavaMLWritable(MLWritable):
     """
     (Private) Mixin for ML instances that provide :py:class:`JavaMLWriter`.
     """
+
     @try_remote_write
     def write(self) -> JavaMLWriter:
         """Returns an MLWriter instance for this ML instance."""

@@ -19,8 +19,14 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Generic, Optional, List, Type, TypeVar, TYPE_CHECKING
 
 from pyspark import since
-from pyspark.ml.remote.util import try_remote_transform_relation, try_remote_call, try_remote_fit, try_remote_del, \
-    try_remote_return_java_class, try_remote_intercept
+from pyspark.ml.remote.util import (
+    try_remote_transform_relation,
+    try_remote_call,
+    try_remote_fit,
+    try_remote_del,
+    try_remote_return_java_class,
+    try_remote_intercept,
+)
 from pyspark.sql import DataFrame, is_remote
 from pyspark.ml import Estimator, Predictor, PredictionModel, Transformer, Model
 from pyspark.ml.base import _PredictorParams

@@ -1958,8 +1958,7 @@ class SparkConnectClient(object):
         # try best to delete the model
         try:
             req = self._execute_plan_request_with_metadata()
-            req.plan.ml_command.delete_model.model_ref.CopyFrom(
-                pb2.ModelRef(id=model_id))
+            req.plan.ml_command.delete_model.model_ref.CopyFrom(pb2.ModelRef(id=model_id))
             self.execute_ml(req)
         except Exception:
             pass
