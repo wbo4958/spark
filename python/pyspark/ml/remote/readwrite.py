@@ -13,7 +13,7 @@ class RemoteMLWriter(MLWriter):
         self._instance = instance
 
     @property
-    def sc(self, ) -> "SparkContext":
+    def sc(self) -> "SparkContext":
         raise RuntimeError("Accessing SparkContext is not supported on Connect")
 
     def save(self, path: str) -> None:

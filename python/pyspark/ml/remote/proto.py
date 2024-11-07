@@ -24,7 +24,10 @@ class _ModelTransformRelationPlan(LogicalPlan):
     """_ModelTransformRelationPlan represents the model transform
     """
 
-    def __init__(self, child, model_id, ml_params):
+    def __init__(self,
+                 child: Optional["LogicalPlan"],
+                 model_id: str,
+                 ml_params: pb2.MlParams) -> None:
         super().__init__(child)
         self._model_id = model_id
         self._ml_params = ml_params
@@ -44,7 +47,11 @@ class _TransformerRelationPlan(LogicalPlan):
     """_TransformerRelationPlan represents the transform for non-model transformers
     """
 
-    def __init__(self, child: Optional["LogicalPlan"], name: str, uid: str, ml_params):
+    def __init__(self,
+                 child: Optional["LogicalPlan"],
+                 name: str,
+                 uid: str,
+                 ml_params: pb2.MlParams) -> None:
         super().__init__(child)
         self._name = name
         self._uid = uid
@@ -65,7 +72,7 @@ class _ModelAttributeRelationPlan(LogicalPlan):
     which returns a Dataframe
     """
 
-    def __init__(self, model_id: str, method: str):
+    def __init__(self, model_id: str, method: str) -> None:
         super().__init__(None)
         self._model_id = model_id
         self._method = method
