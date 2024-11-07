@@ -26,7 +26,7 @@ class RemoteMLWriter(MLWriter):
         if isinstance(self._instance, JavaModel):
             instance = cast("JavaModel", self._instance)
             session = SparkSession.getActiveSession()
-            params = serialize_ml_params(instance, session)
+            params = serialize_ml_params(instance, session.client)
 
             writer = pb2.MlCommand.Writer(
                 model_ref=pb2.ModelRef(id=instance._java_obj),

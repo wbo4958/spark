@@ -33,12 +33,23 @@ def serialize(client: "SparkConnectClient", *args: Any) -> List[Any]:
             vec = pb2.Vector(dense=pb2.Vector.Dense(value=arg.values.tolist()))
             result.append(pb2.FetchModelAttr.Args(vector=vec))
         elif isinstance(arg, SparseVector):
-            v = pb2.Vector.Sparse(
-                size=arg.size, index=arg.indices.tolist(), value=arg.values.tolist()
+            v = pb2.Vector(
+                sparse=pb2.Vector.Sparse(
+                    size=arg.size, index=arg.indices.tolist(), value=arg.values.tolist()
+                )
             )
             result.append(pb2.FetchModelAttr.Args(vector=v))
         elif isinstance(arg, (int, float, str, bool)):
-            result.append(pb2.FetchModelAttr.Args(literal=arg))
+            value = pb2.Expression.Literal()
+            if isinstance(v, bool):
+                value.boolean = v
+            elif isinstance(v, int):
+                value.long = v
+            elif isinstance(v, float):
+                value.double = v
+            else:
+                value.string = v
+            result.append(pb2.FetchModelAttr.Args(literal=value))
         elif isinstance(arg, DataFrame):
             result.append(pb2.FetchModelAttr.Args(input=arg._plan.plan(client)))
         else:
@@ -69,9 +80,9 @@ def deserialize(ml_command_result: pb2.MlCommandResponse) -> Any:
             )
         raise ValueError()
 
-    if ml_command_result.HasField("model_info"):
-        model_info = ml_command_result.model_info
-        return model_info
+    if ml_command_result.HasField("model_attribute"):
+        model_attribute = ml_command_result.model_attribute
+        return model_attribute
 
     raise ValueError()
 
