@@ -37,8 +37,7 @@ def try_remote_intermediate_result(f: FuncT) -> FuncT:
     @functools.wraps(f)
     def wrapped(self: "JavaWrapper") -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
-            id = cast("JavaWrapper", self)._java_obj
-            return f"{id}.{f.__name__}"
+            return f"{self._java_obj}.{f.__name__}"
         else:
             return f(self)
 
@@ -52,15 +51,12 @@ def try_remote_attribute_relation(f: FuncT) -> FuncT:
     @functools.wraps(f)
     def wrapped(self: "JavaWrapper", *args: Any, **kwargs: Any) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
-            id = cast("JavaWrapper", self)._java_obj
-            name = f.__name__
             session = SparkSession.getActiveSession()
-
             # The attribute returns a dataframe, we need to wrap it
             # in the _ModelAttributeRelationPlan
             from pyspark.ml.remote.proto import _ModelAttributeRelationPlan
 
-            plan = _ModelAttributeRelationPlan(id, name)
+            plan = _ModelAttributeRelationPlan(self._java_obj, f.__name__)
             return RemoteDataFrame(plan, session)
         else:
             return f(self, *args, **kwargs)
@@ -74,18 +70,14 @@ def try_remote_fit(f: FuncT) -> FuncT:
     @functools.wraps(f)
     def wrapped(self: "JavaEstimator", dataset: RemoteDataFrame) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
-            instance = cast("JavaEstimator", self)
-            estimator_name = instance._java_obj
-
             client = dataset.sparkSession.client
             input = dataset._plan.plan(client)
-
             estimator = pb2.MlOperator(
-                name=estimator_name, uid=instance.uid, type=pb2.MlOperator.ESTIMATOR
+                name=self._java_obj, uid=self.uid, type=pb2.MlOperator.ESTIMATOR
             )
             fit_cmd = pb2.MlCommand.Fit(
                 estimator=estimator,
-                params=serialize_ml_params(instance, client),
+                params=serialize_ml_params(self, client),
                 dataset=input,
             )
             req = client._execute_plan_request_with_metadata()
@@ -108,21 +100,18 @@ def try_remote_transform_relation(f: FuncT) -> FuncT:
             from pyspark.ml import Model
 
             if isinstance(self, Model):
-                id = cast("JavaWrapper", self)._java_obj
                 session = SparkSession.getActiveSession()
-
                 params = serialize_ml_params(self, session)
                 from pyspark.ml.remote.proto import _ModelTransformRelationPlan
 
-                plan = _ModelTransformRelationPlan(dataset._plan, id, params)
+                plan = _ModelTransformRelationPlan(dataset._plan, self._java_obj, params)
                 return RemoteDataFrame(plan, session)
             else:
-                name = cast("JavaWrapper", self)._java_obj
                 session = SparkSession.getActiveSession()
                 params = serialize_ml_params(self, session)
                 from pyspark.ml.remote.proto import _TransformerRelationPlan
 
-                plan = _TransformerRelationPlan(dataset._plan, name, self.uid, params)
+                plan = _TransformerRelationPlan(dataset._plan, self._java_obj, self.uid, params)
                 return RemoteDataFrame(plan, session)
         else:
             return f(self, dataset)
@@ -138,11 +127,11 @@ def try_remote_call(f: FuncT) -> FuncT:
     def wrapped(self: "JavaWrapper", name: str, *args: Any) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             """Launch a remote call if possible"""
-            id = cast("JavaWrapper", self)._java_obj
-
             session = SparkSession.getActiveSession()
             get_attribute = pb2.FetchModelAttr(
-                model_ref=pb2.ModelRef(id=id), method=name, args=serialize(session.client, *args)
+                model_ref=pb2.ModelRef(id=self._java_obj),
+                method=name,
+                args=serialize(session.client, *args),
             )
             req = session.client._execute_plan_request_with_metadata()
             req.plan.ml_command.fetch_model_attr.CopyFrom(get_attribute)
@@ -166,12 +155,12 @@ def try_remote_del(f: FuncT) -> FuncT:
 
         if in_remote:
             # Delete the model if possible
-            id = cast("JavaWrapper", self)._java_obj
-            if id is not None and "." not in id:
+            model_id = self._java_obj
+            if model_id is not None and "." not in model_id:
                 try:
                     session = SparkSession.getActiveSession()
                     if session is not None:
-                        session.client.remove_ml_model(id)
+                        session.client.remove_ml_model(model_id)
                         return
                 except Exception:
                     # SparkSession's down.

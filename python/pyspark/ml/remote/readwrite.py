@@ -21,16 +21,15 @@ class RemoteMLWriter(MLWriter):
         raise RuntimeError("Accessing SparkContext is not supported on Connect")
 
     def save(self, path: str) -> None:
-        from pyspark.ml import Model
+        from pyspark.ml.wrapper import JavaModel
 
-        if isinstance(self._instance, Model):
-            instance = cast("Model", self._instance)
-            id = instance._java_obj
+        if isinstance(self._instance, JavaModel):
+            instance = cast("JavaModel", self._instance)
             session = SparkSession.getActiveSession()
             params = serialize_ml_params(instance, session)
 
             writer = pb2.MlCommand.Writer(
-                model_ref=pb2.ModelRef(id=id),
+                model_ref=pb2.ModelRef(id=instance._java_obj),
                 params=params,
                 path=path,
                 should_overwrite=self.shouldOverwrite,
