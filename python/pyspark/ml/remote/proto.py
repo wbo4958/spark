@@ -14,10 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import pyspark.sql.connect.proto as pb2
 from pyspark.sql.connect.plan import LogicalPlan
+
+if TYPE_CHECKING:
+    from pyspark.sql.connect.client import SparkConnectClient
 
 
 class _ModelTransformRelationPlan(LogicalPlan):

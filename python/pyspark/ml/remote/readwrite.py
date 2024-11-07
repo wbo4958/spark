@@ -1,10 +1,14 @@
-from typing import cast, Type
+from typing import cast, Type, TYPE_CHECKING
 
 import pyspark.sql.connect.proto as pb2
 from pyspark.ml.remote.serialize import serialize_ml_params, deserialize
 from pyspark.ml.util import MLWriter, MLReader, RL
 from pyspark.sql import SparkSession
 from pyspark.sql.connect.expressions import LiteralExpression
+
+if TYPE_CHECKING:
+    from pyspark.ml.util import JavaMLReadable, JavaMLWritable
+    from pyspark.core.context import SparkContext
 
 
 class RemoteMLWriter(MLWriter):

@@ -16,12 +16,16 @@
 #
 import functools
 import os
-from typing import Any, cast, TypeVar, Callable
+from typing import Any, cast, TypeVar, Callable, TYPE_CHECKING
 
 import pyspark.sql.connect.proto as pb2
 from pyspark.ml.remote.serialize import serialize_ml_params, serialize, deserialize
 from pyspark.sql import is_remote, SparkSession
 from pyspark.sql.connect.dataframe import DataFrame as RemoteDataFrame
+
+if TYPE_CHECKING:
+    from pyspark.ml.wrapper import JavaWrapper, JavaEstimator
+    from pyspark.ml.util import JavaMLReadable, JavaMLWritable
 
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 
@@ -31,7 +35,7 @@ def try_remote_intermediate_result(f: FuncT) -> FuncT:
     Eg, model.summary"""
 
     @functools.wraps(f)
-    def wrapped(self) -> Any:
+    def wrapped(self: "JavaWrapper") -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             id = cast("JavaWrapper", self)._java_obj
             return f"{id}.{f.__name__}"
@@ -46,7 +50,7 @@ def try_remote_attribute_relation(f: FuncT) -> FuncT:
     Eg, model.summary.roc"""
 
     @functools.wraps(f)
-    def wrapped(self, *args: Any, **kwargs: Any) -> Any:
+    def wrapped(self: "JavaWrapper", *args: Any, **kwargs: Any) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             id = cast("JavaWrapper", self)._java_obj
             name = f.__name__
@@ -68,7 +72,7 @@ def try_remote_fit(f: FuncT) -> FuncT:
     """Mark the function that fits a model."""
 
     @functools.wraps(f)
-    def wrapped(self, dataset: RemoteDataFrame) -> Any:
+    def wrapped(self: "JavaEstimator", dataset: RemoteDataFrame) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             instance = cast("JavaEstimator", self)
             estimator_name = instance._java_obj
@@ -99,7 +103,7 @@ def try_remote_transform_relation(f: FuncT) -> FuncT:
     """Mark the function/property that returns a relation for model transform."""
 
     @functools.wraps(f)
-    def wrapped(self, dataset: RemoteDataFrame) -> Any:
+    def wrapped(self: "JavaWrapper", dataset: RemoteDataFrame) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             from pyspark.ml import Model
 
@@ -131,7 +135,7 @@ def try_remote_call(f: FuncT) -> FuncT:
     Eg, model.coefficients"""
 
     @functools.wraps(f)
-    def wrapped(self, name: str, *args: Any) -> Any:
+    def wrapped(self: "JavaWrapper", name: str, *args: Any) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             """Launch a remote call if possible"""
             id = cast("JavaWrapper", self)._java_obj
@@ -154,7 +158,7 @@ def try_remote_del(f: FuncT) -> FuncT:
     """Mark the function/property to delete a model on the server side."""
 
     @functools.wraps(f)
-    def wrapped(self) -> Any:
+    def wrapped(self: "JavaWrapper") -> Any:
         try:
             in_remote = is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ
         except Exception:
@@ -195,7 +199,7 @@ def try_remote_write(f: FuncT) -> FuncT:
     """Mark the function that write an estimator/model or evaluator"""
 
     @functools.wraps(f)
-    def wrapped(self) -> Any:
+    def wrapped(self: "JavaMLWritable") -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             from pyspark.ml.remote.readwrite import RemoteMLWriter
 
@@ -210,7 +214,7 @@ def try_remote_read(f: FuncT) -> FuncT:
     """Mark the function to read an estimator/model or evaluator"""
 
     @functools.wraps(f)
-    def wrapped(self) -> Any:
+    def wrapped(self: "JavaMLReadable") -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
             from pyspark.ml.remote.readwrite import RemoteMLReader
 
