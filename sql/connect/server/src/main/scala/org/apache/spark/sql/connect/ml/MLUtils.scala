@@ -213,6 +213,9 @@ object MLUtils {
     transformer
   }
 
+  // Since we're using reflection way to get the attribute, in order not to
+  // leave a security hole, we define an allowed attribute list that can be accessed.
+  // The attributes could be retrieved from the corresponding python class
   private lazy val ALLOWED_ATTRIBUTES = HashSet(
     "toString",
     "numFeatures",
