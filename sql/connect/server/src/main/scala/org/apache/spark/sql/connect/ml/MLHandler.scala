@@ -21,12 +21,11 @@ import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 import org.apache.spark.connect.proto
 import org.apache.spark.internal.Logging
-import org.apache.spark.ml.Model
+import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.util.MLWritable
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.connect.common.LiteralValueProtoConverter
-import org.apache.spark.sql.connect.ml.MLUtils.loadModel
 import org.apache.spark.sql.connect.ml.Serializer.deserializeMethodArguments
 import org.apache.spark.sql.connect.service.SessionHolder
 
@@ -101,7 +100,7 @@ object MLHandler extends Logging {
         assert(estimatorProto.getType == proto.MlOperator.OperatorType.ESTIMATOR)
 
         val dataset = MLUtils.parseRelationProto(fitCmd.getDataset, sessionHolder)
-        val estimator = MLUtils.getEstimator(fitCmd)
+        val estimator = MLUtils.getEstimator(estimatorProto, Some(fitCmd.getParams))
         val model = estimator.fit(dataset).asInstanceOf[Model[_]]
         val id = mlCache.register(model)
         proto.MlCommandResult
@@ -150,45 +149,59 @@ object MLHandler extends Logging {
             MLUtils.setInstanceParams(copiedModel, mlCommand.getWrite.getParams)
 
             copiedModel match {
-              case m: MLWritable =>
-                val writer = if (mlCommand.getWrite.getShouldOverwrite) {
-                  m.write.overwrite()
-                } else {
-                  m.write
-                }
-                val path = mlCommand.getWrite.getPath
-                val options = mlCommand.getWrite.getOptionsMap
-                options.forEach((k, v) => writer.option(k, v))
-                writer.save(path)
+              case m: MLWritable => MLUtils.write(m, mlCommand.getWrite)
               case _ => throw new RuntimeException("Failed to handle model.save")
             }
-            proto.MlCommandResult.newBuilder().build()
 
           // save an estimator/evaluator/transformer
           case proto.MlCommand.Writer.TypeCase.OPERATOR =>
-            throw new RuntimeException("Support it later")
+            val writer = mlCommand.getWrite
+            if (writer.getOperator.getType == proto.MlOperator.OperatorType.ESTIMATOR) {
+              val estimator = MLUtils.getEstimator(writer.getOperator, Some(writer.getParams))
+              estimator match {
+                case m: MLWritable => MLUtils.write(m, mlCommand.getWrite)
+                case _ => throw new RuntimeException("Failed to handle Estimator.save")
+              }
+            } else {
+              throw new RuntimeException(
+                s"Unsupported writting for ${writer.getOperator.getName}")
+            }
+
           case _ => throw new RuntimeException("Unsupported operator")
         }
+        proto.MlCommandResult.newBuilder().build()
 
       case proto.MlCommand.CommandCase.READ =>
-        val clazz = mlCommand.getRead.getClazz
+        val operator = mlCommand.getRead.getOperator
+        val name = operator.getName
         val path = mlCommand.getRead.getPath
-        val model = loadModel(clazz, path)
-        model match {
-          case _: Model[_] =>
-            val id = mlCache.register(model)
-            proto.MlCommandResult
-              .newBuilder()
-              .setOperatorInfo(
-                proto.MlCommandResult.MlOperatorInfo
-                  .newBuilder()
-                  .setObjRef(proto.ObjectRef.newBuilder().setId(id))
-                  .setUid(model.uid)
-                  .setParams(Serializer.serializeParams(model)))
-              .build()
 
-          case _ =>
-            throw new UnsupportedOperationException(f"Unsupported loading $clazz")
+        if (operator.getType == proto.MlOperator.OperatorType.MODEL) {
+          val model = MLUtils.load(name, path).asInstanceOf[Model[_]]
+          val id = mlCache.register(model)
+          proto.MlCommandResult
+            .newBuilder()
+            .setOperatorInfo(
+              proto.MlCommandResult.MlOperatorInfo
+                .newBuilder()
+                .setObjRef(proto.ObjectRef.newBuilder().setId(id))
+                .setUid(model.uid)
+                .setParams(Serializer.serializeParams(model)))
+            .build()
+
+        } else if (operator.getType == proto.MlOperator.OperatorType.ESTIMATOR) {
+          val estimator = MLUtils.load(name, path).asInstanceOf[Estimator[_]]
+          proto.MlCommandResult
+            .newBuilder()
+            .setOperatorInfo(
+              proto.MlCommandResult.MlOperatorInfo
+                .newBuilder()
+                .setName(name)
+                .setUid(estimator.uid)
+                .setParams(Serializer.serializeParams(estimator)))
+            .build()
+        } else {
+          throw new UnsupportedOperationException(s"Unsupported reading for ${name}")
         }
 
       case _ => throw new UnsupportedOperationException("Unsupported ML command")

@@ -42,7 +42,7 @@ message Param {
 
 // MLOperator represents the ML operators like (Estimator, Transformer or Evaluator)
 message MlOperator {
-  // The name of the ML operator.
+  // The qualified name of the ML operator.
   string name = 1;
   // Unique id of the ML operator
   string uid = 2;
@@ -53,6 +53,7 @@ message MlOperator {
     ESTIMATOR = 1;
     TRANSFORMER = 2;
     EVALUATOR = 3;
+    MODEL = 4;
   }
 }
 

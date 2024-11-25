@@ -182,7 +182,7 @@ def try_remote_del(f: FuncT) -> FuncT:
 
                     session = SparkSession.getActiveSession()
                     if session is not None:
-                        session.client.remove_ml_model(model_id)
+                        session.client.remove_ml_cache(model_id)
                         return
                 except Exception:
                     # SparkSession's down.

@@ -37,28 +37,44 @@ class RemoteMLWriter(MLWriter):
         raise RuntimeError("Accessing SparkContext is not supported on Connect")
 
     def save(self, path: str) -> None:
-        from pyspark.ml.wrapper import JavaModel
+        from pyspark.ml.wrapper import JavaModel, JavaEstimator
+        from pyspark.sql.connect.session import SparkSession
 
+        session = SparkSession.getActiveSession()
+        assert session is not None
+
+        # Spark Connect ML is built on scala Spark.ML, that means we're only
+        # supporting JavaModel or JavaEstimator or JavaEvaluator
         if isinstance(self._instance, JavaModel):
-            from pyspark.sql.connect.session import SparkSession
-
-            session = SparkSession.getActiveSession()
-            assert session is not None
-            instance = cast("JavaModel", self._instance)
-            params = serialize_ml_params(instance, session.client)
-
-            assert isinstance(instance._java_obj, str)
-            command = pb2.Command()
-            command.ml_command.write.CopyFrom(
-                pb2.MlCommand.Writer(
-                    obj_ref=pb2.ObjectRef(id=instance._java_obj),
-                    params=params,
-                    path=path,
-                    should_overwrite=self.shouldOverwrite,
-                    options=self.optionMap,
-                )
+            model = cast("JavaModel", self._instance)
+            params = serialize_ml_params(model, session.client)
+            assert isinstance(model._java_obj, str)
+            writer = pb2.MlCommand.Writer(
+                obj_ref=pb2.ObjectRef(id=model._java_obj),
+                params=params,
+                path=path,
+                should_overwrite=self.shouldOverwrite,
+                options=self.optionMap,
             )
-            session.client.execute_command(command)
+        elif isinstance(self._instance, JavaEstimator):
+            estimator = cast("JavaEstimator", self._instance)
+            params = serialize_ml_params(estimator, session.client)
+            assert isinstance(estimator._java_obj, str)
+            writer = pb2.MlCommand.Writer(
+                operator=pb2.MlOperator(
+                    name=estimator._java_obj, uid=estimator.uid, type=pb2.MlOperator.ESTIMATOR
+                ),
+                params=params,
+                path=path,
+                should_overwrite=self.shouldOverwrite,
+                options=self.optionMap,
+            )
+        else:
+            raise NotImplementedError(f"Unsupported writing for {self._instance}")
+
+        command = pb2.Command()
+        command.ml_command.write.CopyFrom(writer)
+        session.client.execute_command(command)
 
 
 class RemoteMLReader(MLReader[RL]):
@@ -68,6 +84,7 @@ class RemoteMLReader(MLReader[RL]):
 
     def load(self, path: str) -> RL:
         from pyspark.sql.connect.session import SparkSession
+        from pyspark.ml.wrapper import JavaModel, JavaEstimator
 
         session = SparkSession.getActiveSession()
         assert session is not None
@@ -77,13 +94,22 @@ class RemoteMLReader(MLReader[RL]):
             + "."
             + self._clazz.__name__
         )
+
+        if issubclass(self._clazz, JavaModel):
+            ml_type = pb2.MlOperator.MODEL
+        elif issubclass(self._clazz, JavaEstimator):
+            ml_type = pb2.MlOperator.ESTIMATOR
+        else:
+            raise ValueError(f"Unsupported reading for {java_qualified_class_name}")
+
         command = pb2.Command()
         command.ml_command.read.CopyFrom(
-            pb2.MlCommand.Reader(clazz=java_qualified_class_name, path=path)
+            pb2.MlCommand.Reader(
+                operator=pb2.MlOperator(name=java_qualified_class_name, type=ml_type), path=path
+            )
         )
         (_, properties, _) = session.client.execute_command(command)
-        model_info = deserialize(properties)
-        session.client.add_ml_cache(model_info.obj_ref.id)
+        result = deserialize(properties)
 
         # Get the python type
         def _get_class() -> Type[RL]:
@@ -95,9 +121,13 @@ class RemoteMLReader(MLReader[RL]):
         py_type = _get_class()
         # It must be JavaWrapper, since we're passing the string to the _java_obj
         if issubclass(py_type, JavaWrapper):
-            instance = py_type(model_info.obj_ref.id)
-            instance._resetUid(model_info.uid)
-            params = {k: deserialize_param(v) for k, v in model_info.params.params.items()}
+            if ml_type == pb2.MlOperator.MODEL:
+                session.client.add_ml_cache(result.obj_ref.id)
+                instance = py_type(result.obj_ref.id)
+            else:
+                instance = py_type()
+            instance._resetUid(result.uid)
+            params = {k: deserialize_param(v) for k, v in result.params.params.items()}
             instance._set(**params)
             return instance
         else:

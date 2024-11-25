@@ -203,20 +203,24 @@ class MlCommand(google.protobuf.message.Message):
 
         DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-        CLAZZ_FIELD_NUMBER: builtins.int
+        OPERATOR_FIELD_NUMBER: builtins.int
         PATH_FIELD_NUMBER: builtins.int
-        clazz: builtins.str
-        """The class name of the ML operator"""
+        @property
+        def operator(self) -> pyspark.sql.connect.proto.ml_common_pb2.MlOperator:
+            """ML operator information"""
         path: builtins.str
         """Load the ML instance from the input path"""
         def __init__(
             self,
             *,
-            clazz: builtins.str = ...,
+            operator: pyspark.sql.connect.proto.ml_common_pb2.MlOperator | None = ...,
             path: builtins.str = ...,
         ) -> None: ...
+        def HasField(
+            self, field_name: typing_extensions.Literal["operator", b"operator"]
+        ) -> builtins.bool: ...
         def ClearField(
-            self, field_name: typing_extensions.Literal["clazz", b"clazz", "path", b"path"]
+            self, field_name: typing_extensions.Literal["operator", b"operator", "path", b"path"]
         ) -> None: ...
 
     FIT_FIELD_NUMBER: builtins.int

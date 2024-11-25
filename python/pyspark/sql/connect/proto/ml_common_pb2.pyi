@@ -166,18 +166,20 @@ class MlOperator(google.protobuf.message.Message):
         ESTIMATOR: MlOperator._OperatorType.ValueType  # 1
         TRANSFORMER: MlOperator._OperatorType.ValueType  # 2
         EVALUATOR: MlOperator._OperatorType.ValueType  # 3
+        MODEL: MlOperator._OperatorType.ValueType  # 4
 
     class OperatorType(_OperatorType, metaclass=_OperatorTypeEnumTypeWrapper): ...
     UNSPECIFIED: MlOperator.OperatorType.ValueType  # 0
     ESTIMATOR: MlOperator.OperatorType.ValueType  # 1
     TRANSFORMER: MlOperator.OperatorType.ValueType  # 2
     EVALUATOR: MlOperator.OperatorType.ValueType  # 3
+    MODEL: MlOperator.OperatorType.ValueType  # 4
 
     NAME_FIELD_NUMBER: builtins.int
     UID_FIELD_NUMBER: builtins.int
     TYPE_FIELD_NUMBER: builtins.int
     name: builtins.str
-    """The name of the ML operator."""
+    """The qualified name of the ML operator."""
     uid: builtins.str
     """Unique id of the ML operator"""
     type: global___MlOperator.OperatorType.ValueType

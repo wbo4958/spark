@@ -73,8 +73,8 @@ message MlCommand {
 
   // Command to load ML operator.
   message Reader {
-    // The class name of the ML operator
-    string clazz = 1;
+    // ML operator information
+    MlOperator operator = 1;
     // Load the ML instance from the input path
     string path = 2;
   }
