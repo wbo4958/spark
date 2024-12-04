@@ -35,7 +35,7 @@ import org.apache.spark.sql.connect.planner.SparkConnectPlanner
 import org.apache.spark.sql.connect.service.SessionHolder
 import org.apache.spark.util.Utils
 
-object MLUtils {
+private[ml] object MLUtils {
 
   private lazy val estimators: Map[String, Class[_]] = {
     val loader = Utils.getContextOrSparkClassLoader
@@ -88,7 +88,7 @@ object MLUtils {
       } else if (paramProto.hasMatrix) {
         deserializeMatrix(paramProto.getMatrix)
       } else {
-        throw new RuntimeException("Unsupported parameter type")
+        throw MLUnsupportedTypeException(s"Unsupported parameter type for ${name}")
       }
       instance.set(p, value)
     }
@@ -169,7 +169,7 @@ object MLUtils {
     // Get the estimator according to the fit command
     val name = operator.getName
     if (estimators.isEmpty || !estimators.contains(name)) {
-      throw new RuntimeException(s"Failed to find estimator: $name")
+      throw MLUnsupportedEstimatorException(name)
     }
     val uid = operator.getUid
     val estimator: Estimator[_] = estimators(name)
@@ -201,7 +201,7 @@ object MLUtils {
     // Get the transformer name
     val name = transformProto.getTransformer.getName
     if (transformers.isEmpty || !transformers.contains(name)) {
-      throw new RuntimeException(s"Failed to find transformer: $name")
+      throw MLUnsupportedTransformerException(name)
     }
     val uid = transformProto.getTransformer.getUid
     val transformer = transformers(name)
@@ -261,9 +261,9 @@ object MLUtils {
   )
 
   def invokeMethodAllowed(obj: Object, methodName: String): Object = {
-    require(
-      ALLOWED_ATTRIBUTES.contains(methodName),
-      s"$methodName is not allowed to be accessed.")
+    if (!ALLOWED_ATTRIBUTES.contains(methodName)) {
+      throw MLAttributeNotAllowedException(methodName)
+    }
     invokeMethod(obj, methodName)
   }
 
@@ -272,9 +272,9 @@ object MLUtils {
       methodName: String,
       args: Array[Object],
       parameterTypes: Array[Class[_]]): Object = {
-    require(
-      ALLOWED_ATTRIBUTES.contains(methodName),
-      s"$methodName is not allowed to be accessed.")
+    if (!ALLOWED_ATTRIBUTES.contains(methodName)) {
+      throw MLAttributeNotAllowedException(methodName)
+    }
     invokeMethod(obj, methodName, args, parameterTypes)
   }
 

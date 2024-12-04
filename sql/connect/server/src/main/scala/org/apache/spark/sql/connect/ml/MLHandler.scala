@@ -267,7 +267,7 @@ object MLHandler extends Logging {
           case _ => throw new IllegalArgumentException("Unsupported ml operator")
         }
 
-      // Get the model attribute
+      // Get the attribute from a cached object which could be a model or summary
       case proto.MlRelation.MlTypeCase.FETCH_ATTR =>
         val helper = AttributeHelper(
           sessionHolder,
