@@ -84,7 +84,7 @@ private[ml] object Serializer {
   }
 
   def deserializeMethodArguments(
-      args: Array[proto.FetchAttr.Args],
+      args: Array[proto.Fetch.Args],
       sessionHolder: SessionHolder): Array[(Object, Class[_])] = {
     args.map { arg =>
       if (arg.hasParam) {

@@ -278,7 +278,7 @@ private[ml] object MLUtils {
     invokeMethod(obj, methodName, args, parameterTypes)
   }
 
-  def write(instance: MLWritable, writeProto: proto.MlCommand.Writer): Unit = {
+  def write(instance: MLWritable, writeProto: proto.MlCommand.Write): Unit = {
     val writer = if (writeProto.getShouldOverwrite) {
       instance.write.overwrite()
     } else {
