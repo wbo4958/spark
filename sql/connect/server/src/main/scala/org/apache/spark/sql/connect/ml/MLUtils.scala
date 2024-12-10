@@ -33,23 +33,20 @@ import org.apache.spark.sql.{DataFrame, Dataset}
 import org.apache.spark.sql.connect.common.LiteralValueProtoConverter
 import org.apache.spark.sql.connect.planner.SparkConnectPlanner
 import org.apache.spark.sql.connect.service.SessionHolder
-import org.apache.spark.util.Utils
+import org.apache.spark.util.{SparkClassUtils, Utils}
 
 private[ml] object MLUtils {
 
-  private lazy val estimators: Map[String, Class[_]] = {
+  private def loadMLOperators(mlCls: Class[_]): Map[String, Class[_]] = {
     val loader = Utils.getContextOrSparkClassLoader
-    val serviceLoader = ServiceLoader.load(classOf[Estimator[_]], loader)
+    val serviceLoader = ServiceLoader.load(mlCls, loader)
     val providers = serviceLoader.asScala.toList
     providers.map(est => est.getClass.getName -> est.getClass).toMap
   }
 
-  private lazy val transformers: Map[String, Class[_]] = {
-    val loader = Utils.getContextOrSparkClassLoader
-    val serviceLoader = ServiceLoader.load(classOf[Transformer], loader)
-    val providers = serviceLoader.asScala.toList
-    providers.map(est => est.getClass.getName -> est.getClass).toMap
-  }
+  private lazy val estimators = loadMLOperators(classOf[Estimator[_]])
+
+  private lazy val transformers = loadMLOperators(classOf[Transformer])
 
   def deserializeVector(vector: proto.Vector): Vector = {
     if (vector.hasDense) {
@@ -155,6 +152,42 @@ private[ml] object MLUtils {
   }
 
   /**
+   * Get the instance according to the provided proto information.
+   *
+   * @param name
+   * The name of the instance (either estimator or transformer).
+   * @param uid
+   * The unique identifier for the instance.
+   * @param instanceMap
+   * A map of instance names to constructors.
+   * @param params
+   * Optional parameters for the instance.
+   * @tparam T
+   * The type of the instance (Estimator or Transformer).
+   * @return
+   * The instance of the requested type.
+   * @throws MlUnsupportedException
+   * If the instance is not supported.
+   */
+  private def getInstance[T](name: String,
+                                       uid: String,
+                                       instanceMap: Map[String, Class[_]],
+                                       params: Option[proto.MlParams]): T = {
+    if (instanceMap.isEmpty || !instanceMap.contains(name)) {
+      throw MlUnsupportedException(s"Unsupported ML operator, found $name")
+    }
+
+    val instance = instanceMap(name)
+      .getConstructor(classOf[String])
+      .newInstance(uid)
+      .asInstanceOf[T]
+
+    // Set parameters for the instance if they are provided
+    params.foreach(p => MLUtils.setInstanceParams(instance.asInstanceOf[Params], p))
+    instance
+  }
+
+  /**
    * Get the Estimator instance according to the proto information
    *
    * @param operator
@@ -165,28 +198,9 @@ private[ml] object MLUtils {
    *   the estimator
    */
   def getEstimator(operator: proto.MlOperator, params: Option[proto.MlParams]): Estimator[_] = {
-    // TODO support plugin
-    // Get the estimator according to the operator name
     val name = operator.getName
-    if (estimators.isEmpty || !estimators.contains(name)) {
-      throw MlUnsupportedException(s"Unsupported Estimator, found ${name}")
-    }
     val uid = operator.getUid
-    val estimator: Estimator[_] = estimators(name)
-      .getConstructor(classOf[String])
-      .newInstance(uid)
-      .asInstanceOf[Estimator[_]]
-
-    // Set parameters for the estimator
-    params.foreach(p => MLUtils.setInstanceParams(estimator, p))
-    estimator
-  }
-
-  def load(className: String, path: String): Object = {
-    // scalastyle:off classforname
-    val clazz = Class.forName(className)
-    // scalastyle:on classforname
-    invokeStaticMethod(clazz, "load", path)
+    getInstance[Estimator[_]](name, uid, estimators, params)
   }
 
   /**
@@ -198,20 +212,15 @@ private[ml] object MLUtils {
    *   a transformer
    */
   def getTransformer(transformProto: proto.MlRelation.Transform): Transformer = {
-    // Get the transformer name
     val name = transformProto.getTransformer.getName
-    if (transformers.isEmpty || !transformers.contains(name)) {
-      throw MlUnsupportedException(s"Unsupported Transformer, found $name")
-    }
     val uid = transformProto.getTransformer.getUid
-    val transformer = transformers(name)
-      .getConstructor(classOf[String])
-      .newInstance(uid)
-      .asInstanceOf[Transformer]
-
     val params = transformProto.getParams
-    MLUtils.setInstanceParams(transformer, params)
-    transformer
+    getInstance[Transformer](name, uid, transformers, Some(params))
+  }
+
+  def load(className: String, path: String): Object = {
+    val loadedMethod = SparkClassUtils.classForName(className).getMethod("load", classOf[String])
+    loadedMethod.invoke(null, path)
   }
 
   // Since we're using reflection way to get the attribute, in order not to

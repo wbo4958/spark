@@ -27,7 +27,7 @@ import org.apache.spark.sql.connect.service.SessionHolder
 private[ml] object Serializer {
 
   /**
-   * Serialize the ML parameters, currently only support Vector/Matrix and literals
+   * Serialize the ML parameters, currently support Vector/Matrix and literals
    * @param data
    *   the value of parameter
    * @return
