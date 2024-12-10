@@ -160,7 +160,7 @@ def try_remote_call(f: FuncT) -> FuncT:
             assert isinstance(self._java_obj, str)
             command = pb2.Command()
             command.ml_command.fetch_attr.CopyFrom(
-                pb2.FetchAttr(
+                pb2.Fetch(
                     obj_ref=pb2.ObjectRef(id=self._java_obj),
                     method=name,
                     args=serialize(session.client, *args),

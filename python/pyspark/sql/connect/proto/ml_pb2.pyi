@@ -113,7 +113,7 @@ class MlCommand(google.protobuf.message.Message):
             self, field_name: typing_extensions.Literal["obj_ref", b"obj_ref"]
         ) -> None: ...
 
-    class Writer(google.protobuf.message.Message):
+    class Write(google.protobuf.message.Message):
         """Command to write ML operator"""
 
         DESCRIPTOR: google.protobuf.descriptor.Descriptor
@@ -198,7 +198,7 @@ class MlCommand(google.protobuf.message.Message):
             self, oneof_group: typing_extensions.Literal["type", b"type"]
         ) -> typing_extensions.Literal["operator", "obj_ref"] | None: ...
 
-    class Reader(google.protobuf.message.Message):
+    class Read(google.protobuf.message.Message):
         """Command to load ML operator."""
 
         DESCRIPTOR: google.protobuf.descriptor.Descriptor
@@ -231,21 +231,21 @@ class MlCommand(google.protobuf.message.Message):
     @property
     def fit(self) -> global___MlCommand.Fit: ...
     @property
-    def fetch_attr(self) -> pyspark.sql.connect.proto.relations_pb2.FetchAttr: ...
+    def fetch_attr(self) -> pyspark.sql.connect.proto.relations_pb2.Fetch: ...
     @property
     def delete(self) -> global___MlCommand.Delete: ...
     @property
-    def write(self) -> global___MlCommand.Writer: ...
+    def write(self) -> global___MlCommand.Write: ...
     @property
-    def read(self) -> global___MlCommand.Reader: ...
+    def read(self) -> global___MlCommand.Read: ...
     def __init__(
         self,
         *,
         fit: global___MlCommand.Fit | None = ...,
-        fetch_attr: pyspark.sql.connect.proto.relations_pb2.FetchAttr | None = ...,
+        fetch_attr: pyspark.sql.connect.proto.relations_pb2.Fetch | None = ...,
         delete: global___MlCommand.Delete | None = ...,
-        write: global___MlCommand.Writer | None = ...,
-        read: global___MlCommand.Reader | None = ...,
+        write: global___MlCommand.Write | None = ...,
+        read: global___MlCommand.Read | None = ...,
     ) -> None: ...
     def HasField(
         self,
