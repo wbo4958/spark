@@ -37,16 +37,16 @@ import org.apache.spark.util.{SparkClassUtils, Utils}
 
 private[ml] object MLUtils {
 
-  private def loadMLOperators(mlCls: Class[_]): Map[String, Class[_]] = {
+  private def loadOperators(mlCls: Class[_]): Map[String, Class[_]] = {
     val loader = Utils.getContextOrSparkClassLoader
     val serviceLoader = ServiceLoader.load(mlCls, loader)
     val providers = serviceLoader.asScala.toList
     providers.map(est => est.getClass.getName -> est.getClass).toMap
   }
 
-  private lazy val estimators = loadMLOperators(classOf[Estimator[_]])
+  private lazy val estimators = loadOperators(classOf[Estimator[_]])
 
-  private lazy val transformers = loadMLOperators(classOf[Transformer])
+  private lazy val transformers = loadOperators(classOf[Transformer])
 
   def deserializeVector(vector: proto.Vector): Vector = {
     if (vector.hasDense) {
@@ -77,7 +77,7 @@ private[ml] object MLUtils {
     params.getParamsMap.asScala.foreach { case (name, paramProto) =>
       val p = instance.getParam(name)
       val value = if (paramProto.hasLiteral) {
-        convertParamValue(
+        reconcileParam(
           p.paramValueClassTag.runtimeClass,
           LiteralValueProtoConverter.toCatalystValue(paramProto.getLiteral))
       } else if (paramProto.hasVector) {
@@ -91,7 +91,7 @@ private[ml] object MLUtils {
     }
   }
 
-  private def convertArray(elementType: Class[_], array: Array[_]): Array[_] = {
+  private def reconcileArray(elementType: Class[_], array: Array[_]): Array[_] = {
     if (elementType == classOf[Byte]) {
       array.map(_.asInstanceOf[Byte])
     } else if (elementType == classOf[Short]) {
@@ -111,7 +111,7 @@ private[ml] object MLUtils {
     }
   }
 
-  private def convertParamValue(paramType: Class[_], value: Any): Any = {
+  private def reconcileParam(paramType: Class[_], value: Any): Any = {
     // Some cases the param type might be mismatched with the value type.
     // Because in python side we only have int / float type for numeric params.
     // e.g.:
@@ -137,9 +137,10 @@ private[ml] object MLUtils {
     } else if (paramType.isArray) {
       val compType = paramType.getComponentType
       val array = value.asInstanceOf[Array[_]].map { e =>
-        convertParamValue(compType, e)
+        reconcileParam(compType, e)
       }
-      convertArray(compType, array)
+      // reconcileArray(compType, array)
+      array
     } else {
       value
     }
