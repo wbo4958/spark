@@ -91,20 +91,20 @@ private[ml] object MLUtils {
     }
   }
 
-  private def convertArray(paramType: Class[_], array: Array[_]): Array[_] = {
-    if (paramType == classOf[Byte]) {
+  private def convertArray(elementType: Class[_], array: Array[_]): Array[_] = {
+    if (elementType == classOf[Byte]) {
       array.map(_.asInstanceOf[Byte])
-    } else if (paramType == classOf[Short]) {
+    } else if (elementType == classOf[Short]) {
       array.map(_.asInstanceOf[Short])
-    } else if (paramType == classOf[Int]) {
+    } else if (elementType == classOf[Int]) {
       array.map(_.asInstanceOf[Int])
-    } else if (paramType == classOf[Long]) {
+    } else if (elementType == classOf[Long]) {
       array.map(_.asInstanceOf[Long])
-    } else if (paramType == classOf[Float]) {
+    } else if (elementType == classOf[Float]) {
       array.map(_.asInstanceOf[Float])
-    } else if (paramType == classOf[Double]) {
+    } else if (elementType == classOf[Double]) {
       array.map(_.asInstanceOf[Double])
-    } else if (paramType == classOf[String]) {
+    } else if (elementType == classOf[String]) {
       array.map(_.asInstanceOf[String])
     } else {
       array
