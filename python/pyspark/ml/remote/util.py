@@ -39,6 +39,7 @@ def _extract_id_methods(obj_identifier: str) -> Union[str, List[pb2.Fetch.Method
         methods = [pb2.Fetch.Method(method=m) for m in method_chain[1:]]
     return obj_ref, methods
 
+
 def try_remote_intermediate_result(f: FuncT) -> FuncT:
     """Mark the function/property that returns the intermediate result of the remote call.
     Eg, model.summary"""
@@ -72,8 +73,9 @@ def try_remote_attribute_relation(f: FuncT) -> FuncT:
             assert isinstance(self._java_obj, str)
 
             obj_ref, methods = _extract_id_methods(self._java_obj)
-            methods.append(pb2.Fetch.Method(method=f.__name__,
-                           args=serialize(session.client, *args)))
+            methods.append(
+                pb2.Fetch.Method(method=f.__name__, args=serialize(session.client, *args))
+            )
             plan = AttributeRelation(obj_ref, methods)
             return ConnectDataFrame(plan, session)
         else:
@@ -176,10 +178,7 @@ def try_remote_call(f: FuncT) -> FuncT:
             methods.append(pb2.Fetch.Method(method=name, args=serialize(session.client, *args)))
             command = pb2.Command()
             command.ml_command.fetch.CopyFrom(
-                pb2.Fetch(
-                    obj_ref=pb2.ObjectRef(id=obj_ref),
-                    methods=methods
-                )
+                pb2.Fetch(obj_ref=pb2.ObjectRef(id=obj_ref), methods=methods)
             )
             (_, properties, _) = session.client.execute_command(command)
             ml_command_result = properties["ml_command_result"]
