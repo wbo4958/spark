@@ -45,15 +45,21 @@ object SparkConnectPluginRegistry {
     // expression[DummyExpressionPlugin](classOf[DummyExpressionPlugin])
   )
 
+  private lazy val mlBackendChain: Seq[mlBackendBuilder] = Seq(
+
+  )
+
   private var initialized = false
   private var relationRegistryCache: Seq[RelationPlugin] = Seq.empty
   private var expressionRegistryCache: Seq[ExpressionPlugin] = Seq.empty
   private var commandRegistryCache: Seq[CommandPlugin] = Seq.empty
+  private lazy val mlBackendRegistryCache: Seq[MLBackendPlugin] = loadMlBackendPlugins()
 
   // Type used to identify the closure responsible to instantiate a ServerInterceptor.
   type relationPluginBuilder = () => RelationPlugin
   type expressionPluginBuilder = () => ExpressionPlugin
   type commandPluginBuilder = () => CommandPlugin
+  type mlBackendBuilder = () => MLBackendPlugin
 
   def relationRegistry: Seq[RelationPlugin] = withInitialize {
     relationRegistryCache
@@ -64,6 +70,7 @@ object SparkConnectPluginRegistry {
   def commandRegistry: Seq[CommandPlugin] = withInitialize {
     commandRegistryCache
   }
+  def mlBackendRegistry: Seq[MLBackendPlugin] = mlBackendRegistryCache
 
   private def withInitialize[T](f: => Seq[T]): Seq[T] = {
     synchronized {
@@ -105,6 +112,11 @@ object SparkConnectPluginRegistry {
   private[connect] def loadCommandPlugins(): Seq[CommandPlugin] = {
     commandPluginChain.map(x => x()) ++ createConfiguredPlugins(
       SparkEnv.get.conf.get(Connect.CONNECT_EXTENSIONS_COMMAND_CLASSES))
+  }
+
+  private[connect] def loadMlBackendPlugins(): Seq[MLBackendPlugin] = {
+    mlBackendChain.map(x => x()) ++ createConfiguredPlugins(
+      SparkEnv.get.conf.get(Connect.CONNECT_ML_BACKEND_CLASSES))
   }
 
   /**
