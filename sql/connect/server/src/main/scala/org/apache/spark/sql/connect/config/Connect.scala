@@ -214,6 +214,18 @@ object Connect {
       .toSequence
       .createWithDefault(Nil)
 
+  val CONNECT_ML_BACKEND_CLASSES =
+    buildConf("spark.connect.ml.backend.classes")
+      .doc("""
+             |Comma separated list of classes that implement the trait
+             |org.apache.spark.sql.connect.plugin.MLBackendPlugin to replace the
+             |Estimators in spark.ml with third-party implementation.
+             |""".stripMargin)
+      .version("4.0.0")
+      .stringConf
+      .toSequence
+      .createWithDefault(Nil)
+
   val CONNECT_JVM_STACK_TRACE_MAX_SIZE =
     buildStaticConf("spark.connect.jvmStacktrace.maxSize")
       .doc("""

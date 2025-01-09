@@ -117,7 +117,7 @@ private[connect] object MLHandler extends Logging {
         assert(estimatorProto.getType == proto.MlOperator.OperatorType.ESTIMATOR)
 
         val dataset = MLUtils.parseRelationProto(fitCmd.getDataset, sessionHolder)
-        val estimator = MLUtils.getEstimator(estimatorProto, Some(fitCmd.getParams))
+        val estimator = MLUtils.getEstimator(sessionHolder, estimatorProto, Some(fitCmd.getParams))
         val model = estimator.fit(dataset).asInstanceOf[Model[_]]
         val id = mlCache.register(model)
         proto.MlCommandResult
@@ -176,7 +176,8 @@ private[connect] object MLHandler extends Logging {
           case proto.MlCommand.Write.TypeCase.OPERATOR =>
             val writer = mlCommand.getWrite
             if (writer.getOperator.getType == proto.MlOperator.OperatorType.ESTIMATOR) {
-              val estimator = MLUtils.getEstimator(writer.getOperator, Some(writer.getParams))
+              val estimator = MLUtils.getEstimator(sessionHolder, writer.getOperator,
+                Some(writer.getParams))
               estimator match {
                 case m: MLWritable => MLUtils.write(m, mlCommand.getWrite)
                 case other => throw MlUnsupportedException(s"Estimator $other is not writable")
