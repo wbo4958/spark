@@ -55,7 +55,7 @@ private[ml] object MLUtils {
     mutable.HashMap.from(providers.map(est => est.getClass.getName -> est.getClass).toMap)
   }
 
-  private lazy val estimators = loadOperators(classOf[Estimator[_]])
+  private def estimators = loadOperators(classOf[Estimator[_]])
 
   private lazy val transformers = loadOperators(classOf[Transformer])
 
