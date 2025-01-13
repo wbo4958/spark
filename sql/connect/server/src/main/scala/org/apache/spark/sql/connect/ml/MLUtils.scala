@@ -55,9 +55,9 @@ private[ml] object MLUtils {
     mutable.HashMap.from(providers.map(est => est.getClass.getName -> est.getClass).toMap)
   }
 
-  private lazy val estimators = loadOperators(classOf[Estimator[_]])
+  private def estimators = loadOperators(classOf[Estimator[_]])
 
-  private lazy val transformers = loadOperators(classOf[Transformer])
+  private def transformers = loadOperators(classOf[Transformer])
 
   // visible for testing
   private[ml] def addEstimator(name: String, mlCls: Class[_]): Unit = {
@@ -251,11 +251,14 @@ private[ml] object MLUtils {
    * @return
    *   the estimator
    */
-  def getEstimator(operator: proto.MlOperator, params: Option[proto.MlParams]): Estimator[_] = {
-    val name = SparkConnectPluginRegistry.mlBackendRegistry
+  def getEstimator(sessionHolder: SessionHolder,
+                   operator: proto.MlOperator,
+                   params: Option[proto.MlParams]): Estimator[_] = {
+    val name = SparkConnectPluginRegistry.mlBackendRegistry(
+        sessionHolder.session.sessionState.conf)
       .view
-      .map(p => p.replaceEstimator(operator.getName))
-      .find(_.isPresent)
+      .map(p => p.transform(operator.getName))
+      .find(_.isPresent) // First come, first served
       .getOrElse(Optional.of(operator.getName))
       .get()
     val uid = operator.getUid

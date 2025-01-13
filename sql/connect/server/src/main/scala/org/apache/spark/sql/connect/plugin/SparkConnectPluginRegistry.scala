@@ -21,6 +21,7 @@ import java.lang.reflect.InvocationTargetException
 
 import org.apache.spark.{SparkEnv, SparkException}
 import org.apache.spark.sql.connect.config.Connect
+import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.util.Utils
 
 /**
@@ -45,21 +46,15 @@ object SparkConnectPluginRegistry {
     // expression[DummyExpressionPlugin](classOf[DummyExpressionPlugin])
   )
 
-  private lazy val mlBackendChain: Seq[mlBackendBuilder] = Seq(
-
-  )
-
   private var initialized = false
   private var relationRegistryCache: Seq[RelationPlugin] = Seq.empty
   private var expressionRegistryCache: Seq[ExpressionPlugin] = Seq.empty
   private var commandRegistryCache: Seq[CommandPlugin] = Seq.empty
-  private lazy val mlBackendRegistryCache: Seq[MLBackendPlugin] = loadMlBackendPlugins()
 
   // Type used to identify the closure responsible to instantiate a ServerInterceptor.
   type relationPluginBuilder = () => RelationPlugin
   type expressionPluginBuilder = () => ExpressionPlugin
   type commandPluginBuilder = () => CommandPlugin
-  type mlBackendBuilder = () => MLBackendPlugin
 
   def relationRegistry: Seq[RelationPlugin] = withInitialize {
     relationRegistryCache
@@ -70,7 +65,7 @@ object SparkConnectPluginRegistry {
   def commandRegistry: Seq[CommandPlugin] = withInitialize {
     commandRegistryCache
   }
-  def mlBackendRegistry: Seq[MLBackendPlugin] = mlBackendRegistryCache
+  def mlBackendRegistry(conf: SQLConf): Seq[MLBackendPlugin] = loadMlBackendPlugins(conf)
 
   private def withInitialize[T](f: => Seq[T]): Seq[T] = {
     synchronized {
@@ -114,9 +109,9 @@ object SparkConnectPluginRegistry {
       SparkEnv.get.conf.get(Connect.CONNECT_EXTENSIONS_COMMAND_CLASSES))
   }
 
-  private[connect] def loadMlBackendPlugins(): Seq[MLBackendPlugin] = {
-    mlBackendChain.map(x => x()) ++ createConfiguredPlugins(
-      SparkEnv.get.conf.get(Connect.CONNECT_ML_BACKEND_CLASSES))
+  private[connect] def loadMlBackendPlugins(sqlConf: SQLConf): Seq[MLBackendPlugin] = {
+    createConfiguredPlugins(
+      sqlConf.getConf(Connect.CONNECT_ML_BACKEND_CLASSES))
   }
 
   /**

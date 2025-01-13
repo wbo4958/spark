@@ -215,7 +215,7 @@ object Connect {
       .createWithDefault(Nil)
 
   val CONNECT_ML_BACKEND_CLASSES =
-    buildStaticConf("spark.connect.ml.backend.classes")
+    buildConf("spark.connect.ml.backend.classes")
       .doc("""
              |Comma separated list of classes that implement the trait
              |org.apache.spark.sql.connect.plugin.MLBackendPlugin to replace the

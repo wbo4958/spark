@@ -39,11 +39,11 @@ import org.apache.spark.sql.types.{FloatType, Metadata, StructField, StructType}
 
 class MyMlBackend extends MLBackendPlugin {
 
-  override def replaceEstimator(name: String): Optional[String] = {
-    if (name == "org.apache.spark.ml.classification.LogisticRegression") {
-      Optional.of("org.apache.spark.sql.connect.ml.MyLogisticRegression")
-    } else {
-      Optional.empty()
+  override def transform(mlName: String): Optional[String] = {
+    mlName match {
+      case "org.apache.spark.ml.classification.LogisticRegression" =>
+        Optional.of("org.apache.spark.sql.connect.ml.MyLogisticRegression")
+      case _ => Optional.empty()
     }
   }
 }

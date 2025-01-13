@@ -19,6 +19,11 @@ package org.apache.spark.sql.connect.plugin;
 
 import java.util.Optional;
 
+/**
+ * Behavior trait for supporting ML backend for the Spark Connect ML.
+ */
 public interface MLBackendPlugin {
-    Optional<String> replaceEstimator(String name);
+    // Replace the Spark ML estimator with backend implementations.
+    // Return Optional.empty() if not replacing
+    Optional<String> transform(String mlName);
 }
