@@ -215,7 +215,7 @@ object Connect {
       .createWithDefault(Nil)
 
   val CONNECT_EXTENSIONS_ML_OVERRIDES =
-    buildStaticConf("spark.connect.extensions.ml.overrides")
+    buildConf("spark.connect.extensions.ml.overrides")
       .doc("""
              |Comma separated list of strings that specifies how to replace
              |the estimators using the third-party implementations.

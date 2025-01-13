@@ -32,8 +32,8 @@ import org.apache.spark.ml.param.Params
 import org.apache.spark.ml.util.MLWritable
 import org.apache.spark.sql.{DataFrame, Dataset}
 import org.apache.spark.sql.connect.common.LiteralValueProtoConverter
+import org.apache.spark.sql.connect.config.Connect
 import org.apache.spark.sql.connect.planner.SparkConnectPlanner
-import org.apache.spark.sql.connect.plugin.SparkConnectPluginRegistry
 import org.apache.spark.sql.connect.service.SessionHolder
 import org.apache.spark.util.{SparkClassUtils, Utils}
 
@@ -251,8 +251,19 @@ private[ml] object MLUtils {
    * @return
    *   the estimator
    */
-  def getEstimator(operator: proto.MlOperator, params: Option[proto.MlParams]): Estimator[_] = {
-    val name = SparkConnectPluginRegistry.mlOverrides.getOrElse(operator.getName, operator.getName)
+  def getEstimator(sessionHolder: SessionHolder,
+                   operator: proto.MlOperator,
+                   params: Option[proto.MlParams]): Estimator[_] = {
+    val overrides = sessionHolder.session.sessionState.conf
+      .getConf(Connect.CONNECT_EXTENSIONS_ML_OVERRIDES)
+      .map { x =>
+        require(x.contains("="))
+        val l = x.split("=")
+        require(l.length == 2)
+        l(0).trim -> l(1).trim
+      }.toMap
+
+    val name = overrides.getOrElse(operator.getName, operator.getName)
     val uid = operator.getUid
     getInstance[Estimator[_]](name, uid, estimators, params)
   }
