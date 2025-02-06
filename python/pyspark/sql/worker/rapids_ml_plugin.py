@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 import faulthandler
+import importlib
 from importlib import import_module
 from pkgutil import iter_modules
 import os
@@ -23,6 +24,7 @@ from typing import IO
 
 import py4j
 
+import pyspark
 from pyspark.accumulators import _accumulatorRegistry
 from pyspark.serializers import (
     read_int,
@@ -74,10 +76,25 @@ def main(infile: IO, outfile: IO) -> None:
         gw = py4j.java_gateway.JavaGateway()
         jdf = py4j.java_gateway.JavaObject(dataset_key, gw._gateway_client)
         jdf.show()
-
+        print(f"begin to instantiate the instance {estimator_name}")
+        # instance = globals()[estimator_name]()
+        module = importlib.import_module("pyspark.ml.classification")
+        print(dir(module))
+        klass = getattr(module, "LogisticRegression")
+        print(dir(klass))
+        jsql = jdf.sqlContext()
+        jspark = jdf.sparkSession()
+        jsc = jsql.sparkContext()
+        sc = pyspark.context.SparkContext(gateway=gw, jsc=jsc)
+        spark = pyspark.sql.SparkSession.builder.getOrCreate()
+        df = pyspark.sql.DataFrame(jdf=jdf, sql_ctx=spark)
+        df.show()
+        instance = klass()
+        print(f"hello est_name {estimator_name} {dataset_key} {str(instance)}")
         with open("/tmp/ccccccc", "w") as f:
-            f.write(f"hello est_name {estimator_name} {dataset_key}\n")
+            f.write(f"hello est_name {estimator_name} {dataset_key} {str(instance)}\n")
     except BaseException as e:
+        print("Exception occurred:", e)
         handle_worker_exception(e, outfile)
         sys.exit(-1)
     finally:

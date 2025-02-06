@@ -30,10 +30,10 @@ object RapidsHelper {
     PythonUtils.sparkPythonPath,
     sys.env.getOrElse("PYTHONPATH", ""))
 
-  private lazy val gw: py4j.Gateway = {
+  private lazy val (gw: py4j.Gateway, authToken: String) = {
     val gatewayserver = new py4j.GatewayServer()
     gatewayserver.start()
-    gatewayserver.getGateway
+    (gatewayserver.getGateway, gatewayserver.authToken)
   }
 
   def getPythonKey(obj: Object): String = {
