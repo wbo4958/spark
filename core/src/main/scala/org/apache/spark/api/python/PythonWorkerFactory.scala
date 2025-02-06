@@ -89,8 +89,8 @@ private[spark] class PythonWorkerFactory(
   private val simpleWorkers = new mutable.WeakHashMap[PythonWorker, Process]()
 
   private val pythonPath = PythonUtils.mergePythonPaths(
-    PythonUtils.sparkPythonPath,
     envVars.getOrElse("PYTHONPATH", ""),
+    PythonUtils.sparkPythonPath,
     sys.env.getOrElse("PYTHONPATH", ""))
 
   def create(): (PythonWorker, Option[Int]) = {
