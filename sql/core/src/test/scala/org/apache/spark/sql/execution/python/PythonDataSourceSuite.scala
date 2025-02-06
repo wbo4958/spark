@@ -94,6 +94,22 @@ abstract class PythonDataSourceSuiteBase extends QueryTest with SharedSparkSessi
 class PythonDataSourceSuite extends PythonDataSourceSuiteBase {
   import IntegratedUDFTestUtils._
 
+  test("rapids_ml_plugin") {
+    assume(shouldTestPandasUDFs)
+
+    val ss = spark
+//    ss.conf.set("spark.sql.execution.pyspark.udf.faulthandler.enabled", true)
+    import ss.implicits._
+
+    val df = Seq((1, 0), (1, 1)).toDF("features", "label")
+
+    val func = new RapidsMLFunction()
+    val runner = new PythonPlannerRunnerRapids(func)
+    val result = runner.runInPython(true)
+    // scalastyle:off println
+    println(result)
+  }
+
   test("SPARK-50426: should not trigger static Python data source lookup") {
     assume(shouldTestPandasUDFs)
     val testAppender = new LogAppender("Python data source lookup")
