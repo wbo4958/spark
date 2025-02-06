@@ -23,6 +23,7 @@ import sys
 from typing import IO
 
 import py4j
+from py4j.java_gateway import GatewayParameters
 
 import pyspark
 from pyspark.accumulators import _accumulatorRegistry
@@ -70,10 +71,11 @@ def main(infile: IO, outfile: IO) -> None:
         setup_broadcasts(infile)
         _accumulatorRegistry.clear()
 
+        auth_token = utf8_deserializer.loads(infile)
         estimator_name = utf8_deserializer.loads(infile)
         dataset_key = utf8_deserializer.loads(infile)
 
-        gw = py4j.java_gateway.JavaGateway()
+        gw = py4j.java_gateway.JavaGateway(gateway_parameters=GatewayParameters(auth_token=auth_token))
         jdf = py4j.java_gateway.JavaObject(dataset_key, gw._gateway_client)
         jdf.show()
         print(f"begin to instantiate the instance {estimator_name}")
@@ -82,19 +84,22 @@ def main(infile: IO, outfile: IO) -> None:
         print(dir(module))
         klass = getattr(module, "LogisticRegression")
         print(dir(klass))
+        print(f"111111")
         jsql = jdf.sqlContext()
+        print(f"222")
         jspark = jdf.sparkSession()
         jsc = jsql.sparkContext()
+        print(f"333")
         sc = pyspark.context.SparkContext(gateway=gw, jsc=jsc)
+        print(f"444")
         spark = pyspark.sql.SparkSession.builder.getOrCreate()
-        df = pyspark.sql.DataFrame(jdf=jdf, sql_ctx=spark)
+        print(f"555")
+        df = pyspark.sql.DataFrame(jdf=jdf, sql_ctx=jsql)
         df.show()
         instance = klass()
         print(f"hello est_name {estimator_name} {dataset_key} {str(instance)}")
-        with open("/tmp/ccccccc", "w") as f:
-            f.write(f"hello est_name {estimator_name} {dataset_key} {str(instance)}\n")
     except BaseException as e:
-        print("Exception occurred:", e)
+        print(f"Exception occurred: {e}")
         handle_worker_exception(e, outfile)
         sys.exit(-1)
     finally:

@@ -24,17 +24,37 @@ import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters._
 import net.razorvine.pickle.Pickler
 import org.apache.spark.api.python.{PythonFunction, PythonRDD, PythonUtils, SimplePythonFunction}
+import py4j.GatewayServer
+import py4j.GatewayServer.GatewayServerBuilder
+
+class RapidsGatewayServer extends GatewayServer {
+
+  def getAuthToken: String = authToken
+}
 
 object RapidsHelper {
   val pythonPath = PythonUtils.mergePythonPaths(
     PythonUtils.sparkPythonPath,
     sys.env.getOrElse("PYTHONPATH", ""))
 
-  private lazy val (gw: py4j.Gateway, authToken: String) = {
-    val gatewayserver = new py4j.GatewayServer()
+//  private lazy val (gw: py4j.Gateway, authToken: String) = {
+//    val gatewayserver = new RapidsGatewayServer()
+//    gatewayserver.start()
+//    (gatewayserver.getGateway, gatewayserver.getAuthToken)
+//  }
+
+  val AUTH_TOKEN = "ABCDEFGAAA"
+  def startServer(): GatewayServer = {
+    val gatewayserver = new GatewayServerBuilder().authToken(AUTH_TOKEN).build()
     gatewayserver.start()
-    (gatewayserver.getGateway, gatewayserver.authToken)
+    gatewayserver
   }
+
+  private val server = startServer()
+  private val gw = server.getGateway
+  private val authToken = AUTH_TOKEN
+
+  def getAuthToken: String = authToken
 
   def getPythonKey(obj: Object): String = {
     gw.putNewObject(obj)
@@ -62,6 +82,7 @@ class PythonPlannerRunnerRapids(fit: EstimatorFit,
     // scalastyle:off println
     println("in writeToPython")
     // scalastyle:on println
+    PythonRDD.writeUTF(RapidsHelper.getAuthToken, dataOut)
     PythonRDD.writeUTF(fit.name, dataOut)
     PythonRDD.writeUTF(fit.dataset, dataOut)
   }
