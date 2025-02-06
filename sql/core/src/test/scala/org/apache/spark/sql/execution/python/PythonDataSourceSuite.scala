@@ -101,10 +101,12 @@ class PythonDataSourceSuite extends PythonDataSourceSuiteBase {
 //    ss.conf.set("spark.sql.execution.pyspark.udf.faulthandler.enabled", true)
     import ss.implicits._
 
-    val df = Seq((1, 0), (1, 1)).toDF("features", "label")
+    val df = Seq((0, 0), (1, 1)).toDF("features", "label")
 
     val func = new RapidsMLFunction()
-    val runner = new PythonPlannerRunnerRapids(func)
+    val dfKey = RapidsHelper.getPythonKey(df)
+    val est = EstimatorFit("org.apache.spark.ml.classification.LogisticRegression", dfKey)
+    val runner = new PythonPlannerRunnerRapids(est, func)
     val result = runner.runInPython(true)
     // scalastyle:off println
     println(result)

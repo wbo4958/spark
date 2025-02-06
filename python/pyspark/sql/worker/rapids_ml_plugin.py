@@ -21,12 +21,14 @@ import os
 import sys
 from typing import IO
 
+import py4j
+
 from pyspark.accumulators import _accumulatorRegistry
 from pyspark.serializers import (
     read_int,
     write_int,
     write_with_length,
-    SpecialLengths,
+    SpecialLengths, UTF8Deserializer,
 )
 from pyspark.sql.datasource import DataSource
 from pyspark.util import handle_worker_exception, local_connect_and_auth
@@ -39,6 +41,7 @@ from pyspark.worker_util import (
     setup_spark_files,
 )
 
+utf8_deserializer = UTF8Deserializer()
 
 def main(infile: IO, outfile: IO) -> None:
     """
@@ -64,12 +67,16 @@ def main(infile: IO, outfile: IO) -> None:
         setup_spark_files(infile)
         setup_broadcasts(infile)
         _accumulatorRegistry.clear()
-        est_name = read_int(infile)
-        # with open("/tmp/ccccccc", "a") as f:
-        #     f.write(f"hello est_name {est_name}\n")
-        write_int(201314, outfile)
-        # with open("/tmp/ccccccc", "a") as f:
-        #     f.write(f"hello 6 after sending 201314\n")
+
+        estimator_name = utf8_deserializer.loads(infile)
+        dataset_key = utf8_deserializer.loads(infile)
+
+        gw = py4j.java_gateway.JavaGateway()
+        jdf = py4j.java_gateway.JavaObject(dataset_key, gw._gateway_client)
+        jdf.show()
+
+        with open("/tmp/ccccccc", "w") as f:
+            f.write(f"hello est_name {estimator_name} {dataset_key}\n")
     except BaseException as e:
         handle_worker_exception(e, outfile)
         sys.exit(-1)

@@ -23,14 +23,25 @@ import java.io.{DataInputStream, DataOutputStream}
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters._
 import net.razorvine.pickle.Pickler
-import org.apache.spark.api.python.{PythonFunction, PythonUtils, SimplePythonFunction}
+import org.apache.spark.api.python.{PythonFunction, PythonRDD, PythonUtils, SimplePythonFunction}
 
 object RapidsHelper {
   val pythonPath = PythonUtils.mergePythonPaths(
     PythonUtils.sparkPythonPath,
     sys.env.getOrElse("PYTHONPATH", ""))
 
+  private lazy val gw: py4j.Gateway = {
+    val gatewayserver = new py4j.GatewayServer()
+    gatewayserver.start()
+    gatewayserver.getGateway
+  }
+
+  def getPythonKey(obj: Object): String = {
+    gw.putNewObject(obj)
+  }
 }
+
+
 class RapidsMLFunction extends SimplePythonFunction(
   command = Array[Byte](),
   envVars = Map("PYTHONPATH" -> "/home/bobwang/work.d/spark/spark-master/python").asJava,
@@ -40,7 +51,10 @@ class RapidsMLFunction extends SimplePythonFunction(
   broadcastVars = Lists.newArrayList(),
   accumulator = null)
 
-class PythonPlannerRunnerRapids(func: PythonFunction) extends PythonPlannerRunner[Int](func) {
+case class EstimatorFit(name: String, dataset: String)
+
+class PythonPlannerRunnerRapids(fit: EstimatorFit,
+                                func: PythonFunction) extends PythonPlannerRunner[Int](func) {
 
   override protected val workerModule: String = "pyspark.sql.worker.rapids_ml_plugin"
 
@@ -48,13 +62,14 @@ class PythonPlannerRunnerRapids(func: PythonFunction) extends PythonPlannerRunne
     // scalastyle:off println
     println("in writeToPython")
     // scalastyle:on println
-    dataOut.writeInt(100)
+    PythonRDD.writeUTF(fit.name, dataOut)
+    PythonRDD.writeUTF(fit.dataset, dataOut)
   }
 
   override protected def receiveFromPython(dataIn: DataInputStream): Int = {
-    val v = dataIn.readInt()
+//    val v = dataIn.readInt()
     // scalastyle:off println
-    println(s"receiveFromPython $v")
+    println(s"receiveFromPython")
     // scalastyle:on println
 //    v
     1
