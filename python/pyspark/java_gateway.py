@@ -152,7 +152,7 @@ def launch_gateway(conf=None, popen_kwargs=None):
 
     # Store a reference to the Popen object for use by the caller (e.g., in reading stdout/stderr)
     gateway.proc = proc
-
+    print("-------------------------- begin to import")
     # Import the classes used by PySpark
     java_import(gateway.jvm, "org.apache.spark.SparkConf")
     java_import(gateway.jvm, "org.apache.spark.api.java.*")

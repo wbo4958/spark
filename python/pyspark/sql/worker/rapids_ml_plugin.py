@@ -23,9 +23,10 @@ import sys
 from typing import IO
 
 import py4j
-from py4j.java_gateway import GatewayParameters
+from py4j.java_gateway import GatewayParameters, java_import
 
 import pyspark
+from pyspark import SparkConf, SQLContext, SparkContext
 from pyspark.accumulators import _accumulatorRegistry
 from pyspark.serializers import (
     read_int,
@@ -33,6 +34,7 @@ from pyspark.serializers import (
     write_with_length,
     SpecialLengths, UTF8Deserializer,
 )
+from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.datasource import DataSource
 from pyspark.util import handle_worker_exception, local_connect_and_auth
 from pyspark.worker_util import (
@@ -74,30 +76,71 @@ def main(infile: IO, outfile: IO) -> None:
         auth_token = utf8_deserializer.loads(infile)
         estimator_name = utf8_deserializer.loads(infile)
         dataset_key = utf8_deserializer.loads(infile)
+        java_sc_key = utf8_deserializer.loads(infile)
 
-        gw = py4j.java_gateway.JavaGateway(gateway_parameters=GatewayParameters(auth_token=auth_token))
-        jdf = py4j.java_gateway.JavaObject(dataset_key, gw._gateway_client)
+        gateway = py4j.java_gateway.JavaGateway(gateway_parameters=GatewayParameters(auth_token=auth_token))
+
+        java_import(gateway.jvm, "org.apache.spark.SparkConf")
+        java_import(gateway.jvm, "org.apache.spark.api.java.*")
+        java_import(gateway.jvm, "org.apache.spark.api.python.*")
+        java_import(gateway.jvm, "org.apache.spark.ml.python.*")
+        java_import(gateway.jvm, "org.apache.spark.mllib.api.python.*")
+        java_import(gateway.jvm, "org.apache.spark.resource.*")
+        # TODO(davies): move into sql
+        java_import(gateway.jvm, "org.apache.spark.sql.Encoders")
+        java_import(gateway.jvm, "org.apache.spark.sql.OnSuccessCall")
+        java_import(gateway.jvm, "org.apache.spark.sql.functions")
+        java_import(gateway.jvm, "org.apache.spark.sql.classic.*")
+        java_import(gateway.jvm, "org.apache.spark.sql.api.python.*")
+        java_import(gateway.jvm, "org.apache.spark.sql.hive.*")
+        java_import(gateway.jvm, "scala.Tuple2")
+
+        jdf = py4j.java_gateway.JavaObject(dataset_key, gateway._gateway_client)
+        jsc = py4j.java_gateway.JavaObject(java_sc_key, gateway._gateway_client)
         jdf.show()
-        print(f"begin to instantiate the instance {estimator_name}")
-        # instance = globals()[estimator_name]()
-        module = importlib.import_module("pyspark.ml.classification")
-        print(dir(module))
-        klass = getattr(module, "LogisticRegression")
-        print(dir(klass))
-        print(f"111111")
-        jsql = jdf.sqlContext()
-        print(f"222")
+
+        # # print(f"begin to instantiate the instance {estimator_name}")
+
+        # print(f"111111")
+        print("111")
+        # print("222")
+        # jconf = jsc._conf()
+        # conf = SparkConf(_jconf=jconf)
+        jsql_context = jdf.sqlContext()
+        # jsc = jsql_context.sparkContext()
         jspark = jdf.sparkSession()
-        jsc = jsql.sparkContext()
+        jconf = jsc.sc().conf()
+        conf = SparkConf(_jconf=jconf)
+        sc = SparkContext(conf=conf, gateway=gateway, jsc=jsc)
         print(f"333")
-        sc = pyspark.context.SparkContext(gateway=gw, jsc=jsc)
+        spark = SparkSession(sc, jspark)
+        # sqlContext = SQLContext(sc, sparkSession=spark, jsqlContext=jsql_context)
         print(f"444")
-        spark = pyspark.sql.SparkSession.builder.getOrCreate()
+        df = DataFrame(jdf, spark)
+        rows = df.collect()
+        for row in rows:
+            print(row)
         print(f"555")
-        df = pyspark.sql.DataFrame(jdf=jdf, sql_ctx=jsql)
-        df.show()
-        instance = klass()
-        print(f"hello est_name {estimator_name} {dataset_key} {str(instance)}")
+
+        module = importlib.import_module("spark_rapids_ml.classification")
+        klass = getattr(module, "LogisticRegression")
+        lr = klass()
+        model = lr.fit(df)
+        print(model.getMaxIter())
+
+        # sc.parallelize([0, 2, 3, 4, 6], 1).glom().show()
+        # jsql = jdf.sqlContext()
+        print(f"444")
+        # jsc = jsql.sparkContext()
+        # print(f"333")
+
+        # print(f"444")
+        # spark = pyspark.sql.SparkSession.builder.getOrCreate()
+        # print(f"555")
+        # df = pyspark.sql.DataFrame(jdf=jdf, sql_ctx=jsql)
+        # df.show()
+        # instance = klass()
+        # print(f"hello est_name {estimator_name} {dataset_key} {str(instance)}")
     except BaseException as e:
         print(f"Exception occurred: {e}")
         handle_worker_exception(e, outfile)

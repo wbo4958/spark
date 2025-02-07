@@ -130,7 +130,8 @@ class SparkConf:
                 from pyspark.core.context import SparkContext
 
                 jvm = _jvm or SparkContext._jvm
-
+            x = jvm is not None
+            print(f"in SParkCOnf jvm is not none: {x}")
             if jvm is not None:
                 # JVM is created, so create self._jconf directly through JVM
                 self._jconf = jvm.SparkConf(loadDefaults)

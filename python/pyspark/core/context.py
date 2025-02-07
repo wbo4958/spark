@@ -201,8 +201,9 @@ class SparkContext:
                 "You are trying to pass an insecure Py4j gateway to Spark. This"
                 " is not allowed as it is a security risk."
             )
-
+        print("before _ensure_initialized")
         SparkContext._ensure_initialized(self, gateway=gateway, conf=conf)
+        print("after _ensure_initialized")
         try:
             self._do_init(
                 master,
@@ -239,6 +240,7 @@ class SparkContext:
         memory_profiler_cls: Type[MemoryProfiler] = MemoryProfiler,
     ) -> None:
         self.environment = environment or {}
+        print("before _do_init()")
         # java gateway must have been launched at this point.
         if conf is not None and conf._jconf is not None:
             # conf has been initialized in JVM properly, so use conf directly. This represents the
@@ -246,7 +248,9 @@ class SparkContext:
             # created and then stopped, and we create a new SparkConf and new SparkContext again)
             self._conf = conf
         else:
+            print("before _do_init() in else")
             self._conf = SparkConf(_jvm=SparkContext._jvm)
+            print("after creating SparkConf")
             if conf is not None:
                 for k, v in conf.getAll():
                     self._conf.set(k, v)
@@ -288,29 +292,39 @@ class SparkContext:
         self.master = self._conf.get("spark.master")
         self.appName = self._conf.get("spark.app.name")
         self.sparkHome = self._conf.get("spark.home", None)
-
+        print("-------------------------- 1")
         for k, v in self._conf.getAll():
             if k.startswith("spark.executorEnv."):
                 varName = k[len("spark.executorEnv.") :]
                 self.environment[varName] = v
 
         self.environment["PYTHONHASHSEED"] = os.environ.get("PYTHONHASHSEED", "0")
+        print("-------------------------- 2")
 
         # Create the Java SparkContext through Py4J
         self._jsc = jsc or self._initialize_context(self._conf._jconf)
+        print("-------------------------- 3")
+        x = self._jsc.sc().conf()
+        print("-------------------------- 4")
+
         # Reset the SparkConf to the one actually used by the SparkContext in JVM.
         self._conf = SparkConf(_jconf=self._jsc.sc().conf())
+        print("-------------------------- 5")
 
         # Create a single Accumulator in Java that we'll send all our updates through;
         # they will be passed back to us through a TCP server
         assert self._gateway is not None
         auth_token = self._gateway.gateway_parameters.auth_token
         start_update_server = accumulators._start_update_server
+        print("-------------------------- 6")
         self._accumulatorServer = start_update_server(auth_token)
+        print("-------------------------- 7")
         (host, port) = self._accumulatorServer.server_address
         assert self._jvm is not None
         self._javaAccumulator = self._jvm.PythonAccumulatorV2(host, port, auth_token)
+        print("-------------------------- 8")
         self._jsc.sc().register(self._javaAccumulator)
+        print("-------------------------- 9")
 
         # If encryption is enabled, we need to setup a server in the jvm to read broadcast
         # data via a socket.
@@ -333,6 +347,7 @@ class SparkContext:
         SparkFiles._sc = self
         root_dir = SparkFiles.getRootDirectory()
         sys.path.insert(1, root_dir)
+        print("-------------------------- 10")
 
         # Deploy any code dependencies specified in the constructor
         self._python_includes = list()

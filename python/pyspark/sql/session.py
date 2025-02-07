@@ -613,7 +613,7 @@ class SparkSession(SparkConversionMixin):
 
         jSparkSessionClass = SparkSession._get_j_spark_session_class(self._jvm)
         jSparkSessionModule = SparkSession._get_j_spark_session_module(self._jvm)
-
+        print("in SparkSession ")
         if jsparkSession is None:
             if (
                 jSparkSessionClass.getDefaultSession().isDefined()
@@ -624,7 +624,9 @@ class SparkSession(SparkConversionMixin):
             else:
                 jsparkSession = jSparkSessionClass(self._jsc.sc(), options)
         else:
-            jSparkSessionModule.applyModifiableSettings(jsparkSession, options)
+            print("in SparkSession 0")
+            # jSparkSessionModule.applyModifiableSettings(jsparkSession, options)
+        print("in SparkSession 1")
         self._jsparkSession = jsparkSession
         _monkey_patch_RDD(self)
         install_exception_handler()
