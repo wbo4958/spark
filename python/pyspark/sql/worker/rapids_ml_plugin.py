@@ -125,6 +125,7 @@ def main(infile: IO, outfile: IO) -> None:
         module = importlib.import_module("spark_rapids_ml.classification")
         klass = getattr(module, "LogisticRegression")
         lr = klass()
+        lr.setFeaturesCols(["features"])
         model = lr.fit(df)
         print(model.getMaxIter())
 

@@ -64,14 +64,15 @@ object RapidsHelper {
 
 class RapidsMLFunction extends SimplePythonFunction(
   command = Array[Byte](),
-  envVars = Map("PYTHONPATH" -> "/home/bobwang/work.d/spark/spark-master/python").asJava,
+  envVars = Map("PYTHONPATH" ->
+    "/home/bobwang/work.d/spark/spark-master/python:/home/bobwang/work.d/spark-rapids-ml/python/src").asJava,
   pythonIncludes = ArrayBuffer("").asJava,
-  pythonExec = "/home/bobwang/anaconda3/envs/pyspark/bin/python",
-  pythonVer = "3.11",
+  pythonExec = "/home/bobwang/anaconda3/envs/rapids-24.10/bin/python",
+  pythonVer = "3.10",
   broadcastVars = Lists.newArrayList(),
   accumulator = null)
 
-case class EstimatorFit(name: String, dataset: String)
+case class EstimatorFit(name: String, dataset: String, sc: String)
 
 class PythonPlannerRunnerRapids(fit: EstimatorFit,
                                 func: PythonFunction) extends PythonPlannerRunner[Int](func) {
@@ -85,6 +86,7 @@ class PythonPlannerRunnerRapids(fit: EstimatorFit,
     PythonRDD.writeUTF(RapidsHelper.getAuthToken, dataOut)
     PythonRDD.writeUTF(fit.name, dataOut)
     PythonRDD.writeUTF(fit.dataset, dataOut)
+    PythonRDD.writeUTF(fit.sc, dataOut)
   }
 
   override protected def receiveFromPython(dataIn: DataInputStream): Int = {

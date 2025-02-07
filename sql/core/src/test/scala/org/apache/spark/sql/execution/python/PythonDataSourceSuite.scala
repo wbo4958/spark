@@ -18,8 +18,8 @@
 package org.apache.spark.sql.execution.python
 
 import java.io.{File, FileWriter}
-
 import org.apache.spark.SparkException
+import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.api.python.PythonUtils
 import org.apache.spark.sql.{AnalysisException, IntegratedUDFTestUtils, QueryTest, Row}
 import org.apache.spark.sql.execution.datasources.DataSourceManager
@@ -95,17 +95,19 @@ class PythonDataSourceSuite extends PythonDataSourceSuiteBase {
   import IntegratedUDFTestUtils._
 
   test("rapids_ml_plugin") {
-    assume(shouldTestPandasUDFs)
+//    assume(shouldTestPandasUDFs)
 
     val ss = spark
 //    ss.conf.set("spark.sql.execution.pyspark.udf.faulthandler.enabled", true)
     import ss.implicits._
 
-    val df = Seq((0, 0), (1, 1)).toDF("features", "label")
+    val df = Seq((0, 0), (1, 1))
+      .toDF("features", "label")
 
     val func = new RapidsMLFunction()
     val dfKey = RapidsHelper.getPythonKey(df)
-    val est = EstimatorFit("org.apache.spark.ml.classification.LogisticRegression", dfKey)
+    val javaSc = RapidsHelper.getPythonKey(new JavaSparkContext(ss.sparkContext))
+    val est = EstimatorFit("org.apache.spark.ml.classification.LogisticRegression", dfKey, javaSc)
     val runner = new PythonPlannerRunnerRapids(est, func)
     val result = runner.runInPython(true)
     // scalastyle:off println
