@@ -78,7 +78,8 @@ def main(infile: IO, outfile: IO) -> None:
         dataset_key = utf8_deserializer.loads(infile)
         java_sc_key = utf8_deserializer.loads(infile)
 
-        gateway = py4j.java_gateway.JavaGateway(gateway_parameters=GatewayParameters(auth_token=auth_token))
+        gateway = py4j.java_gateway.JavaGateway(gateway_parameters=GatewayParameters(auth_token=auth_token,
+                                                                                     auto_convert=True))
 
         java_import(gateway.jvm, "org.apache.spark.SparkConf")
         java_import(gateway.jvm, "org.apache.spark.api.java.*")
@@ -98,26 +99,24 @@ def main(infile: IO, outfile: IO) -> None:
         jdf = py4j.java_gateway.JavaObject(dataset_key, gateway._gateway_client)
         jsc = py4j.java_gateway.JavaObject(java_sc_key, gateway._gateway_client)
         jdf.show()
-
-        # # print(f"begin to instantiate the instance {estimator_name}")
-
-        # print(f"111111")
         print("111")
-        # print("222")
-        # jconf = jsc._conf()
-        # conf = SparkConf(_jconf=jconf)
-        jsql_context = jdf.sqlContext()
-        # jsc = jsql_context.sparkContext()
+
+
         jspark = jdf.sparkSession()
         jconf = jsc.sc().conf()
         conf = SparkConf(_jconf=jconf)
         sc = SparkContext(conf=conf, gateway=gateway, jsc=jsc)
+        print("2222222222222222")
+
+        x = sc._jvm.PythonUtils.toSeq(["a", "b"])
         print(f"333")
         spark = SparkSession(sc, jspark)
         # sqlContext = SQLContext(sc, sparkSession=spark, jsqlContext=jsql_context)
         print(f"444")
+        cols_names = ["features", "label"]
         df = DataFrame(jdf, spark)
-        rows = df.collect()
+
+        rows = df.select(*cols_names).collect()
         for row in rows:
             print(row)
         print(f"555")

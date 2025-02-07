@@ -299,32 +299,24 @@ class SparkContext:
                 self.environment[varName] = v
 
         self.environment["PYTHONHASHSEED"] = os.environ.get("PYTHONHASHSEED", "0")
-        print("-------------------------- 2")
 
         # Create the Java SparkContext through Py4J
         self._jsc = jsc or self._initialize_context(self._conf._jconf)
-        print("-------------------------- 3")
         x = self._jsc.sc().conf()
-        print("-------------------------- 4")
 
         # Reset the SparkConf to the one actually used by the SparkContext in JVM.
         self._conf = SparkConf(_jconf=self._jsc.sc().conf())
-        print("-------------------------- 5")
 
         # Create a single Accumulator in Java that we'll send all our updates through;
         # they will be passed back to us through a TCP server
         assert self._gateway is not None
         auth_token = self._gateway.gateway_parameters.auth_token
         start_update_server = accumulators._start_update_server
-        print("-------------------------- 6")
         self._accumulatorServer = start_update_server(auth_token)
-        print("-------------------------- 7")
         (host, port) = self._accumulatorServer.server_address
         assert self._jvm is not None
         self._javaAccumulator = self._jvm.PythonAccumulatorV2(host, port, auth_token)
-        print("-------------------------- 8")
         self._jsc.sc().register(self._javaAccumulator)
-        print("-------------------------- 9")
 
         # If encryption is enabled, we need to setup a server in the jvm to read broadcast
         # data via a socket.
@@ -347,7 +339,6 @@ class SparkContext:
         SparkFiles._sc = self
         root_dir = SparkFiles.getRootDirectory()
         sys.path.insert(1, root_dir)
-        print("-------------------------- 10")
 
         # Deploy any code dependencies specified in the constructor
         self._python_includes = list()

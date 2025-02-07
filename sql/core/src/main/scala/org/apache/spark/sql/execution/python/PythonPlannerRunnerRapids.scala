@@ -65,7 +65,9 @@ object RapidsHelper {
 class RapidsMLFunction extends SimplePythonFunction(
   command = Array[Byte](),
   envVars = Map("PYTHONPATH" ->
-    "/home/bobwang/work.d/spark/spark-master/python:/home/bobwang/work.d/spark-rapids-ml/python/src").asJava,
+    "/home/bobwang/work.d/spark/spark-master/python:/home/bobwang/work.d/spark-rapids-ml/python/src",
+  "PYSPARK_PYTHON" -> "/home/bobwang/anaconda3/envs/rapids-24.10/bin/python",
+  "PYSPARK_DRIVER_PYTHON" -> "/home/bobwang/anaconda3/envs/rapids-24.10/bin/python").asJava,
   pythonIncludes = ArrayBuffer("").asJava,
   pythonExec = "/home/bobwang/anaconda3/envs/rapids-24.10/bin/python",
   pythonVer = "3.10",

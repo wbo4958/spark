@@ -1,28 +1,27 @@
-import os
-
-from pyspark.ml.classification import (LogisticRegression,
-                                       LogisticRegressionModel)
-from pyspark.ml.evaluation import RegressionEvaluator, ClusteringEvaluator, BinaryClassificationEvaluator, \
-    MulticlassClassificationEvaluator, MultilabelClassificationEvaluator, RankingEvaluator
-from pyspark.ml.linalg import Vectors
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import udf, col
-from pyspark.sql.types import IntegerType
 
-os.environ["PYSPARK_PYTHON"] = "/home/bobwang/anaconda3/envs/pyspark/bin/python"
-os.environ["PYSPARK_DRIVER_PYTHON"] = "/home/bobwang/anaconda3/envs/pyspark/bin/python"
-# df = spark.read.format("libsvm").load("/home/bobwang/github/mytools/spark.home/spark-3.5.1-bin-hadoop3/data/mllib/sample_binary_classification_data.txt")
+spark = SparkSession.builder.master("local[1]").appName("zz-plugin").getOrCreate()
 
-os.environ["SPARK_CONNECT_MODE_ENABLED"] = ""
-spark = (SparkSession.builder.remote("sc://localhost")
-         .getOrCreate())
+results = spark.sparkContext._jvm.PythonUtils.toSeq(["a", "b"])
 
-@udf(returnType=IntegerType())
-def double(x):
-    return x * x
+# for r in results:
+#     print(r)
 
 
-df = spark.range(1, 2)
-df = df.withColumn("doubled", double(col("id")))
 
-df.show()
+# data = [
+#     ("Alice", 30, "New York"),
+#     ("Bob", 25, "London"),
+#     ("Charlie", 35, "Paris"),
+#     ("David", 28, "Tokyo"),
+#     (None, 40, "Sydney")  # Example with a missing value
+# ]
+#
+# # Define column names (schema as a simple list of strings)
+# columns = ["name", "age", "city"]
+#
+# # Create DataFrame
+# df = spark.createDataFrame(data, columns)
+#
+# df = df.select(*columns)
+# df.show()
