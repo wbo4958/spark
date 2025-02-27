@@ -115,9 +115,9 @@ private[spark] class PythonWorkerFactory(
   private val simpleWorkers = new mutable.WeakHashMap[PythonWorker, Process]()
 
   private val pythonPath = PythonUtils.mergePythonPaths(
-    PythonUtils.sparkPythonPath,
     envVars.getOrElse("PYTHONPATH", ""),
-    sys.env.getOrElse("PYTHONPATH", ""))
+    sys.env.getOrElse("PYTHONPATH", ""),
+    PythonUtils.sparkPythonPath)
 
   def create(): (PythonWorker, Option[ProcessHandle]) = {
     if (useDaemon) {
