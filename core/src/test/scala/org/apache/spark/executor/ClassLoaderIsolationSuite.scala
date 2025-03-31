@@ -17,10 +17,14 @@
 
 package org.apache.spark.executor
 
-import scala.util.Properties
+import org.apache.spark.internal.config.DRIVER_USER_CLASS_PATH_FIRST
 
-import org.apache.spark.{JobArtifactSet, JobArtifactState, LocalSparkContext, SparkConf, SparkContext, SparkFunSuite}
-import org.apache.spark.util.Utils
+import scala.util.Properties
+import org.apache.spark.{JobArtifactSet, JobArtifactState, LocalSparkContext, SparkConf, SparkContext, SparkFunSuite, TestUtils}
+import org.apache.spark.util.{ChildFirstURLClassLoader, MutableURLClassLoader, Utils}
+
+import java.io.{File, PrintWriter}
+import java.net.URL
 
 class ClassLoaderIsolationSuite extends SparkFunSuite with LocalSparkContext  {
 
@@ -112,10 +116,102 @@ class ClassLoaderIsolationSuite extends SparkFunSuite with LocalSparkContext  {
 
   test("SPARK-51537 Executor isolation session classloader inherits from " +
     "default session classloader") {
+
+    val tempDir = Utils.createTempDir()
+    val tempFileName = "test.txt"
+    val tempFile = new File(tempDir, tempFileName)
+
+    // scalastyle:off println
+    Utils.tryWithResource {
+      new PrintWriter(tempFile)
+    } { writer =>
+      writer.println("SparkPluginTest")
+    }
+    // scalastyle:on println
+
+    val sparkPluginCodeBody =
+      """
+        |@Override
+        |public org.apache.spark.api.plugin.ExecutorPlugin executorPlugin() {
+        |  return new TestExecutorPlugin();
+        |}
+        |
+        |@Override
+        |public org.apache.spark.api.plugin.DriverPlugin driverPlugin() { return null; }
+      """.stripMargin
+
+    val testCodeBody =
+      s"""
+         | public static boolean flag = false;
+         |""".stripMargin
+
+    val compiledTestCode = TestUtils.createCompiledClass(
+      "TestFoo",
+      tempDir,
+      "",
+      null,
+      Seq.empty,
+      Seq.empty,
+      testCodeBody)
+
+    val executorPluginCodeBody =
+      s"""
+         |@Override
+         |public void init(
+         |    org.apache.spark.api.plugin.PluginContext ctx,
+         |    java.util.Map<String, String> extraConf) {
+         |  TestFoo.flag = true;
+         |}
+      """.stripMargin
+
+    val thisClassPath =
+      sys.props("java.class.path").split(File.pathSeparator).map(p => new File(p).toURI.toURL)
+
+    val compiledExecutorPlugin = TestUtils.createCompiledClass(
+      "TestExecutorPlugin",
+      tempDir,
+      "",
+      null,
+      Seq(tempDir.toURI.toURL) ++ thisClassPath,
+      Seq("org.apache.spark.api.plugin.ExecutorPlugin"),
+      executorPluginCodeBody)
+
+
+    val compiledSparkPlugin = TestUtils.createCompiledClass(
+      "TestSparkPlugin",
+      tempDir,
+      "",
+      null,
+      Seq(tempDir.toURI.toURL) ++ thisClassPath,
+      Seq("org.apache.spark.api.plugin.SparkPlugin"),
+      sparkPluginCodeBody)
+
+    val jarUrl = TestUtils.createJar(
+      Seq(compiledSparkPlugin, compiledExecutorPlugin, compiledTestCode),
+      new File(tempDir, "testplugin.jar"))
+
+    def getSubmitClassLoader(sparkConf: SparkConf): MutableURLClassLoader = {
+      val loader =
+        if (sparkConf.get(DRIVER_USER_CLASS_PATH_FIRST)) {
+          new ChildFirstURLClassLoader(new Array[URL](0),
+            Thread.currentThread.getContextClassLoader)
+        } else {
+          new MutableURLClassLoader(new Array[URL](0),
+            Thread.currentThread.getContextClassLoader)
+        }
+      Thread.currentThread.setContextClassLoader(loader)
+      loader
+    }
+
+    val loader = getSubmitClassLoader(new SparkConf())
+    loader.addURL(jarUrl)
+
     sc = new SparkContext(new SparkConf()
       .setAppName("test")
-      .setMaster("local")
-      .set("spark.jars", jar2))
+      .set("spark.test.home", "/home/bobwang/work.d/spark/spark-4.0")
+      .setMaster("local-cluster[1, 1, 1024]")
+      .set("spark.jars", jar2 + "," + jarUrl.toString())
+      .set("spark.plugins", "TestSparkPlugin"))
 
     // TestHelloV2's test method returns '2'
     val artifactSetWithHelloV2 = new JobArtifactSet(
@@ -127,13 +223,25 @@ class ClassLoaderIsolationSuite extends SparkFunSuite with LocalSparkContext  {
 
     JobArtifactSet.withActiveJobArtifactState(artifactSetWithHelloV2.state.get) {
       sc.parallelize(1 to 1).foreach { i =>
-        val cls = Utils.classForName("com.example.Hello$")
-        val module = cls.getField("MODULE$").get(null)
-        val result = cls.getMethod("test").invoke(module).asInstanceOf[Int]
-        if (result != 2) {
-          throw new RuntimeException("Unexpected result: " + result)
-        }
+
+//        // Test jar2
+//        val cls = Utils.classForName("com.example.Hello$")
+//        val module = cls.getField("MODULE$").get(null)
+//        val result = cls.getMethod("test").invoke(module).asInstanceOf[Int]
+//        if (result != 2) {
+//          throw new RuntimeException("Unexpected result: " + result)
+//        }
+
+        // Test Plugin
+
+        val cls1 = Utils.classForName("TestFoo", false, true)
+        val z = cls1.getField("flag").getBoolean(null)
+        throw new RuntimeException("got " + z)
       }
     }
+  }
+
+  test("asdfadfasdfasdfadfa") {
+
   }
 }
